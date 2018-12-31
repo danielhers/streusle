@@ -29,28 +29,41 @@ def convert(sent: dict) -> core.Passage:
     :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
     """
     passage = core.Passage(ID=sent[SENT_ID])
+
+    # Create terminals
     l0 = layer0.Layer0(passage)
-    tokens = [Token(tok, l0) for tok in sent["toks"]]  # Create terminals
+    tokens = [Token(tok, l0) for tok in sent["toks"]]
     nodes = [Node(None)] + tokens  # Prepend root
     for node in nodes:  # Link heads to dependents
         node.link(nodes)
+
+    # Create primary UCCA tree
     nodes = topological_sort(nodes)
     l1 = layer1.Layer1(passage)
     remote_edges = []
-    for node in nodes:  # Create primary UCCA tree
+    for node in nodes:
         if node.incoming:
             edge, *remotes = node.incoming
-            edge.dep.preterminal = edge.dep.unit = l1.add_fnode(edge.head.unit, edge.deprel)
             remote_edges += remotes
             if node.is_analyzable():
-                node.preterminal = l1.add_fnode(node.preterminal, "head")  # Intermediate head for hierarchy
-    for edge in remote_edges:  # Create remote edges if there are any reentrancies (none if not using enhanced deps)
+                node.preterminal = node.unit = l1.add_fnode(edge.head.unit, edge.deprel)
+                if any(edge.dep.is_analyzable() for edge in node.outgoing):
+                    node.preterminal = l1.add_fnode(node.preterminal, "head")  # Intermediate head for hierarchy
+            else:  # Unanalyzable: share preterminal with head
+                node.preterminal = edge.head.preterminal
+                node.unit = edge.head.unit
+
+    # Create remote edges if there are any reentrancies (none if not using enhanced deps)
+    for edge in remote_edges:
         parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
         child = edge.dep.unit or l1.heads[0]
         if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
             l1.add_remote(parent, edge.deprel, child)
+
+    # Link preterminals to terminals
     for node in tokens:
         node.preterminal.add(layer1.EdgeTags.Terminal, node.terminal)
+
     return passage
 
 
@@ -62,10 +75,10 @@ class Node:
         """
         :param tok: conllulex2json token dict (from "toks"), or None for the root
         """
-        self.tok = tok  # None for root; dict created by conllulex2json for tokens
-        self.position = 0  # Position in the sentence (root is zero)
-        self.incoming = []  # List of Edges from heads
-        self.outgoing = []  # List of Edges to dependents
+        self.tok: dict = tok  # None for root; dict created by conllulex2json for tokens
+        self.position: int = 0  # Position in the sentence (root is zero)
+        self.incoming: List[Edge] = []  # List of Edges from heads
+        self.outgoing: List[Edge] = []  # List of Edges to dependents
         self.level = self.heads_visited = None  # For topological sort
         self.unit = self.preterminal = None  # Corresponding UCCA units
 
@@ -81,7 +94,7 @@ class Node:
     @property
     def head(self) -> Optional["Node"]:
         """
-        Shortcut for getting the Node's primary head if it exists and None otherwise
+        Shortcut for getting the Node's primary head if it exists and None otherwise.
         :return: head Node
         """
         return self.incoming[0].head if self.incoming else None
@@ -89,16 +102,30 @@ class Node:
     @property
     def deprel(self) -> Optional[str]:
         """
-        Shortcut for getting the Node's primary dependency relation if it exists and None otherwise
+        Shortcut for getting the Node's primary dependency relation if it exists and None otherwise.
         :return: dependency relation str
         """
         return self.incoming[0].deprel if self.incoming else None
+
+    @property
+    def basic_deprel(self) -> Optional[str]:
+        """
+        Remove any relation subtypes (":" and anything following it) from dependency relation.
+        :return: basic dependency relation str
+        """
+        return self.deprel.partition(":")[0] if self.deprel else None
 
     def is_analyzable(self) -> bool:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
-        return bool(self.outgoing)
+        return self.basic_deprel not in ("flat", "fixed", "goeswith")
+
+    def __str__(self):
+        return "ROOT"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self})"
 
 
 class Token(Node):
@@ -111,9 +138,12 @@ class Token(Node):
         :param l0: UCCA Layer0 to add a Terminal to
         """
         super().__init__(tok)
-        self.position = self.tok["#"]
-        self.is_punct = self.tok["upos"] == "PUNCT"
-        self.terminal = l0.add_terminal(text=tok["word"], punct=self.is_punct)
+        self.position: int = self.tok["#"]
+        self.is_punct: bool = self.tok["upos"] == "PUNCT"
+        self.terminal: layer0.Terminal = l0.add_terminal(text=tok["word"], punct=self.is_punct)
+
+    def __str__(self):
+        return self.tok['word']
 
 
 class Edge:
@@ -126,9 +156,15 @@ class Edge:
         :param dep: dependent (Node this edge goes to)
         :param deprel: dependency relation (edge label)
         """
-        self.head = head
-        self.dep = dep
-        self.deprel = deprel
+        self.head: Node = head
+        self.dep: Node = dep
+        self.deprel: str = deprel
+
+    def __str__(self):
+        return f"{self.head} -{self.deprel}-> {self.dep}"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.head}, {self.dep}, {self.deprel})"
 
 
 def topological_sort(nodes: List[Node]) -> List[Node]:
@@ -171,8 +207,8 @@ class ConcatenatedFiles:
         """
         :param filenames: filenames or glob patterns to concatenate
         """
-        self.lines = []
-        self.name = None
+        self.lines: List[str] = []
+        self.name: Optional[str] = None
         for filename in iter_files(filenames):
             with open(filename, encoding="utf-8") as f:
                 self.lines += list(f)
