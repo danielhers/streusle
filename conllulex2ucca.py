@@ -22,10 +22,11 @@ from conllulex2json import load_sents
 SENT_ID = "sent_id"
 
 
-def convert(sent: dict) -> core.Passage:
+def convert(sent: dict, enhanced: bool = False) -> core.Passage:
     """
     Create one UCCA passage from a STREUSLE sentence dict.
     :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
+    :param enhanced: whether to use enhanced dependencies rather than basic dependencies
     :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
     """
     passage = core.Passage(ID=sent[SENT_ID])
@@ -35,7 +36,7 @@ def convert(sent: dict) -> core.Passage:
     tokens = [Token(tok, l0) for tok in sent["toks"]]
     nodes = [Node(None)] + tokens  # Prepend root
     for node in nodes:  # Link heads to dependents
-        node.link(nodes)
+        node.link(nodes, enhanced=enhanced)
 
     # Create primary UCCA tree
     nodes = topological_sort(nodes)
@@ -82,12 +83,20 @@ class Node:
         self.level = self.heads_visited = None  # For topological sort
         self.unit = self.preterminal = None  # Corresponding UCCA units
 
-    def link(self, nodes: List["Node"]) -> None:
+    def link(self, nodes: List["Node"], enhanced: bool = False) -> None:
         """
         Set incoming and outgoing edges after all Nodes have been created.
         :param nodes: List of all Nodes in the sentences, ordered by position (starting with the root in position 0)
+        :param enhanced: whether to use enhanced dependencies rather than basic dependencies
         """
-        self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])] if self.tok else []
+        if self.tok:
+            if enhanced:
+                self.incoming = [Edge(nodes[int(head)], self, deprel) for head, _, deprel in
+                                 [edep.partition(":") for edep in self.tok["edeps"].split("|")]]
+            else:
+                self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])]
+        else:
+            self.incoming = []
         for edge in self.incoming:
             edge.head.outgoing.append(edge)
 
@@ -224,7 +233,7 @@ def main(args: argparse.Namespace) -> None:
     t = tqdm(sents, unit=" sentences", desc="Converting")
     for sent in t:
         t.set_postfix({SENT_ID: sent[SENT_ID]})
-        passage = convert(sent)
+        passage = convert(sent, enhanced=args.enhanced)
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
@@ -237,4 +246,5 @@ if __name__ == '__main__':
     argparser.add_argument("-f", "--format", choices=("xml", "pickle", "json"), default="xml", help="output format")
     argparser.add_argument("-v", "--verbose", action="store_true", help="extra information")
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
+    argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
     main(argparser.parse_args())
