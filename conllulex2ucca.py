@@ -20,13 +20,18 @@ from ucca import core, layer0, layer1
 from conllulex2json import load_sents
 
 SENT_ID = "sent_id"
+UD_TO_UCCA = dict(acl="E", advcl="H", advmod="D", amod="E", appos="C", aux="F", case="R", cc="L", ccomp="A",
+                  compound="E", conj="H", cop="F", csubj="A", dep="F", det="E", discourse="H", expl="F", fixed="C",
+                  goeswith="E", head="C", iobj="A", list="H", mark="F", nmod="E", nsubj="A", nummod="E", obj="A",
+                  obl="A", orphan="A", parataxis="H", vocative="A", xcomp="A", root="H", punct="U")
 
 
-def convert(sent: dict, enhanced: bool = False) -> core.Passage:
+def convert(sent: dict, enhanced: bool = False, map_labels = False) -> core.Passage:
     """
     Create one UCCA passage from a STREUSLE sentence dict.
     :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
     :param enhanced: whether to use enhanced dependencies rather than basic dependencies
+    :param map_labels: whether to translate UD relations to UCCA categories
     :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
     """
     passage = core.Passage(ID=sent[SENT_ID])
@@ -47,9 +52,9 @@ def convert(sent: dict, enhanced: bool = False) -> core.Passage:
             edge, *remotes = node.incoming
             remote_edges += remotes
             if node.is_analyzable():
-                node.preterminal = node.unit = l1.add_fnode(edge.head.unit, edge.deprel)
-                if any(edge.dep.is_analyzable() for edge in node.outgoing):
-                    node.preterminal = l1.add_fnode(node.preterminal, "head")  # Intermediate head for hierarchy
+                node.preterminal = node.unit = l1.add_fnode(edge.head.unit, mapped(edge.deprel, map_labels=map_labels))
+                if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head for hierarchy
+                    node.preterminal = l1.add_fnode(node.preterminal, mapped("head", map_labels=map_labels))
             else:  # Unanalyzable: share preterminal with head
                 node.preterminal = edge.head.preterminal
                 node.unit = edge.head.unit
@@ -59,7 +64,7 @@ def convert(sent: dict, enhanced: bool = False) -> core.Passage:
         parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
         child = edge.dep.unit or l1.heads[0]
         if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-            l1.add_remote(parent, edge.deprel, child)
+            l1.add_remote(parent, mapped(edge.deprel, map_labels=map_labels), child)
 
     # Link preterminals to terminals
     for node in tokens:
@@ -68,10 +73,21 @@ def convert(sent: dict, enhanced: bool = False) -> core.Passage:
     return passage
 
 
+def mapped(deprel: str, map_labels: bool) -> str:
+    """
+    Map UD relation label to UCCA category.
+    :param deprel: UD relation label
+    :param map_labels: whether to apply the map (True) or keep the original relation (False)
+    :return: mapped category
+    """
+    return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if map_labels else deprel
+
+
 class Node:
     """
     Dependency node.
     """
+
     def __init__(self, tok: Optional[dict]):
         """
         :param tok: conllulex2json token dict (from "toks"), or None for the root
@@ -141,6 +157,7 @@ class Token(Node):
     """
     Dependency node that is not the root, wrapper for conllulex2json token dict (from "toks").
     """
+
     def __init__(self, tok: dict, l0: layer0.Layer0):
         """
         :param tok: conllulex2json token dict (from "toks")
@@ -159,6 +176,7 @@ class Edge:
     """
     Edge connecting two Nodes.
     """
+
     def __init__(self, head: Node, dep: Node, deprel: str):
         """
         :param head: Node this edge comes from
@@ -212,6 +230,7 @@ class ConcatenatedFiles:
     Wrapper for multiple files to allow seamless iteration over the concatenation of their lines.
     Reads the whole content into memory first, to allow showing a progress bar with percentage of read lines.
     """
+
     def __init__(self, filenames: Iterable[str]):
         """
         :param filenames: filenames or glob patterns to concatenate
@@ -233,7 +252,7 @@ def main(args: argparse.Namespace) -> None:
     t = tqdm(sents, unit=" sentences", desc="Converting")
     for sent in t:
         t.set_postfix({SENT_ID: sent[SENT_ID]})
-        passage = convert(sent, enhanced=args.enhanced)
+        passage = convert(sent, enhanced=args.enhanced, map_labels=args.map_labels)
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
@@ -247,4 +266,5 @@ if __name__ == '__main__':
     argparser.add_argument("-v", "--verbose", action="store_true", help="extra information")
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
+    argparser.add_argument("-m", "--map-labels", action="store_true", help="map UD relations to UCCA categories")
     main(argparser.parse_args())
