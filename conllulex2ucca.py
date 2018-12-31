@@ -42,7 +42,7 @@ def convert(sent: dict) -> core.Passage:
             edge, *remotes = node.incoming
             edge.dep.preterminal = edge.dep.unit = l1.add_fnode(edge.head.unit, edge.deprel)
             remote_edges += remotes
-            if node.outgoing:
+            if node.is_analyzable():
                 node.preterminal = l1.add_fnode(node.preterminal, "head")  # Intermediate head for hierarchy
     for edge in remote_edges:  # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
@@ -77,6 +77,28 @@ class Node:
         self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])] if self.tok else []
         for edge in self.incoming:
             edge.head.outgoing.append(edge)
+
+    @property
+    def head(self) -> Optional["Node"]:
+        """
+        Shortcut for getting the Node's primary head if it exists and None otherwise
+        :return: head Node
+        """
+        return self.incoming[0].head if self.incoming else None
+
+    @property
+    def deprel(self) -> Optional[str]:
+        """
+        Shortcut for getting the Node's primary dependency relation if it exists and None otherwise
+        :return: dependency relation str
+        """
+        return self.incoming[0].deprel if self.incoming else None
+
+    def is_analyzable(self) -> bool:
+        """
+        Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
+        """
+        return bool(self.outgoing)
 
 
 class Token(Node):
