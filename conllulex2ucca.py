@@ -16,17 +16,26 @@ from typing import List, Iterable, Optional
 from semstr.convert import iter_files, write_passage
 from tqdm import tqdm
 from ucca import core, layer0, layer1
+from ucca.layer1 import EdgeTags as Categories
 
 from conllulex2json import load_sents
 
 SENT_ID = "sent_id"
-UD_TO_UCCA = dict(acl="E", advcl="H", advmod="D", amod="E", appos="C", aux="F", case="R", cc="L", ccomp="A",
-                  compound="E", conj="H", cop="F", csubj="A", dep="F", det="E", discourse="H", expl="F", fixed="C",
-                  goeswith="E", head="C", iobj="A", list="H", mark="F", nmod="E", nsubj="A", nummod="E", obj="A",
-                  obl="A", orphan="A", parataxis="H", vocative="A", xcomp="A", root="H", punct="U")
+UD_TO_UCCA = dict(
+    acl=Categories.Elaborator, advcl=Categories.ParallelScene, advmod=Categories.Adverbial, amod=Categories.Elaborator,
+    appos=Categories.Center, aux=Categories.Function, case=Categories.Relator, cc=Categories.Linker,
+    ccomp=Categories.Participant, compound=Categories.Elaborator, conj=Categories.ParallelScene,
+    cop=Categories.Function, csubj=Categories.Participant, dep=Categories.Function, det=Categories.Elaborator,
+    discourse=Categories.ParallelScene, expl=Categories.Function, fixed=Categories.Center,
+    goeswith=Categories.Elaborator, head=Categories.Center, iobj=Categories.Participant, list=Categories.ParallelScene,
+    mark=Categories.Function, nmod=Categories.Elaborator, nsubj=Categories.Participant, nummod=Categories.Elaborator,
+    obj=Categories.Participant, obl=Categories.Participant, orphan=Categories.Participant,
+    parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
+    root=Categories.ParallelScene, punct=Categories.Punctuation,
+)
 
 
-def convert(sent: dict, enhanced: bool = False, map_labels = False) -> core.Passage:
+def convert(sent: dict, enhanced: bool = False, map_labels: bool = False) -> core.Passage:
     """
     Create one UCCA passage from a STREUSLE sentence dict.
     :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
@@ -68,7 +77,7 @@ def convert(sent: dict, enhanced: bool = False, map_labels = False) -> core.Pass
 
     # Link preterminals to terminals
     for node in tokens:
-        node.preterminal.add(layer1.EdgeTags.Terminal, node.terminal)
+        node.preterminal.add(Categories.Terminal, node.terminal)
 
     return passage
 
