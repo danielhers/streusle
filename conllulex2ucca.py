@@ -89,6 +89,7 @@ def mapped(deprel: str, map_labels: bool) -> str:
     :param map_labels: whether to apply the map (True) or keep the original relation (False)
     :return: mapped category
     """
+    # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
     return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if map_labels else deprel
 
 
@@ -153,6 +154,7 @@ class Node:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
+        # TODO use MWE annotation to find unanalyzable units
         return self.basic_deprel not in ("flat", "fixed", "goeswith")
 
     def __str__(self):
