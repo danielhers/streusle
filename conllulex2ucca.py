@@ -5,7 +5,7 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 @since: 2018-12-27
 @author: Daniel Hershcovich
-@requires: ucca=1.0.129 semstr==1.1 tqdm
+@requires: ucca=1.0.129 semstr==1.1 depedit==2.1.2 tqdm
 """
 
 import argparse
@@ -13,6 +13,7 @@ import os
 from operator import attrgetter
 from typing import List, Iterable, Optional
 
+from depedit.depedit import DepEdit, ParsedToken
 from semstr.convert import iter_files, write_passage
 from tqdm import tqdm
 from ucca import core, layer0, layer1
@@ -21,6 +22,15 @@ from ucca.layer1 import EdgeTags as Categories
 from conllulex2json import load_sents
 
 SENT_ID = "sent_id"
+TRANSFORMATIONS = (
+    # TODO:
+    #   raise cc over conj, root
+    #   raise mark over advcl
+    #   raise advcl over appos, root
+    #   raise appos over root
+    #   raise conj over parataxis, root
+    #   raise parataxis over root
+)
 UD_TO_UCCA = dict(
     acl=Categories.Elaborator, advcl=Categories.ParallelScene, advmod=Categories.Adverbial, amod=Categories.Elaborator,
     appos=Categories.Center, aux=Categories.Function, case=Categories.Relator, cc=Categories.Linker,
@@ -33,64 +43,80 @@ UD_TO_UCCA = dict(
     parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
+DEPEDIT_FIELDS = {  # Map UD/STREUSLE word properties to DepEdit token properties
+    "#": "position", "word": "text", "lemma": "lemma", "upos": "pos", "xpos": "cpos", "feats": "morph", "head": "head",
+    "deprel": "func", "edeps": "", "misc": "", "smwe": "", "wmwe": "", "lextag": ""
+}  # DepEdit properties: tok_id, text, lemma, pos, cpos, morph, head, func, head2, func2, num, child_funcs, position
 
 
-def convert(sent: dict, enhanced: bool = False, map_labels: bool = False) -> core.Passage:
-    """
-    Create one UCCA passage from a STREUSLE sentence dict.
-    :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
-    :param enhanced: whether to use enhanced dependencies rather than basic dependencies
-    :param map_labels: whether to translate UD relations to UCCA categories
-    :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
-    """
-    passage = core.Passage(ID=sent[SENT_ID])
+class ConllulexToUccaConverter:
+    def __init__(self, enhanced: bool = False, map_labels: bool = False, **kwargs):
+        """
+        :param enhanced: whether to use enhanced dependencies rather than basic dependencies
+        :param map_labels: whether to translate UD relations to UCCA categories
+        """
+        del kwargs
+        self.enhanced = enhanced
+        self.map_labels = map_labels
+        self.depedit = DepEdit(TRANSFORMATIONS)
 
-    # Create terminals
-    l0 = layer0.Layer0(passage)
-    tokens = [Token(tok, l0) for tok in sent["toks"]]
-    nodes = [Node(None)] + tokens  # Prepend root
-    for node in nodes:  # Link heads to dependents
-        node.link(nodes, enhanced=enhanced)
+    def convert(self, sent: dict) -> core.Passage:
+        """
+        Create one UCCA passage from a STREUSLE sentence dict.
+        :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
+        :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
+        """
+        passage = core.Passage(ID=sent[SENT_ID])
 
-    # Create primary UCCA tree
-    nodes = topological_sort(nodes)
-    l1 = layer1.Layer1(passage)
-    remote_edges = []
-    for node in nodes:
-        if node.incoming:
-            edge, *remotes = node.incoming
-            remote_edges += remotes
-            if node.is_analyzable():
-                node.preterminal = node.unit = l1.add_fnode(edge.head.unit, mapped(edge.deprel, map_labels=map_labels))
-                if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head for hierarchy
-                    node.preterminal = l1.add_fnode(node.preterminal, mapped("head", map_labels=map_labels))
-            else:  # Unanalyzable: share preterminal with head
-                node.preterminal = edge.head.preterminal
-                node.unit = edge.head.unit
+        # Create terminals
+        l0 = layer0.Layer0(passage)
+        tokens = [Token(tok, l0) for tok in sent["toks"]]
+        nodes = [Node(None)] + tokens  # Prepend root
+        for node in nodes:  # Link heads to dependents
+            node.link(nodes, enhanced=self.enhanced)
 
-    # Create remote edges if there are any reentrancies (none if not using enhanced deps)
-    for edge in remote_edges:
-        parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
-        child = edge.dep.unit or l1.heads[0]
-        if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-            l1.add_remote(parent, mapped(edge.deprel, map_labels=map_labels), child)
+        # Apply pre-conversion transformations to dependency tree
+        parsed_tokens = [ParsedToken(**{DEPEDIT_FIELDS[k]: v for k, v in node.tok.items()}) for node in tokens]
+        transformed = self.depedit.process_sentence(parsed_tokens, 0, -1, self.depedit.transformations)
+        # TODO take the transformed properties and update the tokens accordingly
 
-    # Link preterminals to terminals
-    for node in tokens:
-        node.preterminal.add(Categories.Terminal, node.terminal)
+        # Create primary UCCA tree
+        nodes = topological_sort(nodes)
+        l1 = layer1.Layer1(passage)
+        remote_edges = []
+        for node in nodes:
+            if node.incoming:
+                edge, *remotes = node.incoming
+                remote_edges += remotes
+                if node.is_analyzable():
+                    node.preterminal = node.unit = l1.add_fnode(edge.head.unit, self.mapped(edge.deprel))
+                    if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head for hierarchy
+                        node.preterminal = l1.add_fnode(node.preterminal, self.mapped("head"))
+                else:  # Unanalyzable: share preterminal with head
+                    node.preterminal = edge.head.preterminal
+                    node.unit = edge.head.unit
 
-    return passage
+        # Create remote edges if there are any reentrancies (none if not using enhanced deps)
+        for edge in remote_edges:
+            parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
+            child = edge.dep.unit or l1.heads[0]
+            if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
+                l1.add_remote(parent, self.mapped(edge.deprel), child)
 
+        # Link preterminals to terminals
+        for node in tokens:
+            node.preterminal.add(Categories.Terminal, node.terminal)
 
-def mapped(deprel: str, map_labels: bool) -> str:
-    """
-    Map UD relation label to UCCA category.
-    :param deprel: UD relation label
-    :param map_labels: whether to apply the map (True) or keep the original relation (False)
-    :return: mapped category
-    """
-    # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
-    return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if map_labels else deprel
+        return passage
+
+    def mapped(self, deprel: str) -> str:
+        """
+        Map UD relation label to UCCA category.
+        :param deprel: UD relation label
+        :return: mapped category
+        """
+        # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
+        return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
 
 
 class Node:
@@ -259,11 +285,12 @@ class ConcatenatedFiles:
 
 def main(args: argparse.Namespace) -> None:
     os.makedirs(args.out_dir, exist_ok=True)
-    sents = list(load_sents(ConcatenatedFiles(args.filenames)))
-    t = tqdm(sents, unit=" sentences", desc="Converting")
+    sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
+    converter = ConllulexToUccaConverter(**vars(args))
+    t = tqdm(sentences, unit=" sentences", desc="Converting")
     for sent in t:
         t.set_postfix({SENT_ID: sent[SENT_ID]})
-        passage = convert(sent, enhanced=args.enhanced, map_labels=args.map_labels)
+        passage = converter.convert(sent)
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
