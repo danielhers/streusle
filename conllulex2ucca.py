@@ -13,10 +13,11 @@ import os
 from operator import attrgetter
 from typing import List, Iterable, Optional
 
-from depedit.depedit import DepEdit, ParsedToken
+# from depedit.depedit import DepEdit, ParsedToken
 from semstr.convert import iter_files, write_passage
 from tqdm import tqdm
-from ucca import core, layer0, layer1
+from ucca import core, layer0, layer1, evaluation
+from ucca.ioutil import get_passages_with_progress_bar
 from ucca.layer1 import EdgeTags as Categories
 
 from conllulex2json import load_sents
@@ -58,7 +59,7 @@ class ConllulexToUccaConverter:
         del kwargs
         self.enhanced = enhanced
         self.map_labels = map_labels
-        self.depedit = DepEdit(TRANSFORMATIONS)
+        # self.depedit = DepEdit(TRANSFORMATIONS)
 
     def convert(self, sent: dict) -> core.Passage:
         """
@@ -76,8 +77,8 @@ class ConllulexToUccaConverter:
             node.link(nodes, enhanced=self.enhanced)
 
         # Apply pre-conversion transformations to dependency tree
-        parsed_tokens = [ParsedToken(**{DEPEDIT_FIELDS[k]: v for k, v in node.tok.items()}) for node in tokens]
-        transformed = self.depedit.process_sentence(parsed_tokens, 0, -1, self.depedit.transformations)
+        # parsed_tokens = [ParsedToken(**{DEPEDIT_FIELDS[k]: v for k, v in node.tok.items()}) for node in tokens]
+        # transformed = self.depedit.process_sentence(parsed_tokens, 0, -1, self.depedit.transformations)
         # TODO take the transformed properties and update the tokens accordingly
 
         # Create primary UCCA tree
