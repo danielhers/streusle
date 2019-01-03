@@ -5,7 +5,7 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 @since: 2018-12-27
 @author: Daniel Hershcovich
-@requires: ucca=1.0.129 semstr==1.1 depedit==2.1.2 tqdm
+@requires: ucca=1.0.131 semstr==1.1.2 tqdm git+https://github.com/danielhers/depedit
 """
 
 import argparse
@@ -13,7 +13,7 @@ import os
 from operator import attrgetter
 from typing import List, Iterable, Optional
 
-# from depedit.depedit import DepEdit, ParsedToken
+from depedit.depedit import DepEdit, ParsedToken
 from semstr.convert import iter_files, write_passage
 from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
@@ -44,10 +44,10 @@ UD_TO_UCCA = dict(
     parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
-DEPEDIT_FIELDS = {  # Map UD/STREUSLE word properties to DepEdit token properties
-    "#": "position", "word": "text", "lemma": "lemma", "upos": "pos", "xpos": "cpos", "feats": "morph", "head": "head",
-    "deprel": "func", "edeps": "", "misc": "", "smwe": "", "wmwe": "", "lextag": ""
-}  # DepEdit properties: tok_id, text, lemma, pos, cpos, morph, head, func, head2, func2, num, child_funcs, position
+DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
+    tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
+    head2=None, func2=None, num=None, child_funcs=None, position="#"
+)  # tok fields: #, word, lemma, upos, xpos, feats, head, deprel, edeps, misc, smwe, wmwe, lextag
 
 
 class ConllulexToUccaConverter:
@@ -59,7 +59,7 @@ class ConllulexToUccaConverter:
         del kwargs
         self.enhanced = enhanced
         self.map_labels = map_labels
-        # self.depedit = DepEdit(TRANSFORMATIONS)
+        self.depedit = DepEdit(TRANSFORMATIONS)
 
     def convert(self, sent: dict) -> core.Passage:
         """
@@ -77,8 +77,8 @@ class ConllulexToUccaConverter:
             node.link(nodes, enhanced=self.enhanced)
 
         # Apply pre-conversion transformations to dependency tree
-        # parsed_tokens = [ParsedToken(**{DEPEDIT_FIELDS[k]: v for k, v in node.tok.items()}) for node in tokens]
-        # transformed = self.depedit.process_sentence(parsed_tokens, 0, -1, self.depedit.transformations)
+        parsed_tokens = [ParsedToken(**tok2depedit(node.tok)) for node in tokens]
+        self.depedit.process_sentence(parsed_tokens)
         # TODO take the transformed properties and update the tokens accordingly
 
         # Create primary UCCA tree
@@ -118,6 +118,15 @@ class ConllulexToUccaConverter:
         """
         # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
+
+
+def tok2depedit(tok: dict) -> dict:
+    """
+    Translate JSON property names and values to DepEdit aliases
+    :param tok: dict of token properties
+    :return: dict of DepEdit properties (ParsedToken attributes)
+    """
+    return {k: None if v is None else tok[v] for k, v in DEPEDIT_FIELDS.items()}
 
 
 class Node:
