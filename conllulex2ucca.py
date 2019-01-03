@@ -288,6 +288,8 @@ def main(args: argparse.Namespace) -> None:
     os.makedirs(args.out_dir, exist_ok=True)
     sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
     converter = ConllulexToUccaConverter(**vars(args))
+    gold = {passage.ID: passage for passage in get_passages_with_progress_bar(args.evaluate)} if args.evaluate else None
+    scores = []
     t = tqdm(sentences, unit=" sentences", desc="Converting")
     for sent in t:
         t.set_postfix({SENT_ID: sent[SENT_ID]})
@@ -295,6 +297,13 @@ def main(args: argparse.Namespace) -> None:
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
+        if gold:
+            gold_passage = gold.get(passage.ID.replace("reviews-", ""))
+            if gold_passage is not None:
+                scores.append(evaluation.evaluate(passage, gold_passage))
+    if gold:
+        evaluation.Scores.aggregate(scores).print()
+        print(f"Evaluated {len(scores)} sentences.")
 
 
 if __name__ == '__main__':
@@ -306,4 +315,5 @@ if __name__ == '__main__':
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
     argparser.add_argument("-m", "--map-labels", action="store_true", help="map UD relations to UCCA categories")
+    argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA for evaluation")
     main(argparser.parse_args())
