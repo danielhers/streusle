@@ -89,9 +89,10 @@ class ConllulexToUccaConverter:
                 edge, *remotes = node.incoming
                 remote_edges += remotes
                 if node.is_analyzable():
-                    node.preterminal = node.unit = l1.add_fnode(edge.head.unit, self.mapped(edge.deprel))
+                    node.preterminal = node.unit = l1.add_fnode(edge.head.unit,
+                                                                self.map_label(node=node, deprel=edge.deprel))
                     if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head for hierarchy
-                        node.preterminal = l1.add_fnode(node.preterminal, self.mapped("head"))
+                        node.preterminal = l1.add_fnode(node.preterminal, self.map_label(deprel="head"))
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
@@ -101,7 +102,7 @@ class ConllulexToUccaConverter:
             parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
             child = edge.dep.unit or l1.heads[0]
             if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-                l1.add_remote(parent, self.mapped(edge.deprel), child)
+                l1.add_remote(parent, self.map_label(node=edge.dep, deprel=edge.deprel), child)
 
         # Link preterminals to terminals
         for node in tokens:
@@ -109,12 +110,17 @@ class ConllulexToUccaConverter:
 
         return passage
 
-    def mapped(self, deprel: str) -> str:
+    def map_label(self, node: Optional["Node"] = None, deprel: Optional[str] = None) -> str:
         """
         Map UD relation label to UCCA category.
-        :param deprel: UD relation label
-        :return: mapped category
+        :param node: dependency Node that this label corresponds to, containing a `tok' attribute, which is a dict
+        :param deprel: UD relation label, alternatively specifying just the dependency relation when no node exists
+        :return: mapped UCCA category
         """
+        if deprel is None:
+            if node is None:
+                raise ValueError("Either node or deprel must be specified")
+            deprel = node.tok["deprel"]
         # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
 
