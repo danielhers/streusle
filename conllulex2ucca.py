@@ -71,7 +71,7 @@ class ConllulexToUccaConverter:
 
         # Apply pre-conversion transformations to dependency tree
         toks = sent["toks"]
-        parsed_tokens = [ParsedToken(**tok2depedit(tok)) for tok in toks]
+        parsed_tokens = [tok2depedit(tok) for tok in toks]
         self.depedit.process_sentence(parsed_tokens)
         # Take the transformed properties and update the tokens accordingly
         for tok, parsed_token in zip(toks, parsed_tokens):
@@ -123,20 +123,20 @@ class ConllulexToUccaConverter:
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
 
 
-def tok2depedit(tok: dict) -> dict:
+def tok2depedit(tok: dict) -> ParsedToken:
     """
     Translate JSON property names and values to DepEdit aliases
     :param tok: dict of token properties
-    :return: dict of DepEdit properties (ParsedToken attributes)
+    :return: DepEdit ParsedToken with mapped properties (attributes)
     """
-    return {k: None if v is None else tok[v] for k, v in DEPEDIT_FIELDS.items()}
+    return ParsedToken(**{k: None if v is None else tok[v] for k, v in DEPEDIT_FIELDS.items()})
 
 
 def depedit2tok(token: ParsedToken) -> dict:
     """
     Translate a DepEdit ParsedToken to a dict with JSON property names and values
     :param token: ParsedToken
-    :return: dict of token properties
+    :return: dict of mapped token properties
     """
     return {v: getattr(token, k) for k, v in DEPEDIT_FIELDS.items() if v is not None and hasattr(token, k)}
 
