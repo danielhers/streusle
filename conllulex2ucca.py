@@ -23,15 +23,6 @@ from ucca.layer1 import EdgeTags as Categories
 from conllulex2json import load_sents
 
 SENT_ID = "sent_id"
-TRANSFORMATIONS = (
-    # TODO:
-    #   raise cc over conj, root
-    #   raise mark over advcl
-    #   raise advcl over appos, root
-    #   raise appos over root
-    #   raise conj over parataxis, root
-    #   raise parataxis over root
-)
 UD_TO_UCCA = dict(
     acl=Categories.Elaborator, advcl=Categories.ParallelScene, advmod=Categories.Adverbial, amod=Categories.Elaborator,
     appos=Categories.Center, aux=Categories.Function, case=Categories.Relator, cc=Categories.Linker,
@@ -43,6 +34,15 @@ UD_TO_UCCA = dict(
     obj=Categories.Participant, obl=Categories.Participant, orphan=Categories.Participant,
     parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
     root=Categories.ParallelScene, punct=Categories.Punctuation,
+)
+DEPEDIT_TRANSFORMATIONS = (
+    # TODO:
+    #   raise cc over conj, root
+    #   raise mark over advcl
+    #   raise advcl over appos, root
+    #   raise appos over root
+    #   raise conj over parataxis, root
+    #   raise parataxis over root
 )
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
     tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
@@ -59,7 +59,7 @@ class ConllulexToUccaConverter:
         del kwargs
         self.enhanced = enhanced
         self.map_labels = map_labels
-        self.depedit = DepEdit(TRANSFORMATIONS)
+        self.depedit = DepEdit(DEPEDIT_TRANSFORMATIONS)
 
     def convert(self, sent: dict) -> core.Passage:
         """
@@ -323,6 +323,6 @@ if __name__ == '__main__':
     argparser.add_argument("-v", "--verbose", action="store_true", help="extra information")
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
-    argparser.add_argument("-m", "--map-labels", action="store_true", help="map UD relations to UCCA categories")
-    argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA for evaluation")
+    argparser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
+    argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
     main(argparser.parse_args())
