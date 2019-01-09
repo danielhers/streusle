@@ -35,15 +35,15 @@ UD_TO_UCCA = dict(
     parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
-DEPEDIT_TRANSFORMATIONS = (
+DEPEDIT_TRANSFORMATIONS = list(map("\t".join, (
+    ("func=/.*/;func=/cc/;func=/conj|root/", "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
     # TODO:
-    #   raise cc over conj, root
     #   raise mark over advcl
     #   raise advcl over appos, root
     #   raise appos over root
     #   raise conj over parataxis, root
     #   raise parataxis over root
-)
+)))
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
     tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
     head2=None, func2=None, num=None, child_funcs=None, position="#"
