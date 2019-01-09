@@ -69,17 +69,20 @@ class ConllulexToUccaConverter:
         """
         passage = core.Passage(ID=sent[SENT_ID])
 
+        # Apply pre-conversion transformations to dependency tree
+        toks = sent["toks"]
+        parsed_tokens = [ParsedToken(**tok2depedit(tok)) for tok in toks]
+        self.depedit.process_sentence(parsed_tokens)
+        # Take the transformed properties and update the tokens accordingly
+        for tok, parsed_token in zip(toks, parsed_tokens):
+            tok.update(depedit2tok(parsed_token))
+
         # Create terminals
         l0 = layer0.Layer0(passage)
-        tokens = [Token(tok, l0) for tok in sent["toks"]]
+        tokens = [Token(tok, l0) for tok in toks]
         nodes = [Node(None)] + tokens  # Prepend root
         for node in nodes:  # Link heads to dependents
             node.link(nodes, enhanced=self.enhanced)
-
-        # Apply pre-conversion transformations to dependency tree
-        parsed_tokens = [ParsedToken(**tok2depedit(node.tok)) for node in tokens]
-        self.depedit.process_sentence(parsed_tokens)
-        # TODO take the transformed properties and update the tokens accordingly
 
         # Create primary UCCA tree
         nodes = topological_sort(nodes)
@@ -127,6 +130,15 @@ def tok2depedit(tok: dict) -> dict:
     :return: dict of DepEdit properties (ParsedToken attributes)
     """
     return {k: None if v is None else tok[v] for k, v in DEPEDIT_FIELDS.items()}
+
+
+def depedit2tok(token: ParsedToken) -> dict:
+    """
+    Translate a DepEdit ParsedToken to a dict with JSON property names and values
+    :param token: ParsedToken
+    :return: dict of token properties
+    """
+    return {v: getattr(token, k) for k, v in DEPEDIT_FIELDS.items() if v is not None and hasattr(token, k)}
 
 
 class Node:
