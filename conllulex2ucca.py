@@ -19,6 +19,7 @@ from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
 from ucca.ioutil import get_passages
 from ucca.layer1 import EdgeTags as Categories
+from ucca.normalization import normalize
 
 from conllulex2json import load_sents
 
@@ -313,6 +314,8 @@ def main(args: argparse.Namespace) -> None:
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
         passage = converter.convert(sent)
+        if args.normalize:
+            normalize(passage, extra=args.extra_normalization)
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
@@ -336,5 +339,7 @@ if __name__ == '__main__':
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
     argparser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
+    argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
+    argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
     argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
     main(argparser.parse_args())
