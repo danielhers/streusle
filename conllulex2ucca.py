@@ -36,13 +36,12 @@ UD_TO_UCCA = dict(
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
 DEPEDIT_TRANSFORMATIONS = list(map("\t".join, (
-    ("func=/.*/;func=/cc/;func=/conj|root/", "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
-    # TODO:
-    #   raise mark over advcl
-    #   raise advcl over appos, root
-    #   raise appos over root
-    #   raise conj over parataxis, root
-    #   raise parataxis over root
+    ("func=/.*/;func=/cc/;func=/conj|root/",        "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
+    ("func=/.*/;func=/mark/;func=/advcl/",          "#1>#3;#3>#2", "#1>#2"),  # raise mark over advcl
+    ("func=/.*/;func=/advcl/;func=/appos|root/",    "#1>#3;#3>#2", "#1>#2"),  # raise advcl over appos, root
+    ("func=/.*/;func=/appos/;func=/root/",          "#1>#3;#3>#2", "#1>#2"),  # raise appos over root
+    ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
+    ("func=/.*/;func=/parataxis/;func=/root/",      "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 )))
 
 
