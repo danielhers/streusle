@@ -10,14 +10,14 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 import argparse
 import os
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
 
 from depedit.depedit import DepEdit, ParsedToken
 from semstr.convert import iter_files, write_passage
 from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
-from ucca.ioutil import get_passages_with_progress_bar
+from ucca.ioutil import get_passages
 from ucca.layer1 import EdgeTags as Categories
 
 from conllulex2json import load_sents
@@ -298,20 +298,18 @@ def main(args: argparse.Namespace) -> None:
     sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
     converter = ConllulexToUccaConverter(**vars(args))
     converted = {}
-    t = tqdm(sentences, unit=" sentences", desc="Converting")
-    for sent in t:
-        t.set_postfix({SENT_ID: sent[SENT_ID]})
+    for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
         passage = converter.convert(sent)
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
         converted[passage.ID] = passage
     if args.evaluate:
-        scores = []
-        for reference_passage in get_passages_with_progress_bar(args.evaluate, desc="Evaluating"):
-            converted_passage = converted.get("reviews-" + reference_passage.ID)
-            if converted_passage is not None:
-                scores.append(evaluation.evaluate(converted_passage, reference_passage))
+        passages = ((converted.get("reviews-" + reference_passage.ID), reference_passage)
+                    for reference_passage in get_passages(args.evaluate))
+        scores = [evaluation.evaluate(converted_passage, reference_passage)
+                  for converted_passage, reference_passage in
+                  tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
         evaluation.Scores.aggregate(scores).print()
         print(f"Evaluated {len(scores)} sentences.")
 
