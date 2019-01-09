@@ -44,10 +44,6 @@ DEPEDIT_TRANSFORMATIONS = list(map("\t".join, (
     #   raise conj over parataxis, root
     #   raise parataxis over root
 )))
-DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
-    tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
-    head2=None, func2=None, num=None, child_funcs=None, position="#"
-)  # tok fields: #, word, lemma, upos, xpos, feats, head, deprel, edeps, misc, smwe, wmwe, lextag
 
 
 class ConllulexToUccaConverter:
@@ -67,15 +63,15 @@ class ConllulexToUccaConverter:
         :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
         :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
         """
-        passage = core.Passage(ID=sent[SENT_ID])
-
         # Apply pre-conversion transformations to dependency tree
         toks = sent["toks"]
         parsed_tokens = [tok2depedit(tok) for tok in toks]
         self.depedit.process_sentence(parsed_tokens)
-        # Take the transformed properties and update the tokens accordingly
-        for tok, parsed_token in zip(toks, parsed_tokens):
+        for tok, parsed_token in zip(toks, parsed_tokens):  # Take transformed properties and update tokens accordingly
             tok.update(depedit2tok(parsed_token))
+
+        # Create passage
+        passage = core.Passage(ID=sent[SENT_ID])
 
         # Create terminals
         l0 = layer0.Layer0(passage)
@@ -121,6 +117,12 @@ class ConllulexToUccaConverter:
         """
         # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
+
+
+DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
+    tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
+    head2=None, func2=None, num=None, child_funcs=None, position="#"
+)  # tok fields: #, word, lemma, upos, xpos, feats, head, deprel, edeps, misc, smwe, wmwe, lextag
 
 
 def tok2depedit(tok: dict) -> ParsedToken:
