@@ -333,6 +333,17 @@ class ConcatenatedFiles:
         return iter(self.lines)
 
 
+def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
+    if mwe_report:
+        streusle_mwes = {frozenset(smwe["toknums"]): smwe["lexlemma"] for smwe in sent["smwes"].values()}
+        ucca_mwes = {frozenset(evaluation.get_yield(u)): u for u in reference_passage.layer(layer1.LAYER_ID).all}
+        ucca_mwes = {y: str(u) for y, u in ucca_mwes.items() if len(y) > 1}
+        with open(mwe_report, "a", encoding="utf-8") as f:
+            for mwe in list(streusle_mwes.values()) + list(ucca_mwes.values()):
+                print(reference_passage.ID, mwe, file=f, sep="\t")
+    return evaluation.evaluate(converted_passage, reference_passage)
+
+
 def main(args: argparse.Namespace) -> None:
     os.makedirs(args.out_dir, exist_ok=True)
     sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
@@ -345,15 +356,17 @@ def main(args: argparse.Namespace) -> None:
         if args.write:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
-        converted[passage.ID] = passage
+        converted[passage.ID] = passage, sent
     if args.evaluate:
         passages = ((converted.get("reviews-" + reference_passage.ID), reference_passage)
                     for reference_passage in get_passages(args.evaluate))
-        scores = [evaluation.evaluate(converted_passage, reference_passage)
-                  for converted_passage, reference_passage in
+        scores = [evaluate(converted_passage, sent, reference_passage, args.mwe_report)
+                  for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
         evaluation.Scores.aggregate(scores).print()
         print(f"Evaluated {len(scores)} sentences.")
+    elif args.mwe_report:
+        argparser.error("--mwe-report requires --evaluate")
 
 
 if __name__ == '__main__':
@@ -369,4 +382,5 @@ if __name__ == '__main__':
     argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
     argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
     argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
+    argparser.add_argument("--mwe-report", help="output filename for report comparing multi-word expressions")
     main(argparser.parse_args())
