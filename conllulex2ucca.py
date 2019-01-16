@@ -47,16 +47,16 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
 
 
 class ConllulexToUccaConverter:
-    def __init__(self, enhanced: bool = False, map_labels: bool = False, mwe: bool = False, **kwargs):
+    def __init__(self, enhanced: bool = False, map_labels: bool = False, lvc: bool = False, **kwargs):
         """
         :param enhanced: whether to use enhanced dependencies rather than basic dependencies
         :param map_labels: whether to translate UD relations to UCCA categories
-        :param mwe: whether to use STREUSLE MWE annotation to find unanalyzable units
+        :param lvc: whether to use STREUSLE light verbs to find unanalyzable units
         """
         del kwargs
         self.enhanced = enhanced
         self.map_labels = map_labels
-        self.mwe = mwe
+        self.lvc = lvc
         self.depedit = DepEdit(DEPEDIT_TRANSFORMATIONS)
 
     def convert(self, sent: dict) -> core.Passage:
@@ -90,10 +90,11 @@ class ConllulexToUccaConverter:
             if node.incoming:
                 edge, *remotes = node.incoming
                 remote_edges += remotes
-                if node.is_analyzable(self.mwe):
+                if node.is_analyzable(self.lvc, **sent):
                     node.preterminal = node.unit = l1.add_fnode(edge.head.unit,
                                                                 self.map_label(node=node, deprel=edge.deprel))
-                    if any(edge.dep.is_analyzable(self.mwe) for edge in node.outgoing):  # Intermediate for hierarchy
+                    if any(edge.dep.is_analyzable(self.lvc, **sent) for edge in node.outgoing):
+                        # Intermediate head node for hierarchy
                         node.preterminal = l1.add_fnode(node.preterminal, self.map_label(deprel="head"))
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
@@ -208,16 +209,20 @@ class Node:
         """
         return self.deprel.partition(":")[0] if self.deprel else None
 
-    def is_analyzable(self, mwe: bool = False) -> bool:
+    def is_analyzable(self, lvc: bool = False, smwes: Optional[dict] = None, **kwargs) -> bool:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
-        :param mwe: whether to use STREUSLE MWE annotation to find unanalyzable units
+        :param lvc: whether to use STREUSLE light verbs to find unanalyzable units
+        :param smwes: optional dict mapping strong multi-word expression IDs to dict containing keys lexcat, ss, ss2
         """
+        del kwargs
         unanalyzable = self.basic_deprel in ("flat", "fixed", "goeswith")
-        if mwe:
-            smwes = self.tok["smwe"], (self.head.tok["smwe"] if self.head.tok else None)
-            smwe_ids = [smwe[0] for smwe in smwes if smwe]
-            unanalyzable = len(smwe_ids) > 1 and len(set(smwe_ids)) == 1  # Multiple words, same MWE
+        if lvc and smwes:
+            smwe_id, _ = self.tok["smwe"] or (None, None)
+            if smwe_id is not None:
+                head_smwe_id, _ = (self.head.tok["smwe"] or (None, None) if self.head.tok else (None, None))
+                if smwe_id == head_smwe_id and "LVC" in smwes[smwe_id]["lexcat"]:  # Multiple words, same MWE
+                    unanalyzable = True
         return not unanalyzable
 
     def __str__(self):
@@ -352,7 +357,7 @@ if __name__ == '__main__':
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
     argparser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
-    argparser.add_argument("--mwe", action="store_true", help="use STREUSLE MWE annotation to find unanalyzable units")
+    argparser.add_argument("--lvc", action="store_true", help="use STREUSLE light verbs to find unanalyzable units")
     argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
     argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
     argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
