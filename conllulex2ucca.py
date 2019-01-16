@@ -336,8 +336,8 @@ class ConcatenatedFiles:
 def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
     if mwe_report:
         streusle_mwes = {frozenset(smwe["toknums"]): smwe["lexlemma"] for smwe in sent["smwes"].values()}
-        ucca_mwes = {frozenset(evaluation.get_yield(u)): u for u in reference_passage.layer(layer1.LAYER_ID).all}
-        ucca_mwes = {y: str(u) for y, u in ucca_mwes.items() if len(y) > 1}
+        ucca_mwes = {frozenset(evaluation.get_yield(u)): u for u in reference_passage.layer(layer1.LAYER_ID).all
+                     if len(u.terminals) > 1}
         for mwe in list(streusle_mwes.values()) + list(ucca_mwes.values()):
             print(reference_passage.ID, mwe, file=mwe_report, sep="\t")
     return evaluation.evaluate(converted_passage, reference_passage)
