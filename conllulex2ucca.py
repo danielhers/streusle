@@ -338,9 +338,8 @@ def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
         streusle_mwes = {frozenset(smwe["toknums"]): smwe["lexlemma"] for smwe in sent["smwes"].values()}
         ucca_mwes = {frozenset(evaluation.get_yield(u)): u for u in reference_passage.layer(layer1.LAYER_ID).all}
         ucca_mwes = {y: str(u) for y, u in ucca_mwes.items() if len(y) > 1}
-        with open(mwe_report, "a", encoding="utf-8") as f:
-            for mwe in list(streusle_mwes.values()) + list(ucca_mwes.values()):
-                print(reference_passage.ID, mwe, file=f, sep="\t")
+        for mwe in list(streusle_mwes.values()) + list(ucca_mwes.values()):
+            print(reference_passage.ID, mwe, file=mwe_report, sep="\t")
     return evaluation.evaluate(converted_passage, reference_passage)
 
 
@@ -360,9 +359,12 @@ def main(args: argparse.Namespace) -> None:
     if args.evaluate:
         passages = ((converted.get("reviews-" + reference_passage.ID), reference_passage)
                     for reference_passage in get_passages(args.evaluate))
-        scores = [evaluate(converted_passage, sent, reference_passage, args.mwe_report)
+        mwe_report = open(args.mwe_report, "w", encoding="utf-8") if args.mwe_report else None
+        scores = [evaluate(converted_passage, sent, reference_passage, mwe_report)
                   for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
+        if mwe_report:
+            mwe_report.close()
         evaluation.Scores.aggregate(scores).print()
         print(f"Evaluated {len(scores)} sentences.")
     elif args.mwe_report:
