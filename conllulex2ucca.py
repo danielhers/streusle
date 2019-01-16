@@ -83,10 +83,10 @@ class ConllulexToUccaConverter:
             node.link(nodes, enhanced=self.enhanced)
 
         # Create primary UCCA tree
-        nodes = topological_sort(nodes)
+        sorted_nodes = topological_sort(nodes)
         l1 = layer1.Layer1(passage)
         remote_edges = []
-        for node in nodes:
+        for node in sorted_nodes:
             if node.incoming:
                 edge, *remotes = node.incoming
                 remote_edges += remotes
@@ -99,6 +99,14 @@ class ConllulexToUccaConverter:
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
+
+        # Join multi-word expressions to one unanalyzable unit
+        if self.lvc:
+            for smwe in sent["smwes"].values():
+                if smwe["lexcat"] == "V.LVC.cause":
+                    first_tok_num, *toknums = smwe["toknums"]
+                    for toknum in toknums:
+                        nodes[toknum].preterminal = nodes[first_tok_num].preterminal
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
