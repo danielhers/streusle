@@ -336,12 +336,18 @@ class ConcatenatedFiles:
 def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
     if mwe_report:
         toks = {tok["#"]: tok for tok in sent["toks"]}
-        streusle_mwes = {frozenset(smwe["toknums"]): " ".join(toks[toknum]["word"] for toknum in smwe["toknums"])
-                         for smwe in sent["smwes"].values()}
-        ucca_mwes = {frozenset(evaluation.get_yield(u)): u for u in reference_passage.layer(layer1.LAYER_ID).all
-                     if len(u.terminals) > 1}
-        for mwe in list(streusle_mwes.values()) + list(ucca_mwes.values()):
-            print(reference_passage.ID, mwe, file=mwe_report, sep="\t")
+        sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
+                     for mwe_id, mwe in sent[mwe_type].items()}
+        ucca_mwes = {evaluation.get_yield(unit): unit for unit in reference_passage.layer(layer1.LAYER_ID).all
+                     if len(unit.terminals) > 1}
+        for key in sorted(set(sent_mwes) | set(ucca_mwes)):
+            mwe_id, mwe_type, mwe = sent_mwes.get(key, ("", "", {}))
+            unit = ucca_mwes.get(key)
+            text = " ".join(toks[toknum]["word"] for toknum in mwe["toknums"]) if mwe else str(unit)
+            print(reference_passage.ID, text, mwe_id, mwe_type,
+                  mwe.get("lexcat") or "", mwe.get("ss") or "", mwe.get("ss2") or "",
+                  unit.ID if unit else "", unit.extra.get("tree_id", "") if unit else "", unit.ftag if unit else "",
+                  file=mwe_report, sep="\t")
     return evaluation.evaluate(converted_passage, reference_passage)
 
 
@@ -361,7 +367,12 @@ def main(args: argparse.Namespace) -> None:
     if args.evaluate:
         passages = ((converted.get("reviews-" + reference_passage.ID), reference_passage)
                     for reference_passage in get_passages(args.evaluate))
-        mwe_report = open(args.mwe_report, "w", encoding="utf-8") if args.mwe_report else None
+        if args.mwe_report:
+            mwe_report = open(args.mwe_report, "w", encoding="utf-8")
+            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "unit_id", "tree_id", "category",
+                  file=mwe_report, sep="\t")
+        else:
+            mwe_report = None
         scores = [evaluate(converted_passage, sent, reference_passage, mwe_report)
                   for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
