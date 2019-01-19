@@ -338,13 +338,16 @@ def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
         toks = {tok["#"]: tok for tok in sent["toks"]}
         sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
                      for mwe_id, mwe in sent[mwe_type].items()}
-        ucca_mwes = {evaluation.get_yield(unit): unit for unit in reference_passage.layer(layer1.LAYER_ID).all}
-        for key in sorted(set(sent_mwes) | set(key for key, unit in ucca_mwes.items() if len(unit.terminals) > 1)):
-            mwe_id, mwe_type, mwe = sent_mwes.get(key, ("", "", {}))
-            unit = ucca_mwes.get(key)
-            text = " ".join(toks[toknum]["word"] for toknum in mwe["toknums"]) if mwe else str(unit)
-            print(reference_passage.ID, text, mwe_id, mwe_type,
+        reference_units = {evaluation.get_yield(unit): unit for unit in reference_passage.layer(layer1.LAYER_ID).all}
+        for positions in sorted(set(sent_mwes) | set(key for key, unit in reference_units.items()
+                                                     if len(unit.terminals) > 1)):
+            mwe_id, mwe_type, mwe = sent_mwes.get(positions, ("", "", {}))
+            unit = reference_units.get(positions)
+            tokens = [toks[i] for i in sorted(positions)]
+            print(reference_passage.ID, " ".join(tok["word"] for tok in tokens), mwe_id, mwe_type,
                   mwe.get("lexcat") or "", mwe.get("ss") or "", mwe.get("ss2") or "",
+                  " ".join(tok["deprel"] for tok in tokens),
+                  "Yes" if len({tok["head"] for tok in tokens} - positions) <= 1 else "",
                   unit.ID if unit else "", unit.extra.get("tree_id", "") if unit else "", unit.ftag if unit else "",
                   "Yes" if unit and len(unit.terminals) > 1 else "", str(unit) if unit else "",
                   file=mwe_report, sep="\t")
@@ -369,8 +372,8 @@ def main(args: argparse.Namespace) -> None:
                     for reference_passage in get_passages(args.evaluate))
         if args.mwe_report:
             mwe_report = open(args.mwe_report, "w", encoding="utf-8")
-            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "unit_id", "tree_id", "category",
-                  "unanalyzable", "annotation", file=mwe_report, sep="\t")
+            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "deprels", "subtree",
+                  "unit_id", "tree_id", "category", "unanalyzable", "annotation", file=mwe_report, sep="\t")
         else:
             mwe_report = None
         scores = [evaluate(converted_passage, sent, reference_passage, mwe_report)
