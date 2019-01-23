@@ -218,7 +218,8 @@ class Node:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
-        return self.basic_deprel not in ("flat", "fixed", "goeswith")
+        return self.basic_deprel not in ("flat", "fixed", "goeswith") and not (
+                self.head.tok and self.tok["upos"] == "PROPN" and self.head.tok["upos"] == "PROPN")
 
     def __str__(self):
         return "ROOT"
