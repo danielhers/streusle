@@ -44,6 +44,7 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/",      "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 ]]
+MWE_LEXCATS = {"CCONJ", "V.VPC.full", "ADV", "DISC"}
 
 
 class ConllulexToUccaConverter:
@@ -96,6 +97,13 @@ class ConllulexToUccaConverter:
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
+
+        # Join strong multi-word expressions to one unanalyzable unit
+        for smwe in sent["smwes"].values():
+            if smwe["lexcat"] in MWE_LEXCATS:
+                first_tok_num, *toknums = smwe["toknums"]
+                for toknum in toknums:
+                    nodes[toknum].preterminal = nodes[first_tok_num].preterminal
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
