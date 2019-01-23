@@ -120,7 +120,7 @@ class ConllulexToUccaConverter:
         if deprel is None:
             if node is None:
                 raise ValueError("Either node or deprel must be specified")
-            deprel = node.tok["deprel"]
+            deprel = node.deprel
         # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
 
