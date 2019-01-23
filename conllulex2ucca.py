@@ -382,7 +382,7 @@ def main(args: argparse.Namespace) -> None:
         if mwe_report:
             mwe_report.close()
         evaluation.Scores.aggregate(scores).print()
-        print(f"Evaluated {len(scores)} out of {len(converted)} sentences.")
+        print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).")
     elif args.mwe_report:
         argparser.error("--mwe-report requires --evaluate")
 
