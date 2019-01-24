@@ -72,7 +72,7 @@ class ConllulexToUccaConverter:
             tok.update(depedit2tok(parsed_token))
 
         # Create passage
-        passage = core.Passage(ID=sent[SENT_ID])
+        passage = core.Passage(ID=sent[SENT_ID].replace("reviews-", ""))
 
         # Create terminals
         l0 = layer0.Layer0(passage)
@@ -356,8 +356,7 @@ def main(args: argparse.Namespace) -> None:
                           binary=args.format == "pickle", verbose=args.verbose)
         converted[passage.ID] = passage, sent
     if args.evaluate:
-        passages = ((converted.get("reviews-" + reference_passage.ID), reference_passage)
-                    for reference_passage in get_passages(args.evaluate))
+        passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.mwe_report:
             mwe_report = open(args.mwe_report, "w", encoding="utf-8")
             print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "deprels", "subtree",
