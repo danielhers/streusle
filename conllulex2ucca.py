@@ -44,7 +44,18 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/",      "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 ]]
-MWE_LEXCATS = {"CCONJ", "V.VPC.full", "ADV", "DISC"}
+UNANALYZABLE_DEPREL = {
+    "flat", "fixed", "goeswith",
+}
+UNANALYZABLE_UPOS = {
+    "PROPN",
+}
+UNANALYZABLE_MWE_LEXCAT_SS = {
+    ("V.VPC.full", "v.social"), ("V.VPC.full", "v.cognition"), ("V.VPC.full", "v.stative"),
+    ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
+    # ("N", "n.GROUP"), ("N", "n.LOCATION"),
+    ("CCONJ", None), ("ADV", None), ("DISC", None),
+}
 
 
 class ConllulexToUccaConverter:
@@ -100,7 +111,7 @@ class ConllulexToUccaConverter:
 
         # Join strong multi-word expressions to one unanalyzable unit
         for smwe in sent["smwes"].values():
-            if smwe["lexcat"] in MWE_LEXCATS:
+            if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
                 first_tok_num, *toknums = smwe["toknums"]
                 for toknum in toknums:
                     nodes[toknum].preterminal = nodes[first_tok_num].preterminal
@@ -218,8 +229,8 @@ class Node:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
-        return self.basic_deprel not in ("flat", "fixed", "goeswith") and not (
-                self.head.tok and self.tok["upos"] == "PROPN" and self.head.tok["upos"] == "PROPN")
+        return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
+                self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS)
 
     def __str__(self):
         return "ROOT"
