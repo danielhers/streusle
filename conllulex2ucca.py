@@ -112,9 +112,10 @@ class ConllulexToUccaConverter:
         # Join strong multi-word expressions to one unanalyzable unit
         for smwe in sent["smwes"].values():
             if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
-                first_tok_num, *toknums = smwe["toknums"]
-                for toknum in toknums:
-                    nodes[toknum].preterminal = nodes[first_tok_num].preterminal
+                mwe_nodes = [nodes[tok_num] for tok_num in smwe["toknums"]]
+                head = min(mwe_nodes, key=sorted_nodes.index)  # Highest in the tree
+                for node in mwe_nodes:
+                    node.preterminal = head.preterminal
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
