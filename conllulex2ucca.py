@@ -53,7 +53,6 @@ UNANALYZABLE_UPOS = {
 UNANALYZABLE_MWE_LEXCAT_SS = {
     ("V.VPC.full", "v.social"), ("V.VPC.full", "v.cognition"), ("V.VPC.full", "v.stative"),
     ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
-    # ("N", "n.GROUP"), ("N", "n.LOCATION"),
     ("CCONJ", None), ("ADV", None), ("DISC", None),
 }
 
