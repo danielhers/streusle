@@ -91,6 +91,14 @@ class ConllulexToUccaConverter:
         for node in nodes:  # Link heads to dependents
             node.link(nodes, enhanced=self.enhanced)
 
+        # Link tokens to their multi-word expressions and vice versa
+        smwes = sent["smwes"].values()
+        for smwe in smwes:
+            for tok_num in smwe["toknums"]:
+                node = nodes[tok_num]
+                node.smwe = smwe
+                smwe.setdefault("nodes", []).append(node)
+
         # Create primary UCCA tree
         sorted_nodes = topological_sort(nodes)
         l1 = layer1.Layer1(passage)
@@ -109,11 +117,11 @@ class ConllulexToUccaConverter:
                     node.unit = edge.head.unit
 
         # Join strong multi-word expressions to one unanalyzable unit
-        for smwe in sent["smwes"].values():
+        for smwe in smwes:
             if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
-                mwe_nodes = [nodes[tok_num] for tok_num in smwe["toknums"]]
-                head = min(mwe_nodes, key=sorted_nodes.index)  # Highest in the tree
-                for node in mwe_nodes:
+                smwe_nodes = smwe["nodes"]
+                head = min(smwe_nodes, key=sorted_nodes.index)  # Highest in the tree
+                for node in smwe_nodes:
                     node.preterminal = head.preterminal
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
@@ -138,7 +146,8 @@ class ConllulexToUccaConverter:
         """
         if deprel is None:
             deprel = node.deprel
-        # TODO use supersenses to find Scene-evoking phrases and select labels accordingly
+        if node.is_scene_evoking():  # Use supersenses to find Scene-evoking phrases and select labels accordingly
+            return Categories.Process
         return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
 
 
@@ -181,6 +190,7 @@ class Node:
         self.outgoing: List[Edge] = []  # List of Edges to dependents
         self.level = self.heads_visited = None  # For topological sort
         self.unit = self.preterminal = None  # Corresponding UCCA units
+        self.smwe = None
 
     def link(self, nodes: List["Node"], enhanced: bool = False) -> None:
         """
@@ -229,6 +239,12 @@ class Node:
         """
         return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
                 self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS)
+
+    def is_scene_evoking(self) -> bool:
+        """
+        Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
+        """
+        return False  # TODO e.g. self.tok["upos"] in {"VERB"}
 
     def __str__(self):
         return "ROOT"
