@@ -24,7 +24,7 @@ from ucca.normalization import normalize
 from conllulex2json import load_sents
 
 SENT_ID = "sent_id"
-UD_TO_UCCA = dict(
+UD_TO_UCCA = dict(  # Majority-based mapping of UD deprel to UCCA category, from confusion matrix on EWT training set
     acl=Categories.Elaborator, advcl=Categories.ParallelScene, advmod=Categories.Adverbial, amod=Categories.Elaborator,
     appos=Categories.Center, aux=Categories.Function, case=Categories.Relator, cc=Categories.Linker,
     ccomp=Categories.Participant, compound=Categories.Elaborator, conj=Categories.ParallelScene,
@@ -36,7 +36,7 @@ UD_TO_UCCA = dict(
     parataxis=Categories.ParallelScene, vocative=Categories.Participant, xcomp=Categories.Participant,
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
-DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
+DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # Rules to assimilate UD to UCCA
     ("func=/.*/;func=/cc/;func=/conj|root/",        "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
     ("func=/.*/;func=/mark/;func=/advcl/",          "#1>#3;#3>#2", "#1>#2"),  # raise mark over advcl
     ("func=/.*/;func=/advcl/;func=/appos|root/",    "#1>#3;#3>#2", "#1>#2"),  # raise advcl over appos, root
@@ -44,13 +44,13 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/",      "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 ]]
-UNANALYZABLE_DEPREL = {
+UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
-UNANALYZABLE_UPOS = {
+UNANALYZABLE_UPOS = {  # Universal parts-of-speech of which subtrees are grouped as unanalyzable units
     "PROPN",
 }
-UNANALYZABLE_MWE_LEXCAT_SS = {
+UNANALYZABLE_MWE_LEXCAT_SS = {  # Pairs of multi-word expression lexical category and supersense grouped as unanalyzable
     ("V.VPC.full", "v.social"), ("V.VPC.full", "v.cognition"), ("V.VPC.full", "v.stative"),
     ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
     ("CCONJ", None), ("ADV", None), ("DISC", None),
