@@ -346,24 +346,29 @@ class ConcatenatedFiles:
         return iter(self.lines)
 
 
-def evaluate(converted_passage, sent, reference_passage, mwe_report=None):
-    if mwe_report:
+def evaluate(converted_passage, sent, reference_passage, report=None):
+    if report:
         toks = {tok["#"]: tok for tok in sent["toks"]}
         sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
                      for mwe_id, mwe in sent[mwe_type].items()}
         reference_units = {evaluation.get_yield(unit): unit for unit in reference_passage.layer(layer1.LAYER_ID).all}
-        for positions in sorted(set(sent_mwes) | set(key for key, unit in reference_units.items()
-                                                     if len(unit.terminals) > 1)):
+        for positions in sorted(set(sent_mwes).union(reference_units)):
             mwe_id, mwe_type, mwe = sent_mwes.get(positions, ("", "", {}))
             unit = reference_units.get(positions)
             tokens = [toks[i] for i in sorted(positions)]
-            print(reference_passage.ID, " ".join(tok["word"] for tok in tokens), mwe_id, mwe_type,
-                  mwe.get("lexcat") or "", mwe.get("ss") or "", mwe.get("ss2") or "",
-                  " ".join(tok["deprel"] for tok in tokens),
-                  "Yes" if len({tok["head"] for tok in tokens} - positions) <= 1 else "",
-                  unit.ID if unit else "", unit.extra.get("tree_id", "") if unit else "", unit.ftag if unit else "",
-                  "Yes" if unit and len(unit.terminals) > 1 else "", str(unit) if unit else "",
-                  file=mwe_report, sep="\t")
+
+            def _join(k):
+                return " ".join(tok[k] for tok in tokens)
+
+            def _yes(x):
+                return "Yes" if x else ""
+            fields = [reference_passage.ID,
+                      _join("word"), _join("deprel"), _join("upos"),
+                      mwe_id, mwe_type, mwe.get("lexcat"), mwe.get("ss"), mwe.get("ss2"),
+                      _yes(len({tok["head"] for tok in tokens} - positions) <= 1),
+                      unit and unit.ID, unit and unit.extra.get("tree_id"), unit and unit.ftag,
+                      _yes(unit and len(unit.terminals) > 1), unit and str(unit)]
+            print(*[f or "" for f in fields], file=report, sep="\t")
     return evaluation.evaluate(converted_passage, reference_passage)
 
 
@@ -382,21 +387,21 @@ def main(args: argparse.Namespace) -> None:
         converted[passage.ID] = passage, sent
     if args.evaluate:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
-        if args.mwe_report:
-            mwe_report = open(args.mwe_report, "w", encoding="utf-8")
-            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "deprels", "subtree",
-                  "unit_id", "tree_id", "category", "unanalyzable", "annotation", file=mwe_report, sep="\t")
+        if args.report:
+            report = open(args.report, "w", encoding="utf-8")
+            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "deprel", "upos", "subtree",
+                  "unit_id", "tree_id", "category", "unanalyzable", "annotation", file=report, sep="\t")
         else:
-            mwe_report = None
-        scores = [evaluate(converted_passage, sent, reference_passage, mwe_report)
+            report = None
+        scores = [evaluate(converted_passage, sent, reference_passage, report)
                   for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
-        if mwe_report:
-            mwe_report.close()
+        if report:
+            report.close()
         evaluation.Scores.aggregate(scores).print()
         print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).")
-    elif args.mwe_report:
-        argparser.error("--mwe-report requires --evaluate")
+    elif args.report:
+        argparser.error("--report requires --evaluate")
 
 
 if __name__ == '__main__':
@@ -411,5 +416,5 @@ if __name__ == '__main__':
     argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
     argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
     argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
-    argparser.add_argument("--mwe-report", help="output filename for report comparing multi-word expressions")
+    argparser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
     main(argparser.parse_args())
