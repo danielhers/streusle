@@ -145,10 +145,10 @@ class ConllulexToUccaConverter:
         :return: mapped UCCA category
         """
         if deprel is None:
-            deprel = node.deprel
+            deprel = node.basic_deprel
         if node.is_scene_evoking():  # Use supersenses to find Scene-evoking phrases and select labels accordingly
             return Categories.Process
-        return UD_TO_UCCA.get(deprel.partition(":")[0], deprel) if self.map_labels else deprel
+        return UD_TO_UCCA.get(deprel, deprel) if self.map_labels else deprel
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
@@ -244,7 +244,9 @@ class Node:
         """
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
-        return False  # TODO e.g. self.tok["upos"] in {"VERB"}
+        return self.tok["upos"] in {"VERB"} and \
+               self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
+                not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
 
     def __str__(self):
         return "ROOT"
