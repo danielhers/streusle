@@ -5,16 +5,22 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 @since: 2018-12-27
 @author: Daniel Hershcovich
-@requires: ucca=1.1.4 semstr==1.1.8 tqdm git+https://github.com/danielhers/depedit
+@requires: ucca=1.1.4 semstr==1.1.8 scikit-learn==0.20.2 tqdm git+https://github.com/danielhers/depedit
 """
 
 import argparse
 import os
+import sys
+from itertools import zip_longest
 from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
 
+import numpy as np
 from depedit.depedit import DepEdit, ParsedToken
 from semstr.convert import iter_files, write_passage
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.externals import joblib
+from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
 from ucca.ioutil import get_passages
@@ -22,6 +28,8 @@ from ucca.layer1 import EdgeTags as Categories
 from ucca.normalization import normalize
 
 from conllulex2json import load_sents
+from lexcatter import ALL_LEXCATS
+from supersenses import ALL_SS
 
 SENT_ID = "sent_id"
 UD_TO_UCCA = dict(  # Majority-based mapping of UD deprel to UCCA category, from confusion matrix on EWT training set
@@ -37,12 +45,12 @@ UD_TO_UCCA = dict(  # Majority-based mapping of UD deprel to UCCA category, from
     root=Categories.ParallelScene, punct=Categories.Punctuation,
 )
 DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # Rules to assimilate UD to UCCA
-    ("func=/.*/;func=/cc/;func=/conj|root/",        "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
-    ("func=/.*/;func=/mark/;func=/advcl/",          "#1>#3;#3>#2", "#1>#2"),  # raise mark over advcl
-    ("func=/.*/;func=/advcl/;func=/appos|root/",    "#1>#3;#3>#2", "#1>#2"),  # raise advcl over appos, root
-    ("func=/.*/;func=/appos/;func=/root/",          "#1>#3;#3>#2", "#1>#2"),  # raise appos over root
+    ("func=/.*/;func=/cc/;func=/conj|root/", "#1>#3;#3>#2", "#1>#2"),  # raise cc over conj, root
+    ("func=/.*/;func=/mark/;func=/advcl/", "#1>#3;#3>#2", "#1>#2"),  # raise mark over advcl
+    ("func=/.*/;func=/advcl/;func=/appos|root/", "#1>#3;#3>#2", "#1>#2"),  # raise advcl over appos, root
+    ("func=/.*/;func=/appos/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise appos over root
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
-    ("func=/.*/;func=/parataxis/;func=/root/",      "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
+    ("func=/.*/;func=/parataxis/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 ]]
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
@@ -55,18 +63,48 @@ UNANALYZABLE_MWE_LEXCAT_SS = {  # Pairs of multi-word expression lexical categor
     ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
     ("CCONJ", None), ("ADV", None), ("DISC", None),
 }
+ID2CATEGORY = dict(enumerate(v for k, v in vars(Categories).items() if v and not k.startswith("__")))
+CATEGORY2ID = {v: i for i, v in ID2CATEGORY.items()}
+ALL_DEPREL = [
+    "acl", "advcl", "advmod", "amod", "appos", "aux", "case", "cc", "ccomp", "compound", "conj", "cop", "csubj", "dep",
+    "det", "discourse", "expl", "fixed", "goeswith", "head", "iobj", "list", "mark", "nmod", "nsubj", "nummod", "obj",
+    "obl", "orphan", "parataxis", "vocative", "xcomp", "root", "punct",
+]
+ALL_UPOS = [
+    "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM",
+    "VERB", "X",
+]
 
 
 class ConllulexToUccaConverter:
-    def __init__(self, enhanced: bool = False, map_labels: bool = False, **kwargs):
+    def __init__(self, enhanced: bool = False, map_labels: bool = False, train: bool = False, model: str = None,
+                 **kwargs):
         """
         :param enhanced: whether to use enhanced dependencies rather than basic dependencies
         :param map_labels: whether to translate UD relations to UCCA categories
+        :param train: train model to predict UCCA categories
+        :param model: input/output filename for model predicting UCCA categories
         """
         del kwargs
         self.enhanced = enhanced
         self.map_labels = map_labels
         self.depedit = DepEdit(DEPEDIT_TRANSFORMATIONS)
+        self.train = train
+        self.model = model
+        if self.model:
+            self.one_hot_encoder = OneHotEncoder(handle_unknown="ignore").fit(list(list(x) for x in zip_longest(
+                ALL_DEPREL, ALL_UPOS, sorted(ALL_SS), sorted(ALL_LEXCATS),
+                [y for x, y in vars(layer1.NodeTags).items() if y and not x.startswith("__")],
+                fillvalue="")))
+            if self.train:
+                self.classifier = RandomForestClassifier(n_estimators=10, criterion='entropy', random_state=42)
+            else:
+                print(f"Loading model from '{self.model}'", file=sys.stderr)
+                self.classifier = joblib.load(self.model)
+        else:
+            self.classifier = None
+        self.features = []
+        self.labels = []
 
     def convert(self, sent: dict) -> core.Passage:
         """
@@ -108,10 +146,15 @@ class ConllulexToUccaConverter:
                 edge, *remotes = node.incoming
                 remote_edges += remotes
                 if node.is_analyzable():
-                    node.preterminal = node.unit = l1.add_fnode(edge.head.unit,
-                                                                self.map_label(node, deprel=edge.deprel))
+                    tag = self.map_label(node, deprel=edge.deprel)
+                    node.unit = node.preterminal = l1.add_fnode(edge.head.unit, tag)
+                    if self.train and node.features is not None:
+                        node.preterminal.extra["features"] = list(node.features)
                     if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head node for hierarchy
-                        node.preterminal = l1.add_fnode(node.preterminal, self.map_label(node, deprel="head"))
+                        tag = self.map_label(node, deprel="head")
+                        node.preterminal = l1.add_fnode(node.preterminal, tag)
+                        if self.train and node.features is not None:
+                            node.preterminal.extra["features"] = list(node.features)
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
@@ -144,11 +187,62 @@ class ConllulexToUccaConverter:
         :param deprel: UD relation label, alternatively specifying just the dependency relation when no node exists
         :return: mapped UCCA category
         """
+        if not self.map_labels:
+            return deprel
         if deprel is None:
             deprel = node.basic_deprel
+        if self.model:
+            features = node.extract_features(deprel=deprel)
+            if not self.train:
+                label = self.classifier.predict(self.one_hot_encoder.transform([features]))
+                return ID2CATEGORY[np.asscalar(label)]
         if node.is_scene_evoking():  # Use supersenses to find Scene-evoking phrases and select labels accordingly
             return Categories.Process
-        return UD_TO_UCCA.get(deprel, deprel) if self.map_labels else deprel
+        return UD_TO_UCCA.get(deprel, deprel)
+
+    def evaluate(self, converted_passage, sent, reference_passage, report=None):
+        if report or self.train:
+            toks = {tok["#"]: tok for tok in sent["toks"]}
+            sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
+                         for mwe_id, mwe in sent[mwe_type].items()}
+            converted_units, reference_units = [{evaluation.get_yield(unit): unit
+                                                 for unit in passage.layer(layer1.LAYER_ID).all}
+                                                for passage in (converted_passage, reference_passage)]
+            for positions in sorted(set(sent_mwes).union(reference_units)):
+                mwe_id, mwe_type, mwe = sent_mwes.get(positions, ("", "", {}))
+                ref_unit = reference_units.get(positions)
+                pred_unit = converted_units.get(positions)
+                tokens = [toks[i] for i in sorted(positions)]
+                if report:
+                    def _join(k):
+                        return " ".join(tok[k] for tok in tokens)
+
+                    def _yes(x):
+                        return "Yes" if x else ""
+                    
+                    def _unit_attrs(x):
+                        return [x and x.ID, x and x.extra.get("tree_id"), x and x.ftag,
+                                _yes(x and len(x.terminals) > 1), x and str(x)]
+
+                    fields = [reference_passage.ID,
+                              _join("word"), _join("deprel"), _join("upos"),
+                              mwe_id, mwe_type, mwe.get("lexcat"), mwe.get("ss"), mwe.get("ss2"),
+                              _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
+                    fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
+                    print(*[f or "" for f in fields], file=report, sep="\t")
+                if self.train and ref_unit and pred_unit and ref_unit.ftag:
+                    features = pred_unit.extra.pop("features", None)
+                    if features:
+                        self.features.append(features)
+                        self.labels.append(CATEGORY2ID[ref_unit.ftag])
+        return evaluation.evaluate(converted_passage, reference_passage)
+
+    def fit(self):
+        if self.train:
+            print(f"Fitting model on {len(self.labels)} instances...", file=sys.stderr)
+            self.classifier.fit(self.one_hot_encoder.transform(self.features), self.labels)
+            joblib.dump(self.classifier, self.model)
+            print(f"Saved to '{self.model}'", file=sys.stderr)
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
@@ -180,17 +274,18 @@ class Node:
     Dependency node.
     """
 
-    def __init__(self, tok: Optional[dict]):
+    def __init__(self, tok: Optional[dict], smwe: Optional[dict] = None):
         """
         :param tok: conllulex2json token dict (from "toks"), or None for the root
         """
         self.tok: dict = tok  # None for root; dict created by conllulex2json for tokens
+        self.smwe: dict = smwe
         self.position: int = 0  # Position in the sentence (root is zero)
         self.incoming: List[Edge] = []  # List of Edges from heads
         self.outgoing: List[Edge] = []  # List of Edges to dependents
         self.level = self.heads_visited = None  # For topological sort
         self.unit = self.preterminal = None  # Corresponding UCCA units
-        self.smwe = None
+        self.features = None  # For classification of categories
 
     def link(self, nodes: List["Node"], enhanced: bool = False) -> None:
         """
@@ -245,8 +340,19 @@ class Node:
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
         return self.tok["upos"] in {"VERB"} and \
-               self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
-                not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
+            self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
+                       not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
+
+    def extract_features(self, deprel: Optional[str] = None) -> np.ndarray:
+        smwe = self.smwe or {}
+        self.features = np.array([
+            deprel or self.basic_deprel,
+            self.tok["upos"],
+            smwe.get("ss"),
+            smwe.get("lexcat"),
+            self.unit.tag if self.unit else "",
+        ])
+        return self.features
 
     def __str__(self):
         return "ROOT"
@@ -348,33 +454,11 @@ class ConcatenatedFiles:
         return iter(self.lines)
 
 
-def evaluate(converted_passage, sent, reference_passage, report=None):
-    if report:
-        toks = {tok["#"]: tok for tok in sent["toks"]}
-        sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
-                     for mwe_id, mwe in sent[mwe_type].items()}
-        reference_units = {evaluation.get_yield(unit): unit for unit in reference_passage.layer(layer1.LAYER_ID).all}
-        for positions in sorted(set(sent_mwes).union(reference_units)):
-            mwe_id, mwe_type, mwe = sent_mwes.get(positions, ("", "", {}))
-            unit = reference_units.get(positions)
-            tokens = [toks[i] for i in sorted(positions)]
-
-            def _join(k):
-                return " ".join(tok[k] for tok in tokens)
-
-            def _yes(x):
-                return "Yes" if x else ""
-            fields = [reference_passage.ID,
-                      _join("word"), _join("deprel"), _join("upos"),
-                      mwe_id, mwe_type, mwe.get("lexcat"), mwe.get("ss"), mwe.get("ss2"),
-                      _yes(len({tok["head"] for tok in tokens} - positions) <= 1),
-                      unit and unit.ID, unit and unit.extra.get("tree_id"), unit and unit.ftag,
-                      _yes(unit and len(unit.terminals) > 1), unit and str(unit)]
-            print(*[f or "" for f in fields], file=report, sep="\t")
-    return evaluation.evaluate(converted_passage, reference_passage)
-
-
 def main(args: argparse.Namespace) -> None:
+    if args.train and not args.model:
+        argparser.error("--train requires --model")
+    if args.report and not args.evaluate:
+        argparser.error("--report requires --evaluate")
     os.makedirs(args.out_dir, exist_ok=True)
     sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
     converter = ConllulexToUccaConverter(**vars(args))
@@ -387,23 +471,25 @@ def main(args: argparse.Namespace) -> None:
             write_passage(passage, out_dir=args.out_dir, output_format="json" if args.format == "json" else None,
                           binary=args.format == "pickle", verbose=args.verbose)
         converted[passage.ID] = passage, sent
-    if args.evaluate:
+    if args.evaluate or args.train:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.report:
             report = open(args.report, "w", encoding="utf-8")
             print("sent_id", "text", "deprel", "upos", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "subtree",
-                  "unit_id", "tree_id", "category", "unanalyzable", "annotation", file=report, sep="\t")
+                  "ref_unit_id", "ref_tree_id", "ref_category", "ref_unanalyzable", "ref_annotation",
+                  "pred_unit_id", "pred_tree_id", "pred_category", "pred_unanalyzable", "pred_annotation",
+                  file=report, sep="\t")
         else:
             report = None
-        scores = [evaluate(converted_passage, sent, reference_passage, report)
+        scores = [converter.evaluate(converted_passage, sent, reference_passage, report)
                   for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
+        converter.fit()
         if report:
             report.close()
         evaluation.Scores.aggregate(scores).print()
-        print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).")
-    elif args.report:
-        argparser.error("--report requires --evaluate")
+        print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).",
+              file=sys.stderr)
 
 
 if __name__ == '__main__':
@@ -415,8 +501,10 @@ if __name__ == '__main__':
     argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
     argparser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
+    argparser.add_argument("-t", "--train", action="store_true", help="train model to predict UCCA categories")
     argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
     argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
     argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
     argparser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
+    argparser.add_argument("--model", help="input/output filename for model predicting UCCA categories")
     main(argparser.parse_args())
