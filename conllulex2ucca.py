@@ -391,7 +391,7 @@ def main(args: argparse.Namespace) -> None:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.report:
             report = open(args.report, "w", encoding="utf-8")
-            print("sent_id", "text", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "deprel", "upos", "subtree",
+            print("sent_id", "text", "deprel", "upos", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "subtree",
                   "unit_id", "tree_id", "category", "unanalyzable", "annotation", file=report, sep="\t")
         else:
             report = None
