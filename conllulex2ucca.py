@@ -145,13 +145,14 @@ class ConllulexToUccaConverter:
         for node in nodes:  # Link heads to dependents
             node.link(nodes, enhanced=self.enhanced)
 
-        # Link tokens to their multi-word expressions and vice versa
-        smwes = sent["smwes"].values()
-        for smwe in smwes:
-            for tok_num in smwe["toknums"]:
-                node = nodes[tok_num]
-                node.smwe = smwe
-                smwe.setdefault("nodes", []).append(node)
+        # Link tokens to their single/multi-word expressions and vice versa
+        exprs = {expr_type: sent[expr_type].values() for expr_type in ("swes", "smwes", "wmwes")}
+        for expr_type, expr_values in exprs.items():
+            for expr in expr_values:
+                for tok_num in expr["toknums"]:
+                    node = nodes[tok_num]
+                    node.exprs[expr_type] = expr
+                    expr.setdefault("nodes", []).append(node)
 
         # Create primary UCCA tree
         sorted_nodes = topological_sort(nodes)
@@ -176,7 +177,7 @@ class ConllulexToUccaConverter:
                     node.unit = edge.head.unit
 
         # Join strong multi-word expressions to one unanalyzable unit
-        for smwe in smwes:
+        for smwe in exprs["smwes"]:
             if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
                 smwe_nodes = smwe["nodes"]
                 head = min(smwe_nodes, key=sorted_nodes.index)  # Highest in the tree
@@ -290,12 +291,13 @@ class Node:
     Dependency node.
     """
 
-    def __init__(self, tok: Optional[dict], smwe: Optional[dict] = None):
+    def __init__(self, tok: Optional[dict], exprs: Optional[dict] = None):
         """
         :param tok: conllulex2json token dict (from "toks"), or None for the root
+        :param exprs: dict with entries for any of "swes", "smwes" and "wmwes", each a dict of strings to values
         """
         self.tok: dict = tok  # None for root; dict created by conllulex2json for tokens
-        self.smwe: dict = smwe
+        self.exprs: dict = exprs
         self.position: int = 0  # Position in the sentence (root is zero)
         self.incoming: List[Edge] = []  # List of Edges from heads
         self.outgoing: List[Edge] = []  # List of Edges to dependents
@@ -343,6 +345,18 @@ class Node:
         :return: basic dependency relation str
         """
         return self.deprel.partition(":")[0] if self.deprel else None
+
+    @property
+    def swe(self) -> Optional[dict]:
+        return self.exprs.get("swes")
+
+    @property
+    def smwe(self) -> Optional[dict]:
+        return self.exprs.get("smwes")
+
+    @property
+    def wmwe(self) -> Optional[dict]:
+        return self.exprs.get("wmwes")
 
     def is_analyzable(self) -> bool:
         """
