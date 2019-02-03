@@ -297,7 +297,7 @@ class Node:
         :param exprs: dict with entries for any of "swes", "smwes" and "wmwes", each a dict of strings to values
         """
         self.tok: dict = tok  # None for root; dict created by conllulex2json for tokens
-        self.exprs: dict = exprs
+        self.exprs: dict = exprs or {}
         self.position: int = 0  # Position in the sentence (root is zero)
         self.incoming: List[Edge] = []  # List of Edges from heads
         self.outgoing: List[Edge] = []  # List of Edges to dependents
