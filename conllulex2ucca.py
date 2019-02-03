@@ -81,7 +81,7 @@ ALL_UPOS = [
 def read_amr_roles(role_type):
     file_name = "have-" + role_type + "-role-91-roles-v1.06.txt"
     if not os.path.exists(file_name):
-        urllib.request.urlretrieve("http://amr.isi.edu/download/lists/" + file_name)
+        urllib.request.urlretrieve("http://amr.isi.edu/download/lists/" + file_name, file_name)
     with open(file_name) as f:
         return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith("#")]
 
