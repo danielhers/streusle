@@ -357,6 +357,30 @@ class Node:
     @property
     def wmwe(self) -> Optional[dict]:
         return self.exprs.get("wmwes")
+    
+    @property
+    def ss(self) -> Optional[str]:
+        for expr in self.exprs.values():
+            ss = expr.get("ss")
+            if ss:
+                return ss
+        return None
+    
+    @property
+    def lexcat(self) -> Optional[str]:
+        for expr in self.exprs.values():
+            lexcat = expr.get("lexcat")
+            if lexcat:
+                return lexcat
+        return None
+    
+    @property
+    def lexlemma(self) -> Optional[str]:
+        for expr in self.exprs.values():
+            lexlemma = expr.get("lexlemma")
+            if lexlemma:
+                return lexlemma
+        return None
 
     def is_analyzable(self) -> bool:
         """
@@ -369,9 +393,29 @@ class Node:
         """
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
+        return self.is_scene_verb() or self.is_scene_noun()
+
+    def is_scene_verb(self):
+        if self.ss == "v.change":
+            return not self.is_aspectual_verb()
         return self.tok["upos"] in {"VERB"} and \
-            self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
+               self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
                        not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
+
+    def is_scene_noun(self):
+        if self.ss == "n.PERSON":
+            if self.is_proper_noun():
+                return False
+            if self.has_relational_suffix() or self.is_amr_relational_noun():
+                return True
+        elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
+                         'n.POSSESSION'):
+            return False
+        elif self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
+                         'v.possession', 'v.social'):
+            return True
+        # TODO if ss == 'n.TIME': prediction = 'T'
+        return False
 
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
