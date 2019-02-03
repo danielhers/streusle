@@ -10,7 +10,9 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 import argparse
 import os
+import re
 import sys
+import urllib.request
 from itertools import zip_longest
 from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
@@ -74,6 +76,20 @@ ALL_UPOS = [
     "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM",
     "VERB", "X",
 ]
+
+
+def read_amr_roles(role_type):
+    file_name = "have-" + role_type + "-role-91-roles-v1.06.txt"
+    if not os.path.exists(file_name):
+        urllib.request.urlretrieve("http://amr.isi.edu/download/lists/" + file_name)
+    with open(file_name) as f:
+        return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith("#")]
+
+
+AMR_ROLE = sum((read_amr_roles(role_type) for role_type in ("org", "rel")), [])
+ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
+RELATIONAL_PERSON_SUFFIXES = ['er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist']
+REL_PER_SUF_RE = re.compile('(' + '|'.join(RELATIONAL_PERSON_SUFFIXES) + ')$')
 
 
 class ConllulexToUccaConverter:
@@ -343,6 +359,18 @@ class Node:
             self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
                        not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
 
+    def is_proper_noun(self):
+        return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
+
+    def has_relational_suffix(self):
+        return REL_PER_SUF_RE.search(self.tok['lemma'])
+
+    def is_amr_relational_noun(self):
+        return self.tok['lemma'] in AMR_ROLE
+
+    def is_aspectual_verb(self):
+        return self.tok['lemma'] in ASPECT_VERBS
+
     def extract_features(self, deprel: Optional[str] = None) -> np.ndarray:
         smwe = self.smwe or {}
         self.features = np.array([
@@ -494,7 +522,7 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description="Convert .conllulex files to UCCA")
-    argparser.add_argument("filenames", nargs="+", help=".conllulex file name(s) to convert")
+    argparser.add_argument("filenames", nargs="+", help=".conllulex or .json STREUSLE file name(s) to convert")
     argparser.add_argument("-o", "--out-dir", default=".", help="output directory")
     argparser.add_argument("-f", "--format", choices=("xml", "pickle", "json"), default="xml", help="output format")
     argparser.add_argument("-v", "--verbose", action="store_true", help="extra information")
