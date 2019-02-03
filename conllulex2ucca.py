@@ -386,12 +386,12 @@ class Node:
         return self.tok['lemma'] in ASPECT_VERBS
 
     def extract_features(self, deprel: Optional[str] = None) -> np.ndarray:
-        smwe = self.smwe or {}
+        expr = self.smwe or self.swe or {}
         self.features = np.array([
             deprel or self.basic_deprel,
             self.tok["upos"],
-            smwe.get("ss"),
-            smwe.get("lexcat"),
+            expr.get("ss"),
+            expr.get("lexcat"),
             self.unit.tag if self.unit else "",
         ])
         return self.features
