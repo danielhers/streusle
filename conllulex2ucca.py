@@ -215,9 +215,13 @@ class ConllulexToUccaConverter:
             if not self.train:
                 label = self.classifier.predict(self.one_hot_encoder.transform([features]))
                 return ID2CATEGORY[np.asscalar(label)]
-        if node.is_scene_evoking():  # Use supersenses to find Scene-evoking phrases and select labels accordingly
+        if node.ss == 'n.TIME':
+            return Categories.Time
+        mapped = UD_TO_UCCA.get(deprel, deprel)
+        # Use supersenses to find Scene-evoking phrases and select labels accordingly
+        if mapped not in (Categories.Process, Categories.State) and node.is_scene_evoking():
             return Categories.Process
-        return UD_TO_UCCA.get(deprel, deprel)
+        return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
         if report or self.train:
@@ -416,7 +420,6 @@ class Node:
         elif self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
                          'v.possession', 'v.social'):
             return True
-        # TODO if ss == 'n.TIME': prediction = 'T'
         return False
 
     def is_proper_noun(self):
