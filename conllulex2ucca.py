@@ -399,21 +399,14 @@ class Node:
         """
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
-        return self.is_scene_verb() or self.is_scene_noun()
-
-    def is_scene_verb(self):
+        lemma = self.tok['lemma']
         if self.ss == "v.change":
-            return not self.is_aspectual_verb()
-        return self.tok["upos"] in {"VERB"} and \
-            self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
-                       not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
-
-    def is_scene_noun(self):
+            return lemma not in ASPECT_VERBS
+        if self.tok["upos"] == "VERB":
+            return self.basic_deprel not in ("aux", "cop", "advcl", "conj", "discourse", "list", "parataxis") and (
+                    self.lexcat not in ("V.LVC.cause", "V.LVC.full"))
         if self.ss == "n.PERSON":
-            if self.is_proper_noun():
-                return False
-            if self.has_relational_suffix() or self.is_amr_relational_noun():
-                return True
+            return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or lemma in AMR_ROLE)
         elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
                          'n.POSSESSION'):
             return False
@@ -424,15 +417,6 @@ class Node:
 
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
-
-    def has_relational_suffix(self):
-        return self.tok['lemma'].endswith(RELATIONAL_PERSON_SUFFIXES)
-
-    def is_amr_relational_noun(self):
-        return self.tok['lemma'] in AMR_ROLE
-
-    def is_aspectual_verb(self):
-        return self.tok['lemma'] in ASPECT_VERBS
 
     def extract_features(self, deprel: Optional[str] = None) -> np.ndarray:
         expr = self.smwe or self.swe or {}
