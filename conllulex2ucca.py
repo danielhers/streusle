@@ -80,7 +80,11 @@ ALL_UPOS = [
 def read_amr_roles(role_type):
     file_name = "have-" + role_type + "-role-91-roles-v1.06.txt"
     if not os.path.exists(file_name):
-        urllib.request.urlretrieve("http://amr.isi.edu/download/lists/" + file_name, file_name)
+        url = "http://amr.isi.edu/download/lists/" + file_name
+        try:
+            urllib.request.urlretrieve(url, file_name)
+        except OSError as e:
+            raise IOError(f"Must download {url} and have it in the current directory when running the script") from e
     with open(file_name) as f:
         return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith("#")]
 
