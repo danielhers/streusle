@@ -10,7 +10,6 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 import argparse
 import os
-import re
 import sys
 import urllib.request
 from itertools import zip_longest
@@ -88,8 +87,7 @@ def read_amr_roles(role_type):
 
 AMR_ROLE = sum((read_amr_roles(role_type) for role_type in ("org", "rel")), [])
 ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
-RELATIONAL_PERSON_SUFFIXES = ['er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist']
-REL_PER_SUF_RE = re.compile('(' + '|'.join(RELATIONAL_PERSON_SUFFIXES) + ')$')
+RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
 
 
 class ConllulexToUccaConverter:
@@ -399,7 +397,7 @@ class Node:
         if self.ss == "v.change":
             return not self.is_aspectual_verb()
         return self.tok["upos"] in {"VERB"} and \
-               self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
+            self.basic_deprel not in {"aux", "cop", "advcl", "conj", "discourse", "list", "parataxis"} and (
                        not self.smwe or self.smwe["lexcat"] not in {"V.LVC.cause", "V.LVC.full"})
 
     def is_scene_noun(self):
@@ -421,7 +419,7 @@ class Node:
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
 
     def has_relational_suffix(self):
-        return REL_PER_SUF_RE.search(self.tok['lemma'])
+        return self.tok['lemma'].endswith(RELATIONAL_PERSON_SUFFIXES)
 
     def is_amr_relational_noun(self):
         return self.tok['lemma'] in AMR_ROLE
