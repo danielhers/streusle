@@ -30,6 +30,7 @@ from ucca.normalization import normalize
 
 from conllulex2json import load_sents
 from lexcatter import ALL_LEXCATS
+from relnoun_lists import RELNOUNS
 from supersenses import ALL_SS
 
 SENT_ID = "sent_id"
@@ -244,7 +245,7 @@ class ConllulexToUccaConverter:
                         return "Yes" if x else ""
                     
                     def _unit_attrs(x):
-                        return [x and x.ID, x and x.extra.get("tree_id"), x and x.ftag,
+                        return [x and x.ID, x and x.extra.get("tree_id"), x and getattr(x, "ftags", x.ftag),
                                 _yes(x and len(x.terminals) > 1), x and str(x)]
 
                     fields = [reference_passage.ID,
