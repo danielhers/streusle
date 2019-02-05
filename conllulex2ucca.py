@@ -226,13 +226,13 @@ class ConllulexToUccaConverter:
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
         if report or self.train:
             toks = {tok["#"]: tok for tok in sent["toks"]}
-            sent_mwes = {frozenset(mwe["toknums"]): (mwe_id, mwe_type, mwe) for mwe_type in ("smwes", "wmwes")
-                         for mwe_id, mwe in sent[mwe_type].items()}
+            exprs = {frozenset(expr["toknums"]): (expr_id, expr_type, expr) for expr_type in ("swes", "smwes", "wmwes")
+                     for expr_id, expr in sent[expr_type].items()}
             converted_units, reference_units = [{evaluation.get_yield(unit): unit
                                                  for unit in passage.layer(layer1.LAYER_ID).all}
                                                 for passage in (converted_passage, reference_passage)]
-            for positions in sorted(set(sent_mwes).union(reference_units)):
-                mwe_id, mwe_type, mwe = sent_mwes.get(positions, ("", "", {}))
+            for positions in sorted(set(exprs).union(reference_units)):
+                expr_id, expr_type, expr = exprs.get(positions, ("", "", {}))
                 ref_unit = reference_units.get(positions)
                 pred_unit = converted_units.get(positions)
                 tokens = [toks[i] for i in sorted(positions)]
@@ -249,7 +249,7 @@ class ConllulexToUccaConverter:
 
                     fields = [reference_passage.ID,
                               _join("word"), _join("deprel"), _join("upos"),
-                              mwe_id, mwe_type, mwe.get("lexcat"), mwe.get("ss"), mwe.get("ss2"),
+                              expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
                               _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
                     fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
                     print(*[f or "" for f in fields], file=report, sep="\t")
@@ -549,7 +549,7 @@ def main(args: argparse.Namespace) -> None:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.report:
             report = open(args.report, "w", encoding="utf-8")
-            print("sent_id", "text", "deprel", "upos", "mwe_id", "mwe_type", "lexcat", "ss", "ss2", "subtree",
+            print("sent_id", "text", "deprel", "upos", "expr_id", "expr_type", "lexcat", "ss", "ss2", "subtree",
                   "ref_unit_id", "ref_tree_id", "ref_category", "ref_unanalyzable", "ref_annotation",
                   "pred_unit_id", "pred_tree_id", "pred_category", "pred_unanalyzable", "pred_annotation",
                   file=report, sep="\t")
