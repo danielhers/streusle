@@ -215,8 +215,8 @@ class ConllulexToUccaConverter:
             if not self.train:
                 label = self.classifier.predict(self.one_hot_encoder.transform([features]))
                 return ID2CATEGORY[np.asscalar(label)]
-        if node.ss == 'n.TIME':
-            return Categories.Time
+        # if node.ss == 'n.TIME':
+        #     return Categories.Time
         mapped = UD_TO_UCCA.get(deprel, deprel)
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if mapped not in (Categories.Process, Categories.State) and node.is_scene_evoking():
@@ -400,19 +400,18 @@ class Node:
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
         lemma = self.tok['lemma']
-        if self.ss == "v.change":
-            return lemma not in ASPECT_VERBS
         if self.tok["upos"] == "VERB":
             return self.basic_deprel not in ("aux", "cop", "advcl", "conj", "discourse", "list", "parataxis") and (
-                    self.lexcat not in ("V.LVC.cause", "V.LVC.full"))
-        if self.ss == "n.PERSON":
-            return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or lemma in AMR_ROLE)
-        elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
-                         'n.POSSESSION'):
-            return False
-        elif self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
-                         'v.possession', 'v.social'):
-            return True
+                    self.lexcat not in ("V.LVC.cause", "V.LVC.full")) and not (
+                    self.ss == "v.change" and lemma in ASPECT_VERBS)
+        # elif self.ss == "n.PERSON":
+        #     return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or lemma in AMR_ROLE)
+        # elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
+        #                  'n.POSSESSION'):
+        #     return False
+        # elif self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
+        #                  'v.possession', 'v.social'):
+        #     return True
         return False
 
     def is_proper_noun(self):
