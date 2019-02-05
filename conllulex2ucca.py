@@ -5,7 +5,7 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 
 @since: 2018-12-27
 @author: Daniel Hershcovich
-@requires: ucca=1.1.4 semstr==1.1.8 scikit-learn==0.20.2 tqdm git+https://github.com/danielhers/depedit
+@requires: ucca==1.1.6 semstr==1.1.8 scikit-learn==0.20.2 tqdm git+https://github.com/danielhers/depedit
 """
 
 import argparse
