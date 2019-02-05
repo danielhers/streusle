@@ -248,8 +248,10 @@ class ConllulexToUccaConverter:
                         return [x and x.ID, x and x.extra.get("tree_id"), x and getattr(x, "ftags", x.ftag),
                                 _yes(x and len(x.terminals) > 1), x and str(x)]
 
+                    terminals = reference_passage.layer(layer0.LAYER_ID).all
                     fields = [reference_passage.ID,
-                              _join("word"), _join("deprel"), _join("upos"),
+                              _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
+                              _join("deprel"), _join("upos"),
                               expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
                               _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
                     fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
