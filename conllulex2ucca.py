@@ -83,6 +83,7 @@ LINKERS = [
     "throughout", "thus", "too", "unfortunately", "unless", "until", "upon", "well", "what", "when", "whenever",
     "where", "whether", "which", "while", "who", "without", "yet",
 ]
+MWE_TYPES = ("swes", "smwes", "wmwes")
 
 
 def read_amr_roles(role_type):
@@ -119,7 +120,7 @@ class ConllulexToUccaConverter:
         self.model = model
         if self.model:
             self.one_hot_encoder = OneHotEncoder(handle_unknown="ignore").fit(list(list(x) for x in zip_longest(
-                ALL_DEPREL, ALL_UPOS, sorted(ALL_SS), sorted(ALL_LEXCATS),
+                ALL_DEPREL, ALL_UPOS, sorted(ALL_SS), sorted(ALL_LEXCATS), MWE_TYPES,
                 [y for x, y in vars(layer1.NodeTags).items() if y and not x.startswith("__")],
                 fillvalue="")))
             if self.train:
@@ -156,7 +157,7 @@ class ConllulexToUccaConverter:
             node.link(nodes, enhanced=self.enhanced)
 
         # Link tokens to their single/multi-word expressions and vice versa
-        exprs = {expr_type: sent[expr_type].values() for expr_type in ("swes", "smwes", "wmwes")}
+        exprs = {expr_type: sent[expr_type].values() for expr_type in MWE_TYPES}
         for expr_type, expr_values in exprs.items():
             for expr in expr_values:
                 for tok_num in expr["toknums"]:
@@ -472,6 +473,7 @@ class Node:
             self.tok["upos"],
             self.ss,
             self.lexcat,
+            sorted(self.exprs)[0],
             self.unit.tag if self.unit else "",
         ])
         return self.features
