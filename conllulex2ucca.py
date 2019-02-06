@@ -30,7 +30,6 @@ from ucca.normalization import normalize
 
 from conllulex2json import load_sents
 from lexcatter import ALL_LEXCATS
-from relnoun_lists import RELNOUNS
 from supersenses import ALL_SS
 
 SENT_ID = "sent_id"
@@ -53,7 +52,7 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # 
     ("func=/.*/;func=/appos/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise appos over root
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
-]]
+]]  # TODO move linkers (cc, mark) out of scenes
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
@@ -75,6 +74,14 @@ ALL_DEPREL = [
 ALL_UPOS = [
     "ADJ", "ADP", "ADV", "AUX", "CCONJ", "DET", "INTJ", "NOUN", "NUM", "PART", "PRON", "PROPN", "PUNCT", "SCONJ", "SYM",
     "VERB", "X",
+]
+LINKERS = [
+    "additionally", "after", "already", "also", "although", "anytime", "anyway", "anyways", "as", "because", "before",
+    "but", "by", "cause", "during", "either", "esp", "especially", "etc.", "even", "except", "finally", "first",
+    "firstly", "hence", "how", "however", "if", "including", "just", "knowing", "left", "next", "now", "often", "once",
+    "only", "overall", "respectively", "seeing", "since", "so", "still", "than", "then", "therefore", "though",
+    "throughout", "thus", "too", "unfortunately", "unless", "until", "upon", "well", "what", "when", "whenever",
+    "where", "whether", "which", "while", "who", "without", "yet",
 ]
 
 
@@ -225,6 +232,9 @@ class ConllulexToUccaConverter:
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Process not in mapped and Categories.State not in mapped and node.is_scene_evoking():
             mapped = [Categories.Process]
+        elif node.lexlemma in LINKERS:
+            mapped = [Categories.Linker]
+        # TODO P containing P should be H, so select P only if edge is None and this is not a multi-word predicate
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
@@ -370,7 +380,7 @@ class Node:
     @property
     def wmwe(self) -> Optional[dict]:
         return self.exprs.get("wmwes")
-    
+
     @property
     def ss(self) -> Optional[str]:
         for expr in self.exprs.values():
@@ -378,7 +388,7 @@ class Node:
             if ss:
                 return ss
         return None
-    
+
     @property
     def lexcat(self) -> Optional[str]:
         for expr in self.exprs.values():
@@ -386,7 +396,7 @@ class Node:
             if lexcat:
                 return lexcat
         return None
-    
+
     @property
     def lexlemma(self) -> Optional[str]:
         for expr in self.exprs.values():
@@ -400,6 +410,7 @@ class Node:
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
         return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
+            # TODO check MWE before grouping PROPN to avoid joining separate consecutive names
                 self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS)
 
     def is_scene_evoking(self) -> bool:
