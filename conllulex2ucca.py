@@ -205,6 +205,10 @@ class ConllulexToUccaConverter:
         for node in tokens:
             node.preterminal.add(Categories.Terminal, node.terminal)
 
+        # Postprocess graph
+        for unit in l1.all:
+            self.postprocess(unit)
+
         return passage
 
     def map_label(self, node: "Node", edge: Optional["Edge"] = None) -> List[str]:
@@ -283,6 +287,16 @@ class ConllulexToUccaConverter:
             self.classifier.fit(self.one_hot_encoder.transform(self.features), self.labels)
             joblib.dump(self.classifier, self.model)
             print(f"Saved to '{self.model}'", file=sys.stderr)
+
+    @staticmethod
+    def postprocess(unit: layer1.FoundationalNode):
+        def _raise():
+            for edge in child.incoming:
+                unit.fparent.add_multiple([(tag,) for tag in edge.tags], child, edge_attrib=edge.attrib)
+                edge.parent.remove(edge)
+        if unit.is_scene():
+            for child in unit.parallel_scenes + unit.linkers:
+                _raise()
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
