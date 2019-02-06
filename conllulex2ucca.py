@@ -314,7 +314,7 @@ class ConllulexToUccaConverter:
                     if category.tag == Categories.Linker:
                         category.tag = Categories.Connector
         raised = []
-        if unit.is_scene():
+        if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
             raised += unit.parallel_scenes + unit.linkers
         for child in raised:
             for edge in child.incoming:
