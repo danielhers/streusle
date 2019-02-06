@@ -452,8 +452,8 @@ class Node:
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
         return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
-            # TODO check MWE before grouping PROPN to avoid joining separate consecutive names
-                self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS)
+                self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS
+                and self.smwe == self.head.smwe)
 
     def is_scene_evoking(self) -> bool:
         """
