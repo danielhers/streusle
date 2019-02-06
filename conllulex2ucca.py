@@ -313,6 +313,11 @@ class ConllulexToUccaConverter:
                 for category in edge.categories:
                     if category.tag == Categories.Linker:
                         category.tag = Categories.Connector
+        if not unit.incoming:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag != Categories.Linker:
+                        category.tag = Categories.ParallelScene
         raised = []
         if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
             raised += unit.parallel_scenes + unit.linkers
