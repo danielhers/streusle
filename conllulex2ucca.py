@@ -166,12 +166,12 @@ class ConllulexToUccaConverter:
                 edge, *remotes = node.incoming
                 remote_edges += remotes
                 if node.is_analyzable():
-                    tags = self.map_label(node, deprel=edge.deprel)
+                    tags = self.map_label(node, edge)
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
                     if self.train and node.features is not None:
                         node.preterminal.extra["features"] = list(node.features)
                     if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head node for hierarchy
-                        tags = self.map_label(node, deprel="head")
+                        tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
                         if self.train and node.features is not None:
                             node.preterminal.extra["features"] = list(node.features)
@@ -192,7 +192,7 @@ class ConllulexToUccaConverter:
             parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
             child = edge.dep.unit or l1.heads[0]
             if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-                l1.add_remote(parent, self.map_label(edge.dep, deprel=edge.deprel), child)
+                l1.add_remote(parent, self.map_label(edge.dep, edge), child)
 
         # Link preterminals to terminals
         for node in tokens:
@@ -200,17 +200,20 @@ class ConllulexToUccaConverter:
 
         return passage
 
-    def map_label(self, node: "Node", deprel: Optional[str] = None) -> List[str]:
+    def map_label(self, node: "Node", edge: Optional["Edge"] = None) -> List[str]:
         """
-        Map UD relation label to UCCA category/categories.
+        Map UD relation label to UCCA categories for a corresponding edge.
         :param node: dependency Node that this label corresponds to, containing a `tok' attribute, which is a dict
-        :param deprel: UD relation label, alternatively specifying just the dependency relation when no node exists
-        :return: mapped UCCA category
+        :param edge: optionally, a dependency Edge that the created edge corresponds to
+        :return: mapped UCCA categories
         """
+        if edge is None:
+            deprel = basic_deprel = "head"
+        else:
+            deprel = edge.deprel
+            basic_deprel = edge.basic_deprel
         if not self.map_labels:
             return [deprel]
-        if deprel is None:
-            deprel = node.basic_deprel
         if self.model:
             features = node.extract_features(deprel=deprel)
             if not self.train:
@@ -218,7 +221,7 @@ class ConllulexToUccaConverter:
                 return [ID2CATEGORY[np.asscalar(label)]]
         # if node.ss == 'n.TIME':
         #     return Categories.Time
-        mapped = [UD_TO_UCCA.get(deprel, deprel)]
+        mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Process not in mapped and Categories.State not in mapped and node.is_scene_evoking():
             mapped = [Categories.Process]
@@ -354,7 +357,7 @@ class Node:
         Remove any relation subtypes (":" and anything following it) from dependency relation.
         :return: basic dependency relation str
         """
-        return self.deprel.partition(":")[0] if self.deprel else None
+        return self.incoming[0].basic_deprel if self.incoming else None
 
     @property
     def swe(self) -> Optional[dict]:
@@ -472,6 +475,14 @@ class Edge:
         self.head: Node = head
         self.dep: Node = dep
         self.deprel: str = deprel
+
+    @property
+    def basic_deprel(self) -> Optional[str]:
+        """
+        Remove any relation subtypes (":" and anything following it) from dependency relation.
+        :return: basic dependency relation str
+        """
+        return self.deprel.partition(":")[0]
 
     def __str__(self):
         return f"{self.head} -{self.deprel}-> {self.dep}"
