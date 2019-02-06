@@ -238,6 +238,8 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Process]
         elif node.lexlemma in LINKERS:
             mapped = [Categories.Linker]
+        elif edge is None and node.lexcat in ("V.LVC.full", "V.VID") and node.tok["upos"] == "VERB":
+            mapped = [Categories.Function]
         # TODO P containing P should be H, so select P only if edge is None and this is not a multi-word predicate
         return mapped
 
