@@ -30,6 +30,7 @@ from ucca.normalization import normalize
 
 from conllulex2json import load_sents
 from lexcatter import ALL_LEXCATS
+from relnoun_lists import RELNOUNS
 from supersenses import ALL_SS
 
 SENT_ID = "sent_id"
@@ -177,11 +178,15 @@ class ConllulexToUccaConverter:
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
                     if self.train and node.features is not None:
                         node.preterminal.extra["features"] = list(node.features)
+                    node.preterminal.extra["node"] = str(node)
+                    node.preterminal.extra["scene_noun"] = node.is_scene_noun()
                     if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head node for hierarchy
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
                         if self.train and node.features is not None:
                             node.preterminal.extra["features"] = list(node.features)
+                        node.preterminal.extra["node"] = str(node)
+                        node.preterminal.extra["scene_noun"] = node.is_scene_noun()
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
@@ -264,16 +269,23 @@ class ConllulexToUccaConverter:
                             return "Yes" if x else ""
 
                         def _unit_attrs(x):
-                            return [x and x.ID, x and x.extra.get("tree_id"), x and getattr(x, "ftags", x.ftag),
+                            return [x and x.ID, x and x.extra.get("tree_id"),
+                                    x and "|".join(getattr(x, "ftags", [x.ftag]) or ()),
                                     _yes(x and len(x.terminals) > 1), x and str(x)]
 
                         terminals = reference_passage.layer(layer0.LAYER_ID).all
-                        fields = [reference_passage.ID,
-                                  _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
-                                  _join("deprel"), _join("upos"),
-                                  expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
-                                  _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
+                        fields = [
+                            reference_passage.ID,
+                            _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
+                            _join("deprel"), _join("upos"),
+                            expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
+                            _yes(len({tok["head"] for tok in tokens} - positions) <= 1),
+                        ]
                         fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
+                        fields += [
+                            pred_unit and pred_unit.extra.pop("node", None) or "",
+                            _yes(pred_unit and pred_unit.extra.pop("scene_noun", None))
+                        ]
                         print(*[f or "" for f in fields], file=report, sep="\t")
                     if self.train and ref_unit and pred_unit and ref_unit.ftag:
                         features = pred_unit.extra.pop("features", None)
@@ -470,15 +482,18 @@ class Node:
             return self.basic_deprel not in ("aux", "cop", "advcl", "conj", "discourse", "list", "parataxis") and (
                     self.lexcat not in ("V.LVC.cause", "V.LVC.full")) and not (
                     self.ss == "v.change" and lemma in ASPECT_VERBS)
-        # elif self.ss == "n.PERSON":
-        #     return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or lemma in AMR_ROLE)
+        return False
+
+    def is_scene_noun(self) -> bool:
+        lemma = self.tok['lemma']
+        if self.ss == "n.PERSON":
+            return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or
+                                                  lemma in AMR_ROLE + RELNOUNS)
         # elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
         #                  'n.POSSESSION'):
         #     return False
-        # elif self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
-        #                  'v.possession', 'v.social'):
-        #     return True
-        return False
+        return self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
+                           'v.possession', 'v.social')
 
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
@@ -626,6 +641,7 @@ def main(args: argparse.Namespace) -> None:
             print("sent_id", "text", "deprel", "upos", "expr_id", "expr_type", "lexcat", "ss", "ss2", "subtree",
                   "ref_unit_id", "ref_tree_id", "ref_category", "ref_unanalyzable", "ref_annotation",
                   "pred_unit_id", "pred_tree_id", "pred_category", "pred_unanalyzable", "pred_annotation",
+                  "pred_node", "pred_scene_noun",
                   file=report, sep="\t")
         else:
             report = None
