@@ -226,7 +226,7 @@ class ConllulexToUccaConverter:
         if not self.map_labels:
             return [deprel]
         if self.model:
-            features = node.extract_features(deprel=deprel)
+            features = node.extract_features(basic_deprel=basic_deprel)
             if not self.train:
                 label = self.classifier.predict(self.one_hot_encoder.transform([features]))
                 return [ID2CATEGORY[np.asscalar(label)]]
@@ -466,13 +466,12 @@ class Node:
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
 
-    def extract_features(self, deprel: Optional[str] = None) -> np.ndarray:
-        expr = self.smwe or self.swe or {}
+    def extract_features(self, basic_deprel: Optional[str] = None) -> np.ndarray:
         self.features = np.array([
-            deprel or self.basic_deprel,
+            basic_deprel or self.basic_deprel,
             self.tok["upos"],
-            expr.get("ss"),
-            expr.get("lexcat"),
+            self.ss,
+            self.lexcat,
             self.unit.tag if self.unit else "",
         ])
         return self.features
