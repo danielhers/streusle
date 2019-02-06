@@ -232,35 +232,36 @@ class ConllulexToUccaConverter:
             converted_units, reference_units = [{evaluation.get_yield(unit): unit
                                                  for unit in passage.layer(layer1.LAYER_ID).all}
                                                 for passage in (converted_passage, reference_passage)]
-            for positions in sorted(set(exprs).union(reference_units)):
-                expr_id, expr_type, expr = exprs.get(positions, ("", "", {}))
-                ref_unit = reference_units.get(positions)
-                pred_unit = converted_units.get(positions)
-                tokens = [toks[i] for i in sorted(positions)]
-                if report:
-                    def _join(k):
-                        return " ".join(tok[k] for tok in tokens)
+            for positions in sorted(set(exprs).union(converted_units).union(reference_units)):
+                if positions:
+                    expr_id, expr_type, expr = exprs.get(positions, ("", "", {}))
+                    ref_unit = reference_units.get(positions)
+                    pred_unit = converted_units.get(positions)
+                    tokens = [toks[i] for i in sorted(positions)]
+                    if report:
+                        def _join(k):
+                            return " ".join(tok[k] for tok in tokens)
 
-                    def _yes(x):
-                        return "Yes" if x else ""
-                    
-                    def _unit_attrs(x):
-                        return [x and x.ID, x and x.extra.get("tree_id"), x and getattr(x, "ftags", x.ftag),
-                                _yes(x and len(x.terminals) > 1), x and str(x)]
+                        def _yes(x):
+                            return "Yes" if x else ""
 
-                    terminals = reference_passage.layer(layer0.LAYER_ID).all
-                    fields = [reference_passage.ID,
-                              _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
-                              _join("deprel"), _join("upos"),
-                              expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
-                              _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
-                    fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
-                    print(*[f or "" for f in fields], file=report, sep="\t")
-                if self.train and ref_unit and pred_unit and ref_unit.ftag:
-                    features = pred_unit.extra.pop("features", None)
-                    if features:
-                        self.features.append(features)
-                        self.labels.append(CATEGORY2ID[ref_unit.ftag])
+                        def _unit_attrs(x):
+                            return [x and x.ID, x and x.extra.get("tree_id"), x and getattr(x, "ftags", x.ftag),
+                                    _yes(x and len(x.terminals) > 1), x and str(x)]
+
+                        terminals = reference_passage.layer(layer0.LAYER_ID).all
+                        fields = [reference_passage.ID,
+                                  _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
+                                  _join("deprel"), _join("upos"),
+                                  expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
+                                  _yes(len({tok["head"] for tok in tokens} - positions) <= 1)]
+                        fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
+                        print(*[f or "" for f in fields], file=report, sep="\t")
+                    if self.train and ref_unit and pred_unit and ref_unit.ftag:
+                        features = pred_unit.extra.pop("features", None)
+                        if features:
+                            self.features.append(features)
+                            self.labels.append(CATEGORY2ID[ref_unit.ftag])
         return evaluation.evaluate(converted_passage, reference_passage)
 
     def fit(self):
