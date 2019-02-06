@@ -56,9 +56,6 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # 
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
-UNANALYZABLE_UPOS = {  # Universal parts-of-speech of which subtrees are grouped as unanalyzable units
-    "PROPN",
-}
 UNANALYZABLE_MWE_LEXCAT_SS = {  # Pairs of multi-word expression lexical category and supersense grouped as unanalyzable
     ("V.VPC.full", "v.social"), ("V.VPC.full", "v.cognition"), ("V.VPC.full", "v.stative"),
     ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
@@ -452,8 +449,10 @@ class Node:
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
         return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
-                self.head.tok and self.tok["upos"] == self.head.tok["upos"] and self.tok["upos"] in UNANALYZABLE_UPOS
-                and self.smwe == self.head.smwe)
+                self.head.tok and len({self.tok["upos"], self.head.tok["upos"], "PROPN"}) == 1
+                and self.smwe == self.head.smwe) and not (
+                (self.tok["upos"] in ("PUNCT", "NUM") or self.ss == "n.TIME") and self.head.ss == "n.TIME" and
+                self.head.tok and self.head.tok["upos"] == "PROPN")
 
     def is_scene_evoking(self) -> bool:
         """
