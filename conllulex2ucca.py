@@ -295,6 +295,16 @@ class ConllulexToUccaConverter:
                 for category in edge.categories:
                     if category.tag == Categories.Center:
                         category.tag = Categories.Process
+        if unit.parallel_scenes:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag in Categories.Connector:
+                        category.tag = Categories.Linker
+        else:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag == Categories.Linker:
+                        category.tag = Categories.Connector
         raised = []
         if unit.is_scene():
             raised += unit.parallel_scenes + unit.linkers
