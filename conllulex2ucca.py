@@ -81,6 +81,8 @@ LINKERS = [
     "where", "whether", "which", "while", "who", "without", "yet",
 ]
 MWE_TYPES = ("swes", "smwes", "wmwes")
+TOP_LEVEL_CATEGORIES = {Categories.Linker, Categories.ParallelScene, Categories.Function, Categories.Ground,
+                        Categories.Punctuation}
 
 
 def read_amr_roles(role_type):
@@ -304,6 +306,14 @@ class ConllulexToUccaConverter:
                 for category in edge.categories:
                     if category.tag == Categories.Connector:
                         category.tag = Categories.Linker
+                    # if edge.child.outgoing and edge.child.is_scene():
+                    #     category.tag = Categories.ParallelScene
+            # non_top_level = [edge for edge in unit if not TOP_LEVEL_CATEGORIES.intersection(edge.tags)]
+            # if non_top_level:
+            #     child = unit.layer.add_fnode(unit, Categories.ParallelScene)
+            #     for edge in non_top_level:
+            #         child.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
+            #         unit.remove(edge)
         else:
             for edge in unit:
                 for category in edge.categories:
@@ -312,8 +322,7 @@ class ConllulexToUccaConverter:
         if not unit.incoming:
             for edge in unit:
                 for category in edge.categories:
-                    if category.tag not in (Categories.Linker, Categories.ParallelScene,
-                                            Categories.Function, Categories.Ground, Categories.Punctuation):
+                    if category.tag not in TOP_LEVEL_CATEGORIES:
                         category.tag = Categories.ParallelScene
         if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
             for edge in unit.outgoing:
