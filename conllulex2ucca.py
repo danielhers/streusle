@@ -298,6 +298,11 @@ class ConllulexToUccaConverter:
                 for category in edge.categories:
                     if category.tag == Categories.Center:
                         category.tag = Categories.Process
+        if unit.centers:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag in (Categories.Process, Categories.State):
+                        category.tag = Categories.Elaborator
         if unit.parallel_scenes:
             for edge in unit:
                 for category in edge.categories:
