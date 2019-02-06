@@ -290,13 +290,18 @@ class ConllulexToUccaConverter:
 
     @staticmethod
     def postprocess(unit: layer1.FoundationalNode):
-        def _raise():
+        if unit.participants:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag == Categories.Center:
+                        category.tag = Categories.Process
+        raised = []
+        if unit.is_scene():
+            raised += unit.parallel_scenes + unit.linkers
+        for child in raised:
             for edge in child.incoming:
                 unit.fparent.add_multiple([(tag,) for tag in edge.tags], child, edge_attrib=edge.attrib)
                 edge.parent.remove(edge)
-        if unit.is_scene():
-            for child in unit.parallel_scenes + unit.linkers:
-                _raise()
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
