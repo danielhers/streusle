@@ -52,7 +52,7 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # 
     ("func=/.*/;func=/appos/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise appos over root
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
-]]  # TODO move linkers (cc, mark) out of scenes
+]]
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
@@ -238,7 +238,6 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Linker]
         elif edge is None and node.lexcat in ("V.LVC.full", "V.VID") and node.tok["upos"] == "VERB":
             mapped = [Categories.Function]
-        # TODO P containing P should be H, so select P only if edge is None and this is not a multi-word predicate
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
@@ -303,7 +302,7 @@ class ConllulexToUccaConverter:
         if unit.parallel_scenes:
             for edge in unit:
                 for category in edge.categories:
-                    if category.tag in Categories.Connector:
+                    if category.tag == Categories.Connector:
                         category.tag = Categories.Linker
         else:
             for edge in unit:
@@ -313,7 +312,8 @@ class ConllulexToUccaConverter:
         if not unit.incoming:
             for edge in unit:
                 for category in edge.categories:
-                    if category.tag != Categories.Linker:
+                    if category.tag not in (Categories.Linker, Categories.ParallelScene,
+                                            Categories.Function, Categories.Ground, Categories.Punctuation):
                         category.tag = Categories.ParallelScene
         raised = []
         if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
