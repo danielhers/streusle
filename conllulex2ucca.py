@@ -315,13 +315,11 @@ class ConllulexToUccaConverter:
                     if category.tag not in (Categories.Linker, Categories.ParallelScene,
                                             Categories.Function, Categories.Ground, Categories.Punctuation):
                         category.tag = Categories.ParallelScene
-        raised = []
         if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
-            raised += unit.parallel_scenes + unit.linkers
-        for child in raised:
-            for edge in child.incoming:
-                unit.fparent.add_multiple([(tag,) for tag in edge.tags], child, edge_attrib=edge.attrib)
-                edge.parent.remove(edge)
+            for child in unit.parallel_scenes + unit.linkers:
+                for edge in child.incoming:
+                    unit.fparent.add_multiple([(tag,) for tag in edge.tags], child, edge_attrib=edge.attrib)
+                    edge.parent.remove(edge)
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
