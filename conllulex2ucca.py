@@ -248,7 +248,9 @@ class ConllulexToUccaConverter:
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
-            if node.is_scene_evoking():
+            if node.is_scene_noun() and node.swe:
+                mapped.append(Categories.Process)
+            elif node.is_scene_evoking():
                 mapped = [Categories.Process]
             elif node.lexcat == "ADJ":
                 mapped = [Categories.State]
@@ -506,8 +508,9 @@ class Node:
         # elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
         #                  'n.POSSESSION'):
         #     return False
-        return self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
-                           'v.possession', 'v.social')
+        # return self.ss in ('n.ACT', 'v.communication', 'v.consumption', 'v.contact', 'v.creation', 'v.motion',
+        #                    'v.possession', 'v.social')
+        return False
 
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
