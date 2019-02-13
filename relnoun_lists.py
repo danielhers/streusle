@@ -116,7 +116,7 @@ WORKERS = [
     'lister', 'litter-bearer', 'liveryman', 'loader', 'lobsterback', 'lobsterman', 'lockkeeper', 'lockman',
     'lockmaster', 'locksmith', 'logger', 'longshoreman', 'lovely', 'lumberjack', 'lumberman', 'lumper', 'luthier',
     'mace', 'macebearer', 'macer', 'machinist', 'magistrate', 'mahout', 'maid', 'maidservant', 'mailman', 'major',
-    'major-domo', 'major-general', 'man', 'man-at-arms', 'manakin', 'mandarin', 'manicurist', 'manikin', 'mannequin',
+    'major-domo', 'major-general', 'man-at-arms', 'manakin', 'mandarin', 'manicurist', 'manikin', 'mannequin',
     'mannikin', 'manservant', 'mapper', 'marcher', 'marine', 'mariner', 'marshal', 'marshall', 'mason', 'master',
     'master-at-arms', 'mate', 'mechanic', 'melter', 'mender', 'menial', 'metalworker', 'midinette', 'militiaman',
     'milkmaid', 'milkman', 'mill-girl', 'mill-hand', 'miller', 'millwright', 'minder', 'miner', 'mineworker',
@@ -168,7 +168,7 @@ WORKERS = [
     'wagonwright', 'wainwright', 'waiter', 'waitress', 'waker', 'wall-paperer', 'wallah', 'wallpaperer', 'warehouseman',
     'warehouser', 'washer', 'washerman', 'washerwoman', 'washwoman', 'waterer', 'waterman', 'weaver', 'webmaster',
     'weeder', 'weigher', 'welder', 'wetter', 'whaler', 'wheeler', 'wheelwright', 'whipper-in', 'winder', 'wingman',
-    'wiper', 'wireman', 'wirer', 'woman', 'woodcarver', 'woodcutter', 'woodman', 'woodsman', 'woodworker', 'worker',
+    'wiper', 'wireman', 'wirer', 'woodcarver', 'woodcutter', 'woodman', 'woodsman', 'woodworker', 'worker',
     'workingman', 'workman', 'workmate', 'wrangler', 'wrecker', 'wright', 'yachtsman', 'yachtswoman', 'yardbird',
     'yardman', 'yardmaster'
 ]
