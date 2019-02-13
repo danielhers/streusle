@@ -257,7 +257,7 @@ class ConllulexToUccaConverter:
                     mapped = [Categories.Function]
                 elif node.lexcat == "V.LVC.cause":
                     mapped = [Categories.Adverbial]
-        elif node.lexlemma in LINKERS:
+        elif node.lexlemma in LINKERS or node.lexcat == "DISC":
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
             mapped = [Categories.Time]
