@@ -247,7 +247,7 @@ class ConllulexToUccaConverter:
         #     return Categories.Time
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
-        if Categories.Process not in mapped and Categories.State not in mapped and node.is_scene_evoking():
+        if Categories.Center in mapped and node.is_scene_evoking():
             mapped = [Categories.Process]
         elif node.lexlemma in LINKERS:
             mapped = [Categories.Linker]
