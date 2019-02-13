@@ -57,6 +57,9 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # 
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
+ANALYZABLE_DEPREL = {
+    "conj", "list", "vocative",
+}
 UNANALYZABLE_MWE_LEXCAT_SS = {  # Pairs of multi-word expression lexical category and supersense grouped as unanalyzable
     ("V.VPC.full", "v.social"), ("V.VPC.full", "v.cognition"), ("V.VPC.full", "v.stative"),
     ("V.VPC.full", "v.possession"), ("V.VPC.full", "v.communication"), ("V.VPC.full", "v.change"),
@@ -342,7 +345,7 @@ class ConllulexToUccaConverter:
             #     for edge in non_top_level:
             #         child.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
             #         unit.remove(edge)
-        else:
+        else:  # if not (unit.is_scene() and unit.participants and Categories.ParallelScene in unit.ftags):
             for edge in unit:
                 for category in edge.categories:
                     if category.tag == Categories.Linker:
@@ -488,7 +491,7 @@ class Node:
         """
         Determine if the token requires a preterminal UCCA unit. Otherwise it will be attached to its head's unit.
         """
-        return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
+        return self.basic_deprel in ANALYZABLE_DEPREL or self.basic_deprel not in UNANALYZABLE_DEPREL and not (
                 self.head.tok and len({self.tok["upos"], self.head.tok["upos"], "PROPN"}) == 1
                 and self.smwe == self.head.smwe or
                 (self.tok["upos"] in ("PUNCT", "NUM") or self.ss == "n.TIME") and self.head.ss == "n.TIME" and
