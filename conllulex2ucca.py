@@ -264,6 +264,8 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
             mapped = [Categories.Time]
+        elif node.ss == "p.SocialRel":
+            mapped.append(Categories.Participant)
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
