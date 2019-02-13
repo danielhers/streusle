@@ -247,17 +247,18 @@ class ConllulexToUccaConverter:
         #     return Categories.Time
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
-        if Categories.Center in mapped and node.is_scene_evoking():
-            mapped = [Categories.Process]
+        if Categories.Center in mapped:
+            if node.is_scene_evoking():
+                mapped = [Categories.Process]
+            elif node.lexcat == "ADJ":
+                mapped = [Categories.State]
+            elif node.tok["upos"] == "VERB":
+                if node.lexcat in ("V.LVC.full", "V.VID"):
+                    mapped = [Categories.Function]
+                elif node.lexcat == "V.LVC.cause":
+                    mapped = [Categories.Adverbial]
         elif node.lexlemma in LINKERS:
             mapped = [Categories.Linker]
-        elif edge is None and node.tok["upos"] == "VERB":
-            if node.lexcat in ("V.LVC.full", "V.VID"):
-                mapped = [Categories.Function]
-            elif node.lexcat == "V.LVC.cause":
-                mapped = [Categories.Adverbial]
-        elif node.lexcat == "ADJ" and Categories.Center in mapped:
-            mapped = [Categories.State]
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
