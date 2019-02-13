@@ -367,6 +367,11 @@ class ConllulexToUccaConverter:
                 for grandchild in child.children:
                     unit.add(Categories.Terminal, grandchild)
                 unit.remove(child)
+        if not unit.centers:
+            for edge in unit:
+                for category in edge.categories:
+                    if category.tag == Categories.Connector:
+                        category.tag = Categories.Center
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
