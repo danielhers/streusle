@@ -371,7 +371,7 @@ class ConllulexToUccaConverter:
             for edge in unit:
                 for category in edge.categories:
                     if category.tag == Categories.Connector:
-                        category.tag = Categories.Center
+                        category.tag = Categories.Adverbial if unit.is_scene() else Categories.Center
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
