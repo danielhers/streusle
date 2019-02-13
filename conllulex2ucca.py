@@ -193,11 +193,19 @@ class ConllulexToUccaConverter:
 
         # Join strong multi-word expressions to one unanalyzable unit
         for smwe in exprs["smwes"]:
+            smwe_nodes = smwe["nodes"]
+            head = min(smwe_nodes, key=sorted_nodes.index)  # Highest in the tree
             if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
-                smwe_nodes = smwe["nodes"]
-                head = min(smwe_nodes, key=sorted_nodes.index)  # Highest in the tree
                 for node in smwe_nodes:
                     node.preterminal = head.preterminal
+            elif smwe["lexcat"] in ("V.VID", "V.IAV"):
+                unit_ids = {node.unit.ID for node in smwe_nodes}
+                old_node = head.unit
+                head.unit = l1.add_fnode(old_node, Categories.Process)
+                for edge in old_node.outgoing:
+                    if edge.child.ID in unit_ids:
+                        head.unit.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
+                        old_node.remove(edge)
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
@@ -248,6 +256,8 @@ class ConllulexToUccaConverter:
                 mapped = [Categories.Function]
             elif node.lexcat == "V.LVC.cause":
                 mapped = [Categories.Adverbial]
+        elif node.lexcat == "ADJ" and Categories.Center in mapped:
+            mapped = [Categories.State]
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
@@ -472,7 +482,7 @@ class Node:
         """
         return self.basic_deprel not in UNANALYZABLE_DEPREL and not (
                 self.head.tok and len({self.tok["upos"], self.head.tok["upos"], "PROPN"}) == 1
-                and self.smwe == self.head.smwe) and not (
+                and self.smwe == self.head.smwe or
                 (self.tok["upos"] in ("PUNCT", "NUM") or self.ss == "n.TIME") and self.head.ss == "n.TIME" and
                 self.head.tok and self.head.tok["upos"] == "PROPN")
 
