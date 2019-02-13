@@ -243,8 +243,11 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Process]
         elif node.lexlemma in LINKERS:
             mapped = [Categories.Linker]
-        elif edge is None and node.lexcat in ("V.LVC.full", "V.VID") and node.tok["upos"] == "VERB":
-            mapped = [Categories.Function]
+        elif edge is None and node.tok["upos"] == "VERB":
+            if node.lexcat in ("V.LVC.full", "V.VID"):
+                mapped = [Categories.Function]
+            elif node.lexcat == "V.LVC.cause":
+                mapped = [Categories.Adverbial]
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
