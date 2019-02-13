@@ -243,8 +243,6 @@ class ConllulexToUccaConverter:
             if not self.train:
                 label = self.classifier.predict(self.one_hot_encoder.transform([features]))
                 return [ID2CATEGORY[np.asscalar(label)]]
-        # if node.ss == 'n.TIME':
-        #     return Categories.Time
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
@@ -261,6 +259,8 @@ class ConllulexToUccaConverter:
                     mapped = [Categories.Adverbial]
         elif node.lexlemma in LINKERS:
             mapped = [Categories.Linker]
+        elif node.ss == 'n.TIME':
+            mapped = [Categories.Time]
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
