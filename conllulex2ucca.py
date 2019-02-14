@@ -256,7 +256,7 @@ class ConllulexToUccaConverter:
             elif node.lexcat == "ADJ":
                 mapped = [Categories.State]
             elif node.tok["upos"] == "VERB":
-                if node.lexcat in ("V.LVC.full", "V.VID"):
+                if node.lexcat in ("V.LVC.full", "V.VID") or node.ss == "v.stative":
                     mapped = [Categories.Function]
                 elif node.lexcat == "V.LVC.cause":
                     mapped = [Categories.Adverbial]
