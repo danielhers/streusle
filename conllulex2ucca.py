@@ -516,13 +516,10 @@ class Node:
         return False
 
     def is_scene_noun(self) -> bool:
-        lemma = self.tok['lemma']
         if self.ss == "n.PERSON":
+            lemma = self.tok['lemma']
             return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or
                                                   lemma in AMR_ROLE + RELNOUNS)
-        # elif self.ss in ('n.ANIMAL', 'n.ARTIFACT', 'n.BODY', 'n.FOOD', 'n.GROUP', 'n.LOCATION', 'n.NATURALOBJECT',
-        #                  'n.POSSESSION'):
-        #     return False
         return self.ss in ("n.ACT", "n.ATTRIBUTE", "n.EVENT", "n.FEELING", "n.PHENOMENON", "n.PROCESS")
 
     def is_proper_noun(self):
