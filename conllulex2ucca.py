@@ -368,6 +368,10 @@ class ConllulexToUccaConverter:
                 if {Categories.ParallelScene, Categories.Linker}.intersection(edge.tags):
                     unit.fparent.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
                     unit.remove(edge)
+                else:
+                    for category in edge.categories:
+                        if category.tag == Categories.Elaborator:
+                            category.tag = Categories.Adverbial
         if unit.terminals and unit.punctuation:
             for child in unit.punctuation:
                 for grandchild in child.children:
