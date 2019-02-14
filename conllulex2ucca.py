@@ -567,6 +567,9 @@ class Token(Node):
         self.position: int = self.tok["#"]
         self.is_punct: bool = self.tok["upos"] == "PUNCT"
         self.terminal: layer0.Terminal = l0.add_terminal(text=tok["word"], punct=self.is_punct)
+        self.terminal.extra.update(dep=tok["deprel"].partition(":")[0],
+                                   head=tok["head"] - self.position if tok["head"] else 0,
+                                   lemma=tok["lemma"], orth=tok["word"], pos=tok["upos"], tag=tok["xpos"])
 
     def __str__(self):
         return self.tok['word']
