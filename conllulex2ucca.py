@@ -253,7 +253,7 @@ class ConllulexToUccaConverter:
                 mapped.append(Categories.Process)
             elif node.is_scene_evoking():
                 mapped = [Categories.Process]
-            elif node.lexcat == "ADJ":
+            elif node.lexcat == "ADJ" or node.ss == "n.STATE":
                 mapped = [Categories.State]
             elif node.tok["upos"] == "VERB":
                 if node.lexcat in ("V.LVC.full", "V.VID") or node.ss == "v.stative":
