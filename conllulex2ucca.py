@@ -268,6 +268,8 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Quantifier]
         elif node.ss == "p.SocialRel":
             mapped.append(Categories.Participant)
+        elif Categories.Adverbial in mapped and node.ss == "p.Approximator":
+            mapped = [Categories.Elaborator]
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
