@@ -38,7 +38,7 @@ UD_TO_UCCA = dict(  # Majority-based mapping of UD deprel to UCCA category, from
     acl=Categories.Elaborator, advcl=Categories.ParallelScene, advmod=Categories.Adverbial, amod=Categories.Elaborator,
     appos=Categories.Center, aux=Categories.Function, case=Categories.Relator, cc=Categories.Linker,
     ccomp=Categories.Participant, compound=Categories.Elaborator, conj=Categories.ParallelScene,
-    cop=Categories.Function, csubj=Categories.Participant, dep=Categories.Function, det=Categories.Elaborator,
+    cop=Categories.Function, csubj=Categories.Participant, dep=Categories.Function, det=Categories.Function,
     discourse=Categories.ParallelScene, expl=Categories.Function, fixed=Categories.Center,
     goeswith=Categories.Elaborator, head=Categories.Center, iobj=Categories.Participant, list=Categories.ParallelScene,
     mark=Categories.Function, nmod=Categories.Elaborator, nsubj=Categories.Participant, nummod=Categories.Elaborator,
