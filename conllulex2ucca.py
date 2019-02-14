@@ -270,6 +270,8 @@ class ConllulexToUccaConverter:
             mapped.append(Categories.Participant)
         elif Categories.Adverbial in mapped and node.ss == "p.Approximator":
             mapped = [Categories.Elaborator]
+        if basic_deprel == "vocative":
+            mapped.append(Categories.Ground)
         return mapped
 
     def evaluate(self, converted_passage, sent, reference_passage, report=None):
