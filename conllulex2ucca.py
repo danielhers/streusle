@@ -253,7 +253,7 @@ class ConllulexToUccaConverter:
                 mapped.append(Categories.Process)
             elif node.is_scene_evoking():
                 mapped = [Categories.Process]
-            elif node.lexcat == "ADJ" or node.ss == "n.STATE":
+            elif node.lexcat == "ADJ" or node.ss in ("n.STATE", "n.ATTRIBUTE", "n.FEELING"):
                 mapped = [Categories.State]
             elif node.tok["upos"] == "VERB":
                 if node.lexcat in ("V.LVC.full", "V.VID") or node.ss == "v.stative":
@@ -530,7 +530,7 @@ class Node:
             lemma = self.tok['lemma']
             return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or
                                                   lemma in AMR_ROLE + RELNOUNS)
-        return self.ss in ("n.ACT", "n.ATTRIBUTE", "n.EVENT", "n.FEELING", "n.PHENOMENON", "n.PROCESS")
+        return self.ss in ("n.ACT", "n.EVENT", "n.PHENOMENON", "n.PROCESS")
 
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
