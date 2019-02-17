@@ -79,7 +79,7 @@ ALL_UPOS = [
 LINKERS = [
     "additionally", "after", "already", "also", "although", "anytime", "anyway", "anyways", "as", "because", "before",
     "but", "by", "cause", "during", "either", "esp", "especially", "etc.", "even", "except", "finally", "first",
-    "firstly", "hence", "how", "however", "if", "including", "just", "knowing", "left", "next", "now", "often", "once",
+    "firstly", "hence", "how", "however", "if", "including", "just", "knowing", "left", "next",
     "only", "overall", "respectively", "seeing", "since", "so", "still", "than", "then", "therefore", "though",
     "throughout", "thus", "too", "unfortunately", "unless", "until", "upon", "well", "what", "when", "whenever",
     "where", "whether", "which", "while", "who", "without", "yet",
@@ -258,7 +258,7 @@ class ConllulexToUccaConverter:
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
-        elif node.lexlemma in LINKERS or node.lexcat == "DISC":
+        elif Categories.Adverbial not in mapped and (node.lexlemma in LINKERS or node.lexcat == "DISC"):
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
             mapped = [Categories.Time]
@@ -373,11 +373,11 @@ class ConllulexToUccaConverter:
                 for grandchild in child.children:
                     unit.add(Categories.Terminal, grandchild)
                 unit.remove(child)
-        if not unit.centers:
+        if not unit.centers and not unit.is_scene():
             for edge in unit:
                 for category in edge.categories:
                     if category.tag == Categories.Connector:
-                        category.tag = Categories.Adverbial if unit.is_scene() else Categories.Center
+                        category.tag = Categories.Center
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
