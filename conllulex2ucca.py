@@ -258,6 +258,9 @@ class ConllulexToUccaConverter:
                     mapped = [Categories.Function]
                 elif node.lexcat == "V.LVC.cause":
                     mapped = [Categories.Adverbial]
+        elif basic_deprel == "conj":
+            if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
+                mapped = [Categories.Center]
         elif node.lexlemma in LINKERS or node.lexcat == "DISC":
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
