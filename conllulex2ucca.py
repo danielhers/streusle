@@ -210,7 +210,7 @@ class ConllulexToUccaConverter:
             parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
             child = edge.dep.unit or l1.heads[0]
             if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-                l1.add_remote(parent, self.map_label(edge.dep, edge), child)
+                l1.add_remote_multiple(parent, self.map_label(edge.dep, edge), child)
 
         # Link preterminals to terminals
         for node in tokens:
