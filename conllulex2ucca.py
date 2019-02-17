@@ -179,17 +179,12 @@ class ConllulexToUccaConverter:
                 if node.is_analyzable():
                     tags = self.map_label(node, edge)
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
-                    if self.train and node.features is not None:
-                        node.preterminal.extra["features"] = list(node.features)
-                    node.preterminal.extra["node"] = str(node)
-                    node.preterminal.extra["scene_noun"] = node.is_scene_noun()
-                    if any(edge.dep.is_analyzable() for edge in node.outgoing):  # Intermediate head node for hierarchy
+                    node.set_extra(self.train)
+                    if any(edge.dep.is_analyzable() for edge in node.outgoing) or node.is_possessive_rel():
+                        # Intermediate head node for hierarchy
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
-                        if self.train and node.features is not None:
-                            node.preterminal.extra["features"] = list(node.features)
-                        node.preterminal.extra["node"] = str(node)
-                        node.preterminal.extra["scene_noun"] = node.is_scene_noun()
+                        node.set_extra(self.train)
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
@@ -258,6 +253,8 @@ class ConllulexToUccaConverter:
                     mapped = [Categories.Function]
                 elif node.lexcat == "V.LVC.cause":
                     mapped = [Categories.Adverbial]
+            elif node.is_possessive_rel():
+                mapped = [Categories.State, Categories.Participant]
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
@@ -267,9 +264,7 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Time]
         elif node.lexcat == 'NUM':
             mapped = [Categories.Quantifier]
-        elif node.ss == "p.SocialRel":
-            mapped.append(Categories.Participant)
-        elif Categories.Adverbial in mapped and node.ss == "p.Approximator":
+        elif node.is_possessive_rel() or Categories.Adverbial in mapped and node.ss == "p.Approximator":
             mapped = [Categories.Elaborator]
         if basic_deprel == "vocative":
             mapped.append(Categories.Ground)
@@ -536,6 +531,9 @@ class Node:
     def is_proper_noun(self):
         return self.tok['upos'] == 'PROPN' or self.tok['xpos'].startswith('NNP')
 
+    def is_possessive_rel(self):
+        return self.lexcat.endswith("POSS") and self.ss in ("p.SocialRel", "p.OrgRole")
+
     def extract_features(self, basic_deprel: Optional[str] = None) -> np.ndarray:
         self.features = np.array([
             basic_deprel or self.basic_deprel,
@@ -546,6 +544,12 @@ class Node:
             self.unit.tag if self.unit else "",
         ])
         return self.features
+
+    def set_extra(self, train: bool):
+        if train and self.features is not None:
+            self.preterminal.extra["features"] = list(self.features)
+        self.preterminal.extra["node"] = str(self)
+        self.preterminal.extra["scene_noun"] = self.is_scene_noun()
 
     def __str__(self):
         return "ROOT"
