@@ -244,7 +244,7 @@ class ConllulexToUccaConverter:
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
-            if node.is_scene_evoking() or node.is_scene_noun() or node.lexcat == "DISC":
+            if node.is_scene_verb() or node.is_scene_noun() or node.lexcat == "DISC":
                 mapped = [Categories.Process]
             elif node.lexcat == "ADJ" or node.ss in ("n.STATE", "n.ATTRIBUTE", "n.FEELING"):
                 mapped = [Categories.State]
@@ -508,7 +508,7 @@ class Node:
                 (self.tok["upos"] in ("PUNCT", "NUM") or self.ss == "n.TIME") and self.head.ss == "n.TIME" and
                 self.head.tok and self.head.tok["upos"] == "PROPN")
 
-    def is_scene_evoking(self) -> bool:
+    def is_scene_verb(self) -> bool:
         """
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
