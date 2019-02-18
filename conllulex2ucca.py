@@ -180,7 +180,7 @@ class ConllulexToUccaConverter:
                     tags = self.map_label(node, edge)
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
                     node.set_extra(self.train)
-                    if any(edge.dep.is_analyzable() for edge in node.outgoing) or node.is_possessive_rel():
+                    if node.is_possessive_rel() or any(edge.dep.is_analyzable() for edge in node.outgoing):
                         # Intermediate head node for hierarchy
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
@@ -295,7 +295,7 @@ class ConllulexToUccaConverter:
 
                         def _unit_attrs(x):
                             return [x and x.ID, x and x.extra.get("tree_id"),
-                                    x and "|".join(getattr(x, "ftags", [x.ftag]) or ()),
+                                    x and "|".join(sorted(getattr(x, "ftags", [x.ftag]) or ())),
                                     _yes(x and len(x.terminals) > 1), x and str(x)]
 
                         terminals = reference_passage.layer(layer0.LAYER_ID).all
