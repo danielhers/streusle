@@ -512,12 +512,10 @@ class Node:
         """
         Determine if the node evokes a scene, which affects its UCCA category and the categories of units linked to it
         """
-        lemma = self.tok['lemma']
-        if self.tok["upos"] == "VERB":
-            return self.basic_deprel not in ("aux", "cop", "advcl", "conj", "discourse", "list", "parataxis") and (
-                    self.lexcat not in ("V.LVC.cause", "V.LVC.full")) and not (
-                    self.ss == "v.change" and lemma in ASPECT_VERBS)
-        return False
+        return self.tok["upos"] == "VERB" and (
+                self.basic_deprel not in ("aux", "cop", "advcl", "conj", "discourse", "list", "parataxis")) and (
+                self.lexcat not in ("V.LVC.cause", "V.LVC.full")) and not (
+                self.ss == "v.change" and self.tok['lemma'] in ASPECT_VERBS)
 
     def is_scene_noun(self) -> bool:
         if self.ss == "n.PERSON":
