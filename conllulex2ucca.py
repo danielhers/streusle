@@ -266,6 +266,8 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Quantifier]
         elif node.is_possessive_rel() or Categories.Adverbial in mapped and node.ss == "p.Approximator":
             mapped = [Categories.Elaborator]
+        elif node.head.is_scene_noun() and Categories.Elaborator in mapped:
+            mapped = [Categories.Adverbial]
         if basic_deprel == "vocative":
             mapped.append(Categories.Ground)
         return mapped
@@ -364,10 +366,6 @@ class ConllulexToUccaConverter:
                 if {Categories.ParallelScene, Categories.Linker}.intersection(edge.tags):
                     unit.fparent.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
                     unit.remove(edge)
-                elif unit.is_scene():
-                    for category in edge.categories:
-                        if category.tag == Categories.Elaborator:
-                            category.tag = Categories.Adverbial
         if unit.terminals and unit.punctuation:
             for child in unit.punctuation:
                 for grandchild in child.children:
