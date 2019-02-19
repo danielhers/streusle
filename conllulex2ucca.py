@@ -249,7 +249,15 @@ class ConllulexToUccaConverter:
             elif node.lexcat == "ADJ" or node.ss in ("n.STATE", "n.ATTRIBUTE", "n.FEELING"):
                 mapped = [Categories.State]
             elif node.tok["upos"] == "VERB":
-                if node.lexcat in ("V.LVC.full", "V.VID") or node.ss == "v.stative":
+                if node.ss == "v.stative":
+                    objs = [e.dep for e in node.outgoing if e.basic_deprel == "obj"]
+                    if objs and objs[0].is_scene_noun():
+                        mapped = [Categories.Function]
+                    elif node.lexlemma in ("be", "have"):
+                        mapped = [Categories.State]
+                    else:
+                        mapped = [Categories.Process]
+                elif node.lexcat in ("V.LVC.full", "V.VID"):
                     mapped = [Categories.Function]
                 elif node.lexcat == "V.LVC.cause":
                     mapped = [Categories.Adverbial]
