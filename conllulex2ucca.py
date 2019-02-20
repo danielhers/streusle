@@ -240,7 +240,7 @@ class ConllulexToUccaConverter:
             features = node.extract_features(basic_deprel=basic_deprel)
             if not self.train:
                 label = self.classifier.predict(self.one_hot_encoder.transform([features]))
-                return [ID2CATEGORY[np.asscalar(label)]]
+                return [ID2CATEGORY[np.item(label)]]
         mapped = [UD_TO_UCCA.get(basic_deprel, deprel)]
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
