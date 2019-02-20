@@ -263,6 +263,8 @@ class ConllulexToUccaConverter:
                     mapped = [Categories.Adverbial]
             elif node.is_possessive_rel():
                 mapped = [Categories.State, Categories.Participant]
+            elif node.is_copular_fragment():
+                mapped = [Categories.Participant]
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
@@ -274,8 +276,11 @@ class ConllulexToUccaConverter:
             mapped = [Categories.Quantifier]
         elif node.is_possessive_rel() or Categories.Adverbial in mapped and node.ss == "p.Approximator":
             mapped = [Categories.Elaborator]
-        elif node.head.is_scene_noun() and Categories.Elaborator in mapped:
-            mapped = [Categories.Adverbial]
+        elif Categories.Elaborator in mapped:
+            if node.head.is_scene_noun():
+                mapped = [Categories.Adverbial]
+            elif node.head.is_copular_fragment():
+                mapped = [Categories.State]
         if basic_deprel == "vocative":
             mapped.append(Categories.Ground)
         return mapped
@@ -537,6 +542,10 @@ class Node:
 
     def is_possessive_rel(self):
         return self.lexcat.endswith("POSS") and self.ss in ("p.SocialRel", "p.OrgRole")
+
+    def is_copular_fragment(self):
+        return self.tok["upos"] == "NOUN" and self.basic_deprel == "root" and not any(
+            e.basic_deprel in ("nsubj", "csubj", "expl") for e in self.outgoing)
 
     def extract_features(self, basic_deprel: Optional[str] = None) -> np.ndarray:
         self.features = np.array([
