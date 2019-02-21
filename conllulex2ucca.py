@@ -309,6 +309,8 @@ class ConllulexToUccaConverter:
                         def _unit_attrs(x):
                             return [x and x.ID, x and x.extra.get("tree_id"),
                                     x and "|".join(sorted(getattr(x, "ftags", [x.ftag]) or ())),
+                                    x and "|".join(sorted(t for e in x.incoming if e.attrib.get("remote")
+                                                          for t in e.tags)),
                                     _yes(x and len(x.terminals) > 1), x and str(x)]
 
                         terminals = reference_passage.layer(layer0.LAYER_ID).all
@@ -697,9 +699,9 @@ def main(args: argparse.Namespace) -> None:
         if args.report:
             report = open(args.report, "w", encoding="utf-8")
             print("sent_id", "text", "deprel", "upos", "expr_id", "expr_type", "lexcat", "ss", "ss2", "subtree",
-                  "ref_unit_id", "ref_tree_id", "ref_category", "ref_unanalyzable", "ref_annotation",
-                  "pred_unit_id", "pred_tree_id", "pred_category", "pred_unanalyzable", "pred_annotation",
-                  "pred_node", "pred_scene_noun",
+                  "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable", "ref_annotation",
+                  "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
+                  "pred_annotation", "pred_node", "pred_scene_noun",
                   file=report, sep="\t")
         else:
             report = None
