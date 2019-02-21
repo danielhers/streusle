@@ -208,7 +208,7 @@ class ConllulexToUccaConverter:
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
             parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
-            child = edge.dep.unit or l1.heads[0]
+            child = edge.dep.preterminal or l1.heads[0]
             if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
                 l1.add_remote_multiple(parent, self.map_label(edge.dep, edge), child)
 
