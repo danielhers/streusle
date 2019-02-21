@@ -382,11 +382,14 @@ class ConllulexToUccaConverter:
                 if {Categories.ParallelScene, Categories.Linker}.intersection(edge.tags):
                     unit.fparent.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
                     unit.remove(edge)
-        if unit.terminals and unit.punctuation:
-            for child in unit.punctuation:
-                for grandchild in child.children:
-                    unit.add(Categories.Terminal, grandchild)
-                unit.remove(child)
+        if unit.terminals:
+            for child in unit.children:
+                if child.layer.ID != layer0.LAYER_ID:
+                    for grandchild in child.children:
+                        unit.add(Categories.Terminal, grandchild)
+                    unit.remove(child)
+                    if not child.incoming:
+                        child.destroy()
         if not unit.centers and not unit.is_scene():
             for edge in unit:
                 for category in edge.categories:
