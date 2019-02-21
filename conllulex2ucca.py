@@ -207,11 +207,10 @@ class ConllulexToUccaConverter:
 
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
-            if edge.deprel != "ref":
-                parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
-                child = edge.dep.preterminal or l1.heads[0]
-                if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
-                    l1.add_remote_multiple(parent, self.map_label(edge.dep, edge), child)
+            parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
+            child = edge.dep.preterminal or l1.heads[0]
+            if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
+                l1.add_remote_multiple(parent, self.map_label(edge.dep, edge), child)
 
         # Link preterminals to terminals
         for node in tokens:
@@ -449,9 +448,10 @@ class Node:
         if self.tok:
             self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])]
             if enhanced:
-                self.incoming += [Edge(nodes[int(head)], self, deprel) for head, _, deprel in
+                self.incoming += [Edge(nodes[int(head)], self, deprel, enhanced=True) for head, _, deprel in
                                   [edep.partition(":") for edep in self.tok["edeps"].split("|")]
-                                  if "." not in head and int(head) != self.tok["head"] and deprel != self.tok["deprel"]]
+                                  if "." not in head and int(head) != self.tok["head"] and
+                                  deprel not in (self.tok["deprel"], "ref")]
         else:
             self.incoming = []
         for edge in self.incoming:
@@ -604,15 +604,17 @@ class Edge:
     Edge connecting two Nodes.
     """
 
-    def __init__(self, head: Node, dep: Node, deprel: str):
+    def __init__(self, head: Node, dep: Node, deprel: str, enhanced: bool = False):
         """
         :param head: Node this edge comes from
         :param dep: dependent (Node this edge goes to)
         :param deprel: dependency relation (edge label)
+        :param enhanced: whether this is an enhanced edge
         """
         self.head: Node = head
         self.dep: Node = dep
         self.deprel: str = deprel
+        self.enhanced: bool = enhanced
 
     @property
     def basic_deprel(self) -> Optional[str]:
@@ -640,19 +642,20 @@ def topological_sort(nodes: List[Node]) -> List[Node]:
     for node in nodes:
         node.level = None
         node.heads_visited = set()
-        if not node.outgoing:  # Start from the leaves
+        if all(edge.enhanced for edge in node.outgoing):  # Start from the leaves
             remaining.append(node)
     while remaining:
         node = remaining.pop()
         if node.level is None:  # Not done with this node yet
+            incoming = [edge for edge in node.incoming if not edge.enhanced]
             if node.incoming:  # Got a head
-                remaining_heads = [edge.head for edge in node.incoming
-                                   if edge.head.level is None and edge.head not in node.heads_visited]
+                remaining_heads = [edge.head for edge in incoming if
+                                   edge.head.level is None and edge.head not in node.heads_visited]
                 if remaining_heads:
                     node.heads_visited.update(remaining_heads)  # To avoid cycles
                     remaining += [node] + remaining_heads
                     continue
-                node.level = 1 + max(edge.head.level or 0 for edge in node.incoming)  # Done with heads
+                node.level = 1 + max(edge.head.level or 0 for edge in incoming)  # Done with heads
             else:  # Root
                 node.level = 0
             levels.setdefault(node.level, set()).add(node)
