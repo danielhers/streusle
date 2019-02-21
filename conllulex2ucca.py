@@ -98,7 +98,7 @@ def read_amr_roles(role_type):
         except OSError as e:
             raise IOError(f"Must download {url} and have it in the current directory when running the script") from e
     with open(file_name) as f:
-        return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith("#")]
+        return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith(("#", "MAYBE"))]
 
 
 AMR_ROLE = sum((read_amr_roles(role_type) for role_type in ("org", "rel")), [])
