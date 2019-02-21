@@ -445,7 +445,7 @@ class Node:
             if enhanced:
                 self.incoming += [Edge(nodes[int(head)], self, deprel) for head, _, deprel in
                                   [edep.partition(":") for edep in self.tok["edeps"].split("|")]
-                                  if int(head) != self.tok["head"] and deprel != self.tok["deprel"]]
+                                  if "." not in head and int(head) != self.tok["head"] and deprel != self.tok["deprel"]]
         else:
             self.incoming = []
         for edge in self.incoming:
