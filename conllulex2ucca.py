@@ -441,11 +441,11 @@ class Node:
         :param enhanced: whether to use enhanced dependencies rather than basic dependencies
         """
         if self.tok:
+            self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])]
             if enhanced:
-                self.incoming = [Edge(nodes[int(head)], self, deprel) for head, _, deprel in
-                                 [edep.partition(":") for edep in self.tok["edeps"].split("|")]]
-            else:
-                self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])]
+                self.incoming += [Edge(nodes[int(head)], self, deprel) for head, _, deprel in
+                                  [edep.partition(":") for edep in self.tok["edeps"].split("|")]
+                                  if int(head) != self.tok["head"] and deprel != self.tok["deprel"]]
         else:
             self.incoming = []
         for edge in self.incoming:
