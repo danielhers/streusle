@@ -78,7 +78,7 @@ ALL_UPOS = [
 ]
 LINKERS = [
     "additionally", "after", "already", "also", "although", "anytime", "anyway", "anyways", "as", "because", "before",
-    "but", "by", "cause", "during", "either", "esp", "especially", "etc.", "even", "except", "finally", "first",
+    "but", "cause", "during", "either", "esp", "especially", "etc.", "even", "except", "finally", "first",
     "firstly", "hence", "how", "however", "if", "including", "just", "knowing", "left", "next",
     "only", "overall", "respectively", "seeing", "since", "so", "still", "than", "then", "therefore", "though",
     "throughout", "thus", "too", "unfortunately", "unless", "until", "upon", "well", "what", "when", "whenever",
@@ -268,8 +268,8 @@ class ConllulexToUccaConverter:
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
-        elif Categories.Adverbial not in mapped and (node.lexlemma in LINKERS or node.lexcat == "DISC" or
-                                                     node.ss == "p.Purpose"):
+        elif not {Categories.Adverbial, Categories.Relator}.intersection(mapped) and (
+                node.lexlemma in LINKERS or node.lexcat == "DISC" or node.ss == "p.Purpose"):
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
             mapped = [Categories.Time]
