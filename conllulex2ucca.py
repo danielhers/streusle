@@ -282,6 +282,8 @@ class ConllulexToUccaConverter:
                 mapped = [Categories.Adverbial]
             elif node.head.is_copular_fragment():
                 mapped = [Categories.State]
+        elif basic_deprel == "mark" and node.lexlemma != "to":
+            mapped = [Categories.Relator]
         if basic_deprel == "vocative":
             mapped.append(Categories.Ground)
         return mapped
