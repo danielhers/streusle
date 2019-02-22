@@ -268,7 +268,8 @@ class ConllulexToUccaConverter:
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
-        elif Categories.Adverbial not in mapped and (node.lexlemma in LINKERS or node.lexcat == "DISC"):
+        elif Categories.Adverbial not in mapped and (node.lexlemma in LINKERS or node.lexcat == "DISC" or
+                                                     node.ss == "p.Purpose"):
             mapped = [Categories.Linker]
         elif node.ss == 'n.TIME':
             mapped = [Categories.Time]
@@ -317,7 +318,7 @@ class ConllulexToUccaConverter:
                         fields = [
                             reference_passage.ID,
                             _join("word") or " ".join(terminals.by_position(p).text for p in sorted(positions)),
-                            _join("deprel"), _join("upos"),
+                            _join("deprel"), _join("upos"), _join("edeps"),
                             expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
                             _yes(len({tok["head"] for tok in tokens} - positions) <= 1),
                         ]
@@ -705,9 +706,9 @@ def main(args: argparse.Namespace) -> None:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.report:
             report = open(args.report, "w", encoding="utf-8")
-            print("sent_id", "text", "deprel", "upos", "expr_id", "expr_type", "lexcat", "ss", "ss2", "subtree",
-                  "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable", "ref_annotation",
-                  "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
+            print("sent_id", "text", "deprel", "upos", "edeps", "expr_id", "expr_type", "lexcat", "ss", "ss2",
+                  "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable",
+                  "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
                   "pred_annotation", "pred_node", "pred_scene_noun",
                   file=report, sep="\t")
         else:
