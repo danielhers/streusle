@@ -54,6 +54,7 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [  # 
     ("func=/.*/;func=/conj/;func=/parataxis|root/", "#1>#3;#3>#2", "#1>#2"),  # raise conj over parataxis, root
     ("func=/.*/;func=/parataxis/;func=/root/", "#1>#3;#3>#2", "#1>#2"),  # raise parataxis over root
 ]]
+DEPEDIT_TRANSFORMED_DEPRELS = {"cc", "mark", "advcl", "appos", "conj", "parataxis"}
 UNANALYZABLE_DEPREL = {  # UD dependency relations whose dependents are grouped with the heads as unanalyzable units
     "flat", "fixed", "goeswith",
 }
@@ -460,10 +461,11 @@ class Node:
         if self.tok:
             self.incoming = [Edge(nodes[self.tok["head"]], self, self.tok["deprel"])]
             if enhanced:
+                # DepEdit does not modify enhanced dependencies. Avoid adding back stale edeps by filtering them.
+                excluded = DEPEDIT_TRANSFORMED_DEPRELS.intersection({self.tok["deprel"]}) | {"ref"}
                 self.incoming += [Edge(nodes[int(head)], self, deprel, enhanced=True) for head, _, deprel in
                                   [edep.partition(":") for edep in self.tok["edeps"].split("|")]
-                                  if "." not in head and int(head) != self.tok["head"] and
-                                  deprel not in (self.tok["deprel"], "ref")]
+                                  if "." not in head and int(head) != self.tok["head"] and deprel not in excluded]
         else:
             self.incoming = []
         for edge in self.incoming:
