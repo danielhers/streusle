@@ -185,13 +185,14 @@ class ConllulexToUccaConverter:
                     tags = self.map_label(node, edge)
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
                     node.set_extra(self.train)
-                    possessive = node.is_possessive_rel() and not node.head.is_scene_noun()
-                    if possessive or any(edge.dep.is_analyzable() for edge in node.outgoing):
+                    sub_scene = node.is_possessive_rel() and not node.head.is_scene_noun() or \
+                        node.basic_deprel == "amod"
+                    if sub_scene or any(edge.dep.is_analyzable() for edge in node.outgoing):
                         # Intermediate head node for hierarchy
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
                         node.set_extra(self.train)
-                    if possessive:
+                    if sub_scene:
                         remote_edges.append(Edge(edge.dep, edge.head, Categories.Participant))
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
@@ -256,7 +257,8 @@ class ConllulexToUccaConverter:
         if Categories.Center in mapped:
             if node.is_scene_verb() or node.is_scene_noun() or node.lexcat == "DISC":
                 mapped = [Categories.Process]
-            elif node.lexcat == "ADJ" or node.ss in ("n.STATE", "n.ATTRIBUTE", "n.FEELING"):
+            elif node.lexcat == "ADJ" or node.basic_deprel == "amod" or node.ss in (
+                    "n.STATE", "n.ATTRIBUTE", "n.FEELING"):
                 mapped = [Categories.State]
             elif node.tok["upos"] == "VERB":
                 if node.ss == "v.stative":
