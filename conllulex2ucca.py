@@ -277,6 +277,8 @@ class ConllulexToUccaConverter:
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
+        elif basic_deprel == "compound" and node.head.is_scene_noun():
+            mapped = [Categories.Participant]
         elif not {Categories.Adverbial, Categories.Relator}.intersection(mapped) and (
                 node.lexlemma in LINKERS or node.lexcat == "DISC" or node.ss == "p.Purpose"):
             mapped = [Categories.Linker]
