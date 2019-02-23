@@ -185,6 +185,8 @@ class ConllulexToUccaConverter:
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
                         node.set_extra(self.train)
+                    if node.is_possessive_rel():
+                        remote_edges.append(Edge(edge.dep, edge.head, Categories.Participant))
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
                     node.unit = edge.head.unit
