@@ -86,6 +86,9 @@ LINKERS = [
     "throughout", "thus", "too", "unfortunately", "unless", "until", "upon", "well", "what", "when", "whenever",
     "where", "whether", "which", "while", "who", "without", "yet",
 ]
+LOCATIVE_PRO_ADVERBS = [
+    "here", "there", "nowhere", "somewhere", "anywhere", "everywhere",
+]
 MWE_TYPES = ("swes", "smwes", "wmwes")
 TOP_LEVEL_CATEGORIES = {Categories.Linker, Categories.ParallelScene, Categories.Function, Categories.Ground,
                         Categories.Punctuation}
@@ -290,6 +293,8 @@ class ConllulexToUccaConverter:
                 mapped = [Categories.State]
         elif basic_deprel == "mark" and node.lexlemma != "to":
             mapped = [Categories.Relator]
+        elif Categories.Adverbial in mapped and node.lexlemma in LOCATIVE_PRO_ADVERBS:
+            mapped = [Categories.Participant]
         if basic_deprel == "vocative":
             mapped.append(Categories.Ground)
         return mapped
