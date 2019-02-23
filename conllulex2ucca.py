@@ -208,7 +208,7 @@ class ConllulexToUccaConverter:
         # Create remote edges if there are any reentrancies (none if not using enhanced deps)
         for edge in remote_edges:
             parent = edge.head.unit or l1.heads[0]  # Use UCCA root if no unit set for node
-            child = edge.dep.preterminal or l1.heads[0]
+            child = edge.dep.preterminal
             if child not in parent.children and parent not in child.iter():  # Avoid cycles and multi-edges
                 l1.add_remote_multiple(parent, self.map_label(edge.dep, edge), child)
 
@@ -382,7 +382,8 @@ class ConllulexToUccaConverter:
         if unit.is_scene() or Categories.ParallelScene in (unit.ftags or ()):
             for edge in unit.outgoing:
                 if {Categories.ParallelScene, Categories.Linker}.intersection(edge.tags):
-                    unit.fparent.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
+                    if not edge.attrib.get("remote"):
+                        unit.fparent.add_multiple([(tag,) for tag in edge.tags], edge.child, edge_attrib=edge.attrib)
                     unit.remove(edge)
         if unit.terminals:
             for child in unit.children:
@@ -397,6 +398,10 @@ class ConllulexToUccaConverter:
                 for category in edge.categories:
                     if category.tag == Categories.Connector:
                         category.tag = Categories.Center
+        for edge in unit.outgoing:
+            if edge.attrib.get("remote") and \
+                    {Categories.ParallelScene, Categories.Connector, Categories.Linker}.intersection(edge.tags):
+                unit.remove(edge)
 
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
