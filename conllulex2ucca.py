@@ -185,12 +185,13 @@ class ConllulexToUccaConverter:
                     tags = self.map_label(node, edge)
                     node.unit = node.preterminal = l1.add_fnode_multiple(edge.head.unit, [(tag,) for tag in tags])
                     node.set_extra(self.train)
-                    if node.is_possessive_rel() or any(edge.dep.is_analyzable() for edge in node.outgoing):
+                    possessive = node.is_possessive_rel() and not node.head.is_scene_noun()
+                    if possessive or any(edge.dep.is_analyzable() for edge in node.outgoing):
                         # Intermediate head node for hierarchy
                         tags = self.map_label(node)
                         node.preterminal = l1.add_fnode_multiple(node.preterminal, [(tag,) for tag in tags])
                         node.set_extra(self.train)
-                    if node.is_possessive_rel():
+                    if possessive:
                         remote_edges.append(Edge(edge.dep, edge.head, Categories.Participant))
                 else:  # Unanalyzable: share preterminal with head
                     node.preterminal = edge.head.preterminal
@@ -277,7 +278,7 @@ class ConllulexToUccaConverter:
         elif basic_deprel == "conj":
             if node.head.unit and Categories.ParallelScene not in node.head.unit.ftags:
                 mapped = [Categories.Center]
-        elif basic_deprel == "compound" and node.head.is_scene_noun():
+        elif (basic_deprel == "compound" or node.lexcat.endswith("POSS")) and node.head.is_scene_noun():
             mapped = [Categories.Participant]
         elif not {Categories.Adverbial, Categories.Relator}.intersection(mapped) and (
                 node.lexlemma in LINKERS or node.lexcat == "DISC" or node.ss == "p.Purpose"):
