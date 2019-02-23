@@ -390,7 +390,9 @@ class ConllulexToUccaConverter:
             for edge in unit:
                 for category in edge.categories:
                     if category.tag == Categories.Linker:
-                        category.tag = Categories.Relator if unit.is_scene() else Categories.Connector
+                        category.tag = Categories.Relator if unit.is_scene() and \
+                                                             unit.start_position == edge.child.start_position else \
+                                                             Categories.Connector
         if not unit.incoming:
             for edge in unit:
                 for category in edge.categories:
