@@ -373,7 +373,7 @@ class ConllulexToUccaConverter:
             for edge in unit:
                 for category in edge.categories:
                     if category.tag == Categories.Linker:
-                        category.tag = Categories.Connector
+                        category.tag = Categories.Relator if unit.is_scene() else Categories.Connector
         if not unit.incoming:
             for edge in unit:
                 for category in edge.categories:
