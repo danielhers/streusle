@@ -370,7 +370,7 @@ class ConllulexToUccaConverter:
             for edge in unit:
                 for category in edge.categories:
                     if category.tag in (Categories.Process, Categories.State, Categories.Adverbial):
-                        category.tag = Categories.Elaborator
+                        category.tag = Categories.Center if unit.connector or unit.linkers else Categories.Elaborator
         if unit.parallel_scenes:
             for edge in unit:
                 for category in edge.categories:
