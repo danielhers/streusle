@@ -9,6 +9,7 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 """
 
 import argparse
+import csv
 import os
 import sys
 import urllib.request
@@ -293,7 +294,8 @@ class ConllulexToUccaConverter:
             mapped.append(Categories.Ground)
         return mapped
 
-    def evaluate(self, converted_passage, sent, reference_passage, report=None):
+    def evaluate(self, converted_passage: core.Passage, sent: dict, reference_passage: core.Passage,
+                 report: Optional[csv.writer] = None):
         if report or self.train:
             toks = {tok["#"]: tok for tok in sent["toks"]}
             exprs = {frozenset(expr["toknums"]): (expr_id, expr_type, expr) for expr_type in ("swes", "smwes", "wmwes")
@@ -334,7 +336,7 @@ class ConllulexToUccaConverter:
                             pred_unit and pred_unit.extra.pop("node", None) or "",
                             _yes(pred_unit and pred_unit.extra.pop("scene_noun", None))
                         ]
-                        print(*[f or "" for f in fields], file=report, sep="\t")
+                        report.writerow([f or "" for f in fields])
                     if self.train and ref_unit and pred_unit and ref_unit.ftag:
                         features = pred_unit.extra.pop("features", None)
                         if features:
@@ -718,20 +720,21 @@ def main(args: argparse.Namespace) -> None:
     if args.evaluate or args.train:
         passages = ((converted.get(ref_passage.ID), ref_passage) for ref_passage in get_passages(args.evaluate))
         if args.report:
-            report = open(args.report, "w", encoding="utf-8")
-            print("sent_id", "text", "deprel", "upos", "edeps", "expr_id", "expr_type", "lexcat", "ss", "ss2",
-                  "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable",
-                  "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
-                  "pred_annotation", "pred_node", "pred_scene_noun",
-                  file=report, sep="\t")
+            report_f = open(args.report, "w", encoding="utf-8", newline="")
+            report = csv.writer(report_f, delimiter="\t")
+            report.writerow([
+                "sent_id", "text", "deprel", "upos", "edeps", "expr_id", "expr_type", "lexcat", "ss", "ss2",
+                "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable",
+                "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
+                "pred_annotation", "pred_node", "pred_scene_noun"])
         else:
-            report = None
+            report_f = report = None
         scores = [converter.evaluate(converted_passage, sent, reference_passage, report)
                   for (converted_passage, sent), reference_passage in
                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
         converter.fit()
-        if report:
-            report.close()
+        if report_f:
+            report_f.close()
         evaluation.Scores.aggregate(scores).print()
         print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).",
               file=sys.stderr)
