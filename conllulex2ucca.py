@@ -147,22 +147,8 @@ class ConllulexToUccaConverter:
         :param sent: conllulex2json sentence dict, containing "sent_id" and "toks"
         :return: UCCA Passage where each Terminal corresponds to a token from the original sentence
         """
-        # Apply pre-conversion transformations to dependency tree
-        toks = sent["toks"]
-        parsed_tokens = [tok2depedit(tok) for tok in toks]
-        self.depedit.process_sentence(parsed_tokens)
-        for tok, parsed_token in zip(toks, parsed_tokens):  # Take transformed properties and update tokens accordingly
-            tok.update(depedit2tok(parsed_token))
-
-        # Create passage
-        passage = core.Passage(ID=sent[SENT_ID].replace("reviews-", ""))
-
-        # Create terminals
-        l0 = layer0.Layer0(passage)
-        tokens = [Token(tok, l0) for tok in toks]
-        nodes = [Node(None)] + tokens  # Prepend root
-        for node in nodes:  # Link heads to dependents
-            node.link(nodes, enhanced=self.enhanced)
+        toks = self.depedit_transform(sent)
+        passage, nodes, tokens = self.create_passage(sent, toks)
 
         # Link tokens to their single/multi-word expressions and vice versa
         exprs = {expr_type: sent[expr_type].values() for expr_type in MWE_TYPES}
@@ -232,6 +218,26 @@ class ConllulexToUccaConverter:
             self.postprocess(unit)
 
         return passage
+
+    def create_passage(self, sent, toks):
+        # Create passage
+        passage = core.Passage(ID=sent[SENT_ID].replace("reviews-", ""))
+        # Create terminals
+        l0 = layer0.Layer0(passage)
+        tokens = [Token(tok, l0) for tok in toks]
+        nodes = [Node(None)] + tokens  # Prepend root
+        for node in nodes:  # Link heads to dependents
+            node.link(nodes, enhanced=self.enhanced)
+        return passage, nodes, tokens
+
+    def depedit_transform(self, sent):
+        # Apply pre-conversion transformations to dependency tree
+        toks = sent["toks"]
+        parsed_tokens = [tok2depedit(tok) for tok in toks]
+        self.depedit.process_sentence(parsed_tokens)
+        for tok, parsed_token in zip(toks, parsed_tokens):  # Take transformed properties and update tokens accordingly
+            tok.update(depedit2tok(parsed_token))
+        return toks
 
     def map_label(self, node: "Node", edge: Optional["Edge"] = None) -> List[str]:
         """
@@ -713,13 +719,17 @@ class ConcatenatedFiles:
 
 
 def main(args: argparse.Namespace) -> None:
+    converter = ConllulexToUccaConverter(**vars(args))
+    run(args, converter)
+
+
+def run(args, converter):
     if args.train and not args.model:
         argparser.error("--train requires --model")
     if args.report and not args.evaluate:
         argparser.error("--report requires --evaluate")
     os.makedirs(args.out_dir, exist_ok=True)
     sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
-    converter = ConllulexToUccaConverter(**vars(args))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
         passage = converter.convert(sent)
@@ -752,19 +762,23 @@ def main(args: argparse.Namespace) -> None:
               file=sys.stderr)
 
 
+def add_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument("filenames", nargs="+", help=".conllulex or .json STREUSLE file name(s) to convert")
+    parser.add_argument("-o", "--out-dir", default=".", help="output directory")
+    parser.add_argument("-f", "--format", choices=("xml", "pickle", "json"), default="xml", help="output format")
+    parser.add_argument("-v", "--verbose", action="store_true", help="extra information")
+    parser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
+    parser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
+    parser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
+    parser.add_argument("-t", "--train", action="store_true", help="train model to predict UCCA categories")
+    parser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
+    parser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
+    parser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
+    parser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
+    parser.add_argument("--model", help="input/output filename for model predicting UCCA categories")
+
+
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description="Convert .conllulex files to UCCA")
-    argparser.add_argument("filenames", nargs="+", help=".conllulex or .json STREUSLE file name(s) to convert")
-    argparser.add_argument("-o", "--out-dir", default=".", help="output directory")
-    argparser.add_argument("-f", "--format", choices=("xml", "pickle", "json"), default="xml", help="output format")
-    argparser.add_argument("-v", "--verbose", action="store_true", help="extra information")
-    argparser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
-    argparser.add_argument("-e", "--enhanced", action="store_true", help="use enhanced dependencies rather than basic")
-    argparser.add_argument("-m", "--map-labels", action="store_true", help="predict UCCA categories for edge labels")
-    argparser.add_argument("-t", "--train", action="store_true", help="train model to predict UCCA categories")
-    argparser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
-    argparser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
-    argparser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
-    argparser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
-    argparser.add_argument("--model", help="input/output filename for model predicting UCCA categories")
+    add_arguments(argparser)
     main(argparser.parse_args())
