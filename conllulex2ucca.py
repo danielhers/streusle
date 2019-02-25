@@ -13,7 +13,7 @@ import csv
 import os
 import sys
 import urllib.request
-from itertools import zip_longest
+from itertools import zip_longest, groupby
 from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
 
@@ -316,14 +316,16 @@ class ConllulexToUccaConverter:
             toks = {tok["#"]: tok for tok in sent["toks"]}
             exprs = {frozenset(expr["toknums"]): (expr_id, expr_type, expr) for expr_type in ("swes", "smwes", "wmwes")
                      for expr_id, expr in sent[expr_type].items()}
-            converted_units, reference_units = [{evaluation.get_yield(unit): unit
-                                                 for unit in passage.layer(layer1.LAYER_ID).all}
+            converted_units, reference_units = [{positions: list(units) for positions, units in
+                                                 groupby(sorted(passage.layer(layer1.LAYER_ID).all,
+                                                                key=evaluation.get_yield),
+                                                         key=evaluation.get_yield)}
                                                 for passage in (converted_passage, reference_passage)]
             for positions in sorted(set(exprs).union(converted_units).union(reference_units)):
                 if positions:
                     expr_id, expr_type, expr = exprs.get(positions, ("", "", {}))
-                    ref_unit = reference_units.get(positions)
-                    pred_unit = converted_units.get(positions)
+                    ref_units = reference_units.get(positions, [])
+                    pred_units = converted_units.get(positions, [])
                     tokens = [toks[i] for i in sorted(positions)]
                     if report:
                         def _join(k):
@@ -332,12 +334,13 @@ class ConllulexToUccaConverter:
                         def _yes(x):
                             return "Yes" if x else ""
 
-                        def _unit_attrs(x):
-                            return [x and x.ID, x and x.extra.get("tree_id"),
-                                    x and "|".join(sorted(getattr(x, "ftags", [x.ftag]) or ())),
-                                    x and "|".join(sorted(t for e in x.incoming if e.attrib.get("remote")
-                                                          for t in e.tags)),
-                                    _yes(x and len(x.terminals) > 1), x and str(x)]
+                        def _unit_attrs(xs):
+                            return [", ".join(x.ID for x in xs),
+                                    ", ".join(map(str, filter(None, (x.extra.get("tree_id") for x in xs)))),
+                                    "|".join(sorted(t for x in xs for t in getattr(x, "ftags", [x.ftag]) or ())),
+                                    "|".join(sorted(t for x in xs for e in x.incoming if e.attrib.get("remote")
+                                                    for t in e.tags)),
+                                    _yes(len([t for x in xs for t in x.terminals]) > 1), ", ".join(map(str, xs))]
 
                         terminals = reference_passage.layer(layer0.LAYER_ID).all
                         fields = [
@@ -347,17 +350,20 @@ class ConllulexToUccaConverter:
                             expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
                             _yes(len({tok["head"] for tok in tokens} - positions) <= 1),
                         ]
-                        fields += _unit_attrs(ref_unit) + _unit_attrs(pred_unit)
+                        fields += _unit_attrs(ref_units) + _unit_attrs(pred_units)
                         fields += [
-                            pred_unit and pred_unit.extra.pop("node", None) or "",
-                            _yes(pred_unit and pred_unit.extra.pop("scene_noun", None))
+                            next(filter(None, (x.extra.pop("node", None) for x in pred_units)), None) or "",
+                            _yes(any(x.extra.pop("scene_noun", None) for x in pred_units))
                         ]
                         report.writerow([f or "" for f in fields])
-                    if self.train and ref_unit and pred_unit and ref_unit.ftag:
-                        features = pred_unit.extra.pop("features", None)
-                        if features:
-                            self.features.append(features)
-                            self.labels.append(CATEGORY2ID[ref_unit.ftag])
+                    if self.train and ref_units and pred_units:
+                        for pred_unit in pred_units:
+                            features = pred_unit.extra.pop("features", None)
+                            if features:
+                                for ref_unit in ref_units:
+                                    if ref_unit.ftag:
+                                        self.features.append(features)
+                                        self.labels.append(CATEGORY2ID[ref_unit.ftag])
         return evaluation.evaluate(converted_passage, reference_passage)
 
     def fit(self):
