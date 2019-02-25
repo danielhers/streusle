@@ -365,10 +365,9 @@ class ConllulexToUccaConverter:
                                     if ref_unit.ftag:
                                         self.features.append(features)
                                         self.labels.append(CATEGORY2ID[ref_unit.ftag])
-        return (evaluation.evaluate(converted_passage, reference_passage),
-                " ".join(t.text for t in sorted(reference_passage.layer(layer0.LAYER_ID).all,
-                                                key=attrgetter("position"))),
-                str(converted_passage), str(reference_passage))
+        return (evaluation.evaluate(converted_passage, reference_passage), reference_passage.ID,
+                " ".join(t.text for t in sorted(reference_passage.layer(layer0.LAYER_ID).all, key=attrgetter(
+                    "position"))), str(converted_passage), str(reference_passage))
 
     def fit(self):
         if self.train:
@@ -772,7 +771,7 @@ def run(args, converter):
         prefix = re.sub(r"(^\./*)|(/$)", "", args.out_dir)
         with open(prefix + ".scores.tsv", "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow(summary.titles() + ["text", "pred", "ref"])
+            writer.writerow(summary.titles() + ["ID", "text", "pred", "ref"])
             for result, *fields in results:
                 writer.writerow(result.fields() + fields)
         with open(prefix + ".summary.tsv", "w", encoding="utf-8", newline="") as f:
