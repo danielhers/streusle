@@ -11,6 +11,7 @@ If the script is called directly, outputs the data as XML, Pickle or JSON files.
 import argparse
 import csv
 import os
+import re
 import sys
 import urllib.request
 from itertools import zip_longest, groupby
@@ -364,7 +365,10 @@ class ConllulexToUccaConverter:
                                     if ref_unit.ftag:
                                         self.features.append(features)
                                         self.labels.append(CATEGORY2ID[ref_unit.ftag])
-        return evaluation.evaluate(converted_passage, reference_passage)
+        return (evaluation.evaluate(converted_passage, reference_passage),
+                " ".join(t.text for t in sorted(reference_passage.layer(layer0.LAYER_ID).all,
+                                                key=attrgetter("position"))),
+                str(converted_passage), str(reference_passage))
 
     def fit(self):
         if self.train:
@@ -757,15 +761,26 @@ def run(args, converter):
                 "pred_annotation", "pred_node", "pred_scene_noun"])
         else:
             report_f = report = None
-        scores = [converter.evaluate(converted_passage, sent, reference_passage, report)
-                  for (converted_passage, sent), reference_passage in
-                  tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
+        results = [converter.evaluate(converted_passage, sent, reference_passage, report)
+                   for (converted_passage, sent), reference_passage in
+                   tqdm(filter(itemgetter(0), passages), unit=" passages", desc="Evaluating", total=len(converted))]
         converter.fit()
         if report_f:
             report_f.close()
-        evaluation.Scores.aggregate(scores).print()
-        print(f"Evaluated {len(scores)} out of {len(converted)} sentences ({100 * len(scores) / len(converted):.2f}%).",
-              file=sys.stderr)
+        summary = evaluation.Scores.aggregate(s for s, *_ in results)
+        summary.print()
+        prefix = re.sub(r"(^\./*)|(/$)", "", args.out_dir)
+        with open(prefix + ".scores.tsv", "w", encoding="utf-8", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")
+            writer.writerow(summary.titles() + ["text", "pred", "ref"])
+            for result, *fields in results:
+                writer.writerow(result.fields() + fields)
+        with open(prefix + ".summary.tsv", "w", encoding="utf-8", newline="") as f:
+            writer = csv.writer(f, delimiter="\t")
+            writer.writerow(summary.titles())
+            writer.writerow(summary.fields())
+        print(f"Evaluated {len(results)} out of {len(converted)} sentences "
+              f"({100 * len(results) / len(converted):.2f}%).", file=sys.stderr)
 
 
 def add_arguments(parser: argparse.ArgumentParser):
