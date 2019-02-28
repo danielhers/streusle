@@ -91,6 +91,8 @@ LINKERS = [
 LOCATIVE_PRO_ADVERBS = [
     "here", "there", "nowhere", "somewhere", "anywhere", "everywhere",
 ]
+FUNCTION_MARKERS = ("to",)
+STATE_VERBS = ("be", "have")
 MWE_TYPES = ("swes", "smwes", "wmwes")
 TOP_LEVEL_CATEGORIES = {Categories.Linker, Categories.ParallelScene, Categories.Function, Categories.Ground,
                         Categories.Punctuation}
@@ -273,7 +275,7 @@ class ConllulexToUccaConverter:
                     objs = [e.dep for e in node.outgoing if e.basic_deprel == "obj"]
                     if objs and objs[0].is_scene_noun():
                         mapped = [Categories.Function]
-                    elif node.lexlemma in ("be", "have"):
+                    elif node.lexlemma in STATE_VERBS:
                         mapped = [Categories.State]
                     else:
                         mapped = [Categories.Process]
@@ -304,7 +306,7 @@ class ConllulexToUccaConverter:
                 mapped = [Categories.Adverbial]
             elif node.head.is_copular_fragment():
                 mapped = [Categories.State]
-        elif basic_deprel == "mark" and node.lexlemma != "to":
+        elif basic_deprel == "mark" and node.lexlemma not in FUNCTION_MARKERS:
             mapped = [Categories.Relator]
         elif Categories.Adverbial in mapped and node.lexlemma in LOCATIVE_PRO_ADVERBS:
             mapped = [Categories.Participant]
