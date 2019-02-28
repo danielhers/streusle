@@ -594,7 +594,7 @@ class Node:
         return self.lexcat.endswith("POSS") and self.ss in ("p.SocialRel", "p.OrgRole")
 
     def is_copular_fragment(self):
-        return self.tok["upos"] == "NOUN" and self.basic_deprel == "root" and not any(
+        return self.tok and self.tok["upos"] == "NOUN" and self.basic_deprel == "root" and not any(
             e.basic_deprel in ("nsubj", "csubj", "expl") for e in self.outgoing)
 
     def extract_features(self, basic_deprel: Optional[str] = None) -> np.ndarray:
