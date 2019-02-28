@@ -543,7 +543,7 @@ class Node:
             ss = expr.get("ss")
             if ss:
                 return ss
-        return None
+        return ""
 
     @property
     def lexcat(self) -> Optional[str]:
@@ -551,7 +551,7 @@ class Node:
             lexcat = expr.get("lexcat")
             if lexcat:
                 return lexcat
-        return None
+        return ""
 
     @property
     def lexlemma(self) -> Optional[str]:
@@ -559,7 +559,7 @@ class Node:
             lexlemma = expr.get("lexlemma")
             if lexlemma:
                 return lexlemma
-        return None
+        return ""
 
     def is_analyzable(self) -> bool:
         """
