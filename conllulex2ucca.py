@@ -26,6 +26,7 @@ from sklearn.externals import joblib
 from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
+from ucca.evaluation import UNLABELED, LABELED
 from ucca.ioutil import get_passages
 from ucca.layer1 import EdgeTags as Categories
 from ucca.normalization import normalize
@@ -776,8 +777,8 @@ def run(args, converter):
                 writer.writerow(result.fields() + fields)
         with open(prefix + ".summary.tsv", "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
-            writer.writerow(summary.titles())
-            writer.writerow(summary.fields())
+            writer.writerow(summary.titles(LABELED) + summary.titles(UNLABELED))
+            writer.writerow(summary.fields(LABELED) + summary.fields(UNLABELED))
         print(f"Evaluated {len(results)} out of {len(converted)} sentences "
               f"({100 * len(results) / len(converted):.2f}%).", file=sys.stderr)
 
