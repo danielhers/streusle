@@ -187,7 +187,7 @@ class ConllulexToUccaConverter:
                     node.unit = edge.head.unit
 
         # Join strong multi-word expressions to one unanalyzable unit
-        for smwe in exprs["smwes"]:
+        for smwe in exprs.get("smwes", ()):
             smwe_nodes = smwe["nodes"]
             head = min(smwe_nodes, key=sorted_nodes.index)  # Highest in the tree
             if (smwe["lexcat"], smwe["ss"]) in UNANALYZABLE_MWE_LEXCAT_SS:
