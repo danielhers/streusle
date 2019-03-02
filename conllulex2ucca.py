@@ -266,7 +266,7 @@ class ConllulexToUccaConverter:
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
             if node.is_scene_verb() or node.is_scene_noun() or node.lexcat == "DISC":
-                mapped = [Categories.Process]
+                mapped = [Categories.State] if node.lexlemma in AMR_ROLE else [Categories.Process]
             elif (node.lexcat == "ADJ" or node.basic_deprel == "amod" or node.ss in (
                     "n.STATE", "n.ATTRIBUTE", "n.FEELING")) and not node.head.is_scene_noun():
                 mapped = [Categories.State]
