@@ -110,7 +110,7 @@ def read_amr_roles(role_type):
         return [line.split()[1] for line in map(str.strip, f) if line and not line.startswith(("#", "MAYBE"))]
 
 
-AMR_ROLE = sum((read_amr_roles(role_type) for role_type in ("org", "rel")), [])
+AMR_ROLE = {role_type: read_amr_roles(role_type) for role_type in ("org", "rel")}
 ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
 RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
 
@@ -266,7 +266,7 @@ class ConllulexToUccaConverter:
         # Use supersenses to find Scene-evoking phrases and select labels accordingly
         if Categories.Center in mapped:
             if node.is_scene_verb() or node.is_scene_noun() or node.lexcat == "DISC":
-                mapped = [Categories.State] if node.lexlemma in AMR_ROLE else [Categories.Process]
+                mapped = [Categories.State] if node.lexlemma in AMR_ROLE["rel"] else [Categories.Process]
             elif (node.lexcat == "ADJ" or node.basic_deprel == "amod" or node.ss in (
                     "n.STATE", "n.ATTRIBUTE", "n.FEELING")) and not node.head.is_scene_noun():
                 mapped = [Categories.State]
@@ -586,7 +586,7 @@ class Node:
         if self.ss == "n.PERSON":
             lemma = self.tok['lemma']
             return not self.is_proper_noun() and (lemma.endswith(RELATIONAL_PERSON_SUFFIXES) or
-                                                  lemma in AMR_ROLE + RELNOUNS)
+                                                  lemma in AMR_ROLE["rel"] + AMR_ROLE["org"] + RELNOUNS)
         return self.ss in ("n.ACT", "n.EVENT", "n.PHENOMENON", "n.PROCESS")
 
     def is_proper_noun(self):
