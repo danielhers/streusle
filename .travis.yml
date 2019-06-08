@@ -2,8 +2,13 @@ language: python
 python:
 - '3.6'
 - '3.7'
-install: pip install tox-travis
-script: tox
+install:
+  - pip install tox-travis
+  - pip install -U ucca[visualize]==1.1.7 semstr[amr]==1.1.10 scikit-learn==0.20.2 tqdm depedit==2.1.4 scour
+  - python -m spacy download en_core_web_md
+env:
+  global:
+    - SCRIPTS=https://raw.githubusercontent.com/UniversalConceptualCognitiveAnnotation/docs/master/scripts
 deploy:
   provider: pypi
   user: __token__
@@ -13,3 +18,33 @@ deploy:
     tags: true
   skip_existing: true
   skip_cleanup: true
+jobs:
+  include:
+    - script: tox
+    - script:
+        - URL=`git remote get-url origin`
+        - python conllulex2ucca.py train/streusle.ud_train.conllulex dev/streusle.ud_dev.conllulex test/streusle.ud_test.conllulex -emo xml -v
+        - git checkout --orphan xml
+        - git reset -q
+        - git pull origin xml || true
+        - rm -f *.*
+        - mv -f xml/* ./
+        - rmdir xml
+        - git add *.xml
+        - curl $SCRIPTS/push.sh | bash || true
+        - python -m scripts.visualize --format svg --node-ids *.xml -o images
+        - |
+          for f in images/*.svg; do
+            scour -i $f -o $f.images --enable-viewboxing --enable-id-stripping --enable-comment-stripping --shorten-ids --indent=none
+            mv $f.images $f -f
+          done
+        - git checkout --orphan images
+        - git reset -q
+        - git pull origin images || true
+        - rm -f *.*
+        - mv -f images/* ./
+        - rmdir images
+        - git add *.svg
+        - git remote set-url origin $URL > /dev/null 2>&1
+        - curl $SCRIPTS/push.sh | bash || true
+
