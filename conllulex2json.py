@@ -124,7 +124,8 @@ def load_sents(inF, morph_syn=True, misc=True, ss_mapper=None, store_conllulex=F
                 assert ss is None and ss2 is None and lc not in ('N', 'V', 'P', 'INF.P', 'PP', 'POSS', 'PRON.POSS'),f"In {sent['sent_id']}, invalid supersense(s) in lexical entry: {lexe}"
 
         # check lexcat on single-word expressions
-        for swe in sent['swes'].values():
+        swes_to_validate = sent['swes'].values() if validate_pos else []
+        for swe in swes_to_validate:
             tok = sent['toks'][swe['toknums'][0]-1]
             upos, xpos = tok['upos'], tok['xpos']
             lc = swe['lexcat']
