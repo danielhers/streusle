@@ -260,13 +260,17 @@ def load_sents(inF, morph_syn=True, misc=True, ss_mapper=None, validate_pos=True
         ss_mapper = lambda ss: ss
 
     sent = {}
+    errors = []
     for ln in chain(inF, [""]):  # Add empty line at the end to avoid skipping the last sent
         ln = ln.strip()
         if not ln:
             if sent:
                 _unpack_lextags(sent)
-                _postproc_sent(sent)
-                yield sent
+                try:
+                    _postproc_sent(sent)
+                    yield sent
+                except AssertionError as e:
+                    errors.append(e)
                 sent = {}
             continue
 
@@ -376,6 +380,10 @@ def load_sents(inF, morph_syn=True, misc=True, ss_mapper=None, validate_pos=True
 
     if lc_tbd>0:
         print('Tokens with lexcat TBD:', lc_tbd, file=sys.stderr)
+    if errors:
+        print(f"{len(errors)} errors:", file=sys.stderr)
+        for error in errors:
+            print(error, file=sys.stderr)
 
 if __name__=='__main__':
     argparser = ArgumentParser(description=desc)
