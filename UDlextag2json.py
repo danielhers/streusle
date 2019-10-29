@@ -268,9 +268,9 @@ def load_sents(inF, morph_syn=True, misc=True, ss_mapper=None, validate_pos=True
                 _unpack_lextags(sent)
                 try:
                     _postproc_sent(sent)
-                    yield sent
                 except AssertionError as e:
                     errors.append(e)
+                yield sent
                 sent = {}
             continue
 
