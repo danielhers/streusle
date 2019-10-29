@@ -3,6 +3,7 @@
 import json
 import re
 import sys
+import traceback
 from argparse import ArgumentParser, FileType
 from collections import defaultdict
 from itertools import chain
@@ -269,7 +270,10 @@ def load_sents(inF, morph_syn=True, misc=True, ss_mapper=None, validate_pos=True
                 try:
                     _postproc_sent(sent)
                 except AssertionError as e:
-                    errors.append(e)
+                    _, _, tb = sys.exc_info()
+                    tb_info = traceback.extract_tb(tb)
+                    filename, line, func, text = tb_info[-1]
+                    errors.append('{} [{}: {}]'.format(str(e) or "Assertion error", line, text))
                 yield sent
                 sent = {}
             continue
