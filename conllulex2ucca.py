@@ -752,7 +752,8 @@ def run(args, converter):
     if args.report and not args.evaluate:
         argparser.error("--report requires --evaluate")
     os.makedirs(args.out_dir, exist_ok=True)
-    sentences = list(load_sents(ConcatenatedFiles(args.filenames), ss_mapper=SSMapper(args.depth)))
+    sentences = list(load_sents(ConcatenatedFiles(args.filenames), ss_mapper=SSMapper(args.depth),
+                                validate_pos=False, validate_type=False))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
         passage = converter.convert(sent)
