@@ -34,7 +34,7 @@ from ucca.normalization import normalize
 from conllulex2json import load_sents
 from lexcatter import ALL_LEXCATS
 from relnoun_lists import RELNOUNS
-from supersenses import ALL_SS
+from supersenses import ALL_SS, coarsen_pss
 
 SENT_ID = "sent_id"
 UD_TO_UCCA = dict(  # Majority-based mapping of UD deprel to UCCA category, from confusion matrix on EWT training set
@@ -729,6 +729,17 @@ class ConcatenatedFiles:
     def __iter__(self) -> Iterable[str]:
         return iter(self.lines)
 
+    def read(self):
+        return "\n".join(self.lines)
+
+
+class SSMapper:
+    def __init__(self, depth):
+        self.depth = depth
+
+    def __call__(self, ss):
+        return coarsen_pss(ss, self.depth) if ss.startswith('p.') else ss
+
 
 def main(args: argparse.Namespace) -> None:
     converter = ConllulexToUccaConverter(**vars(args))
@@ -741,7 +752,7 @@ def run(args, converter):
     if args.report and not args.evaluate:
         argparser.error("--report requires --evaluate")
     os.makedirs(args.out_dir, exist_ok=True)
-    sentences = list(load_sents(ConcatenatedFiles(args.filenames)))
+    sentences = list(load_sents(ConcatenatedFiles(args.filenames), ss_mapper=SSMapper(args.depth)))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
         passage = converter.convert(sent)
@@ -799,6 +810,9 @@ def add_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
     parser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
     parser.add_argument("--model", help="input/output filename for model predicting UCCA categories")
+    argparser.add_argument('--depth', metavar='D', type=int, choices=range(1, 5), default=4,
+                           help='depth of hierarchy at which to cluster SNACS supersense labels '
+                                '(default: 4, i.e. no collapsing)')
 
 
 if __name__ == '__main__':
