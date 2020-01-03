@@ -1,0 +1,152 @@
+<root annotationID="0" passageID="177779-0003">
+  <attributes />
+  <layer layerID="0">
+    <attributes />
+    <node ID="0.1" type="Word">
+      <attributes paragraph="1" paragraph_position="1" text="This" />
+      <extra dep="det" head="1" lemma="this" orth="This" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.2" type="Word">
+      <attributes paragraph="1" paragraph_position="2" text="place" />
+      <extra dep="nsubj" head="4" lemma="place" orth="place" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.3" type="Word">
+      <attributes paragraph="1" paragraph_position="3" text="is" />
+      <extra dep="cop" head="3" lemma="be" orth="is" pos="AUX" tag="VBZ" />
+    </node>
+    <node ID="0.4" type="Word">
+      <attributes paragraph="1" paragraph_position="4" text="a" />
+      <extra dep="det" head="2" lemma="a" orth="a" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.5" type="Word">
+      <attributes paragraph="1" paragraph_position="5" text="complete" />
+      <extra dep="amod" head="1" lemma="complete" orth="complete" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.6" type="Word">
+      <attributes paragraph="1" paragraph_position="6" text="embarrassment" />
+      <extra dep="root" head="0" lemma="embarrassment" orth="embarrassment" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.7" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="7" text="." />
+      <extra dep="punct" head="-1" lemma="." orth="." pos="PUNCT" tag="." />
+    </node>
+  </layer>
+  <layer layerID="1">
+    <attributes />
+    <node ID="1.1" type="FN">
+      <attributes />
+      <edge toID="1.2" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+    </node>
+    <node ID="1.2" type="FN">
+      <attributes />
+      <extra node="embarrassment" scene_noun="False" />
+      <edge toID="1.3" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.4" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.6" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.7" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.8" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+      <edge toID="1.10" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+    </node>
+    <node ID="1.3" type="FN">
+      <attributes />
+      <extra node="embarrassment" scene_noun="False" />
+      <edge toID="0.6" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.4" type="FN">
+      <attributes />
+      <extra node="place" scene_noun="False" />
+      <edge toID="1.5" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.11" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.5" type="FN">
+      <attributes />
+      <extra node="place" scene_noun="False" />
+      <edge toID="0.2" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.6" type="FN">
+      <attributes />
+      <extra node="is" scene_noun="False" />
+      <edge toID="0.3" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.7" type="FN">
+      <attributes />
+      <extra node="a" scene_noun="False" />
+      <edge toID="0.4" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.8" type="FN">
+      <attributes />
+      <extra node="complete" scene_noun="False" />
+      <edge toID="1.5" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.9" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.9" type="FN">
+      <attributes />
+      <extra node="complete" scene_noun="False" />
+      <edge toID="0.5" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.10" type="FN">
+      <attributes />
+      <extra node="." scene_noun="False" />
+      <edge toID="0.7" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.11" type="FN">
+      <attributes />
+      <extra node="This" scene_noun="False" />
+      <edge toID="0.1" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+  </layer>
+</root>

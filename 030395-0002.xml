@@ -1,0 +1,356 @@
+<root annotationID="0" passageID="030395-0002">
+  <attributes />
+  <layer layerID="0">
+    <attributes />
+    <node ID="0.1" type="Word">
+      <attributes paragraph="1" paragraph_position="1" text="Sanctuary" />
+      <extra dep="nsubj" head="1" lemma="Sanctuary" orth="Sanctuary" pos="PROPN" tag="NNP" />
+    </node>
+    <node ID="0.2" type="Word">
+      <attributes paragraph="1" paragraph_position="2" text="serves" />
+      <extra dep="root" head="0" lemma="serve" orth="serves" pos="VERB" tag="VBZ" />
+    </node>
+    <node ID="0.3" type="Word">
+      <attributes paragraph="1" paragraph_position="3" text="delicious" />
+      <extra dep="amod" head="4" lemma="delicious" orth="delicious" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.4" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="4" text="," />
+      <extra dep="punct" head="3" lemma="," orth="," pos="PUNCT" tag="," />
+    </node>
+    <node ID="0.5" type="Word">
+      <attributes paragraph="1" paragraph_position="5" text="somewhat" />
+      <extra dep="advmod" head="1" lemma="somewhat" orth="somewhat" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.6" type="Word">
+      <attributes paragraph="1" paragraph_position="6" text="healthy" />
+      <extra dep="amod" head="1" lemma="healthy" orth="healthy" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.7" type="Word">
+      <attributes paragraph="1" paragraph_position="7" text="food" />
+      <extra dep="obj" head="-5" lemma="food" orth="food" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.8" type="Word">
+      <attributes paragraph="1" paragraph_position="8" text="in" />
+      <extra dep="case" head="7" lemma="in" orth="in" pos="ADP" tag="IN" />
+    </node>
+    <node ID="0.9" type="Word">
+      <attributes paragraph="1" paragraph_position="9" text="a" />
+      <extra dep="det" head="6" lemma="a" orth="a" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.10" type="Word">
+      <attributes paragraph="1" paragraph_position="10" text="great" />
+      <extra dep="amod" head="5" lemma="great" orth="great" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.11" type="Word">
+      <attributes paragraph="1" paragraph_position="11" text="restaurant" />
+      <extra dep="compound" head="4" lemma="restaurant" orth="restaurant" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.12" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="12" text="/" />
+      <extra dep="cc" head="-1" lemma="/" orth="/" pos="PUNCT" tag="," />
+    </node>
+    <node ID="0.13" type="Word">
+      <attributes paragraph="1" paragraph_position="13" text="fast" />
+      <extra dep="amod" head="1" lemma="fast" orth="fast" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.14" type="Word">
+      <attributes paragraph="1" paragraph_position="14" text="food" />
+      <extra dep="conj" head="-3" lemma="food" orth="food" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.15" type="Word">
+      <attributes paragraph="1" paragraph_position="15" text="style" />
+      <extra dep="obl" head="-13" lemma="style" orth="style" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.16" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="16" text="." />
+      <extra dep="punct" head="-14" lemma="." orth="." pos="PUNCT" tag="." />
+    </node>
+  </layer>
+  <layer layerID="1">
+    <attributes />
+    <node ID="1.1" type="FN">
+      <attributes />
+      <edge toID="1.2" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+    </node>
+    <node ID="1.2" type="FN">
+      <attributes />
+      <extra node="serves" scene_noun="False" />
+      <edge toID="1.3" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.4" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.5" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.7" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.9" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+    </node>
+    <node ID="1.3" type="FN">
+      <attributes />
+      <extra node="serves" scene_noun="False" />
+      <edge toID="0.2" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.4" type="FN">
+      <attributes />
+      <extra node="Sanctuary" scene_noun="False" />
+      <edge toID="0.1" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.5" type="FN">
+      <attributes />
+      <extra node="food" scene_noun="False" />
+      <edge toID="1.6" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.10" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+      <edge toID="1.12" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+      <edge toID="1.13" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.6" type="FN">
+      <attributes />
+      <extra node="food" scene_noun="False" />
+      <edge toID="0.7" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.7" type="FN">
+      <attributes />
+      <extra node="style" scene_noun="False" />
+      <edge toID="1.8" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.15" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+      <edge toID="1.16" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.17" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+      <edge toID="1.19" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.8" type="FN">
+      <attributes />
+      <extra node="style" scene_noun="False" />
+      <edge toID="0.15" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.9" type="FN">
+      <attributes />
+      <extra node="." scene_noun="False" />
+      <edge toID="0.16" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.10" type="FN">
+      <attributes />
+      <extra node="delicious" scene_noun="False" />
+      <edge toID="1.6" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.11" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.11" type="FN">
+      <attributes />
+      <extra node="delicious" scene_noun="False" />
+      <edge toID="0.3" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.12" type="FN">
+      <attributes />
+      <extra node="," scene_noun="False" />
+      <edge toID="0.4" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.13" type="FN">
+      <attributes />
+      <extra node="healthy" scene_noun="False" />
+      <edge toID="1.6" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.14" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.21" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+    </node>
+    <node ID="1.14" type="FN">
+      <attributes />
+      <extra node="healthy" scene_noun="False" />
+      <edge toID="0.6" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.15" type="FN">
+      <attributes />
+      <extra node="in" scene_noun="False" />
+      <edge toID="0.8" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.16" type="FN">
+      <attributes />
+      <extra node="a" scene_noun="False" />
+      <edge toID="0.9" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.17" type="FN">
+      <attributes />
+      <extra node="great" scene_noun="False" />
+      <edge toID="1.8" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.18" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.18" type="FN">
+      <attributes />
+      <extra node="great" scene_noun="False" />
+      <edge toID="0.10" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.19" type="FN">
+      <attributes />
+      <extra node="restaurant" scene_noun="False" />
+      <edge toID="1.20" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.22" type="N">
+        <attributes />
+        <category tag="N" />
+      </edge>
+      <edge toID="1.23" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+    </node>
+    <node ID="1.20" type="FN">
+      <attributes />
+      <extra node="restaurant" scene_noun="False" />
+      <edge toID="0.11" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.21" type="FN">
+      <attributes />
+      <extra node="somewhat" scene_noun="False" />
+      <edge toID="0.5" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.22" type="FN">
+      <attributes />
+      <extra node="/" scene_noun="False" />
+      <edge toID="0.12" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.23" type="FN">
+      <attributes />
+      <extra node="food" scene_noun="False" />
+      <edge toID="1.24" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.25" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.24" type="FN">
+      <attributes />
+      <extra node="food" scene_noun="False" />
+      <edge toID="0.14" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.25" type="FN">
+      <attributes />
+      <extra node="fast" scene_noun="False" />
+      <edge toID="1.24" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.26" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.26" type="FN">
+      <attributes />
+      <extra node="fast" scene_noun="False" />
+      <edge toID="0.13" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+  </layer>
+</root>

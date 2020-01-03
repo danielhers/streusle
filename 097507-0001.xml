@@ -1,0 +1,120 @@
+<root annotationID="0" passageID="097507-0001">
+  <attributes />
+  <layer layerID="0">
+    <attributes />
+    <node ID="0.1" type="Word">
+      <attributes paragraph="1" paragraph_position="1" text="Best" />
+      <extra dep="amod" head="2" lemma="best" orth="Best" pos="ADJ" tag="JJS" />
+    </node>
+    <node ID="0.2" type="Word">
+      <attributes paragraph="1" paragraph_position="2" text="meat" />
+      <extra dep="compound" head="1" lemma="meat" orth="meat" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.3" type="Word">
+      <attributes paragraph="1" paragraph_position="3" text="pies" />
+      <extra dep="root" head="0" lemma="pie" orth="pies" pos="NOUN" tag="NNS" />
+    </node>
+    <node ID="0.4" type="Word">
+      <attributes paragraph="1" paragraph_position="4" text="in" />
+      <extra dep="case" head="1" lemma="in" orth="in" pos="ADP" tag="IN" />
+    </node>
+    <node ID="0.5" type="Word">
+      <attributes paragraph="1" paragraph_position="5" text="Canada" />
+      <extra dep="nmod" head="-2" lemma="Canada" orth="Canada" pos="PROPN" tag="NNP" />
+    </node>
+  </layer>
+  <layer layerID="1">
+    <attributes />
+    <node ID="1.1" type="FN">
+      <attributes />
+      <edge toID="1.2" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+    </node>
+    <node ID="1.2" type="FN">
+      <attributes />
+      <extra node="pies" scene_noun="False" />
+      <edge toID="1.3" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.4" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.6" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.7" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.3" type="FN">
+      <attributes />
+      <extra node="pies" scene_noun="False" />
+      <edge toID="0.3" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.4" type="FN">
+      <attributes />
+      <extra node="Best" scene_noun="False" />
+      <edge toID="1.3" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.5" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+    </node>
+    <node ID="1.5" type="FN">
+      <attributes />
+      <extra node="Best" scene_noun="False" />
+      <edge toID="0.1" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.6" type="FN">
+      <attributes />
+      <extra node="meat" scene_noun="False" />
+      <edge toID="0.2" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.7" type="FN">
+      <attributes />
+      <extra node="Canada" scene_noun="False" />
+      <edge toID="1.8" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.9" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+    </node>
+    <node ID="1.8" type="FN">
+      <attributes />
+      <extra node="Canada" scene_noun="False" />
+      <edge toID="0.5" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.9" type="FN">
+      <attributes />
+      <extra node="in" scene_noun="False" />
+      <edge toID="0.4" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+  </layer>
+</root>

@@ -1,0 +1,1363 @@
+<root annotationID="0" passageID="043020-0014">
+  <attributes />
+  <layer layerID="0">
+    <attributes />
+    <node ID="0.1" type="Word">
+      <attributes paragraph="1" paragraph_position="1" text="I" />
+      <extra dep="nsubj" head="3" lemma="I" orth="I" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.2" type="Word">
+      <attributes paragraph="1" paragraph_position="2" text="'m" />
+      <extra dep="cop" head="2" lemma="be" orth="'m" pos="AUX" tag="VBP" />
+    </node>
+    <node ID="0.3" type="Word">
+      <attributes paragraph="1" paragraph_position="3" text="very" />
+      <extra dep="advmod" head="1" lemma="very" orth="very" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.4" type="Word">
+      <attributes paragraph="1" paragraph_position="4" text="frustrated" />
+      <extra dep="root" head="0" lemma="frustrated" orth="frustrated" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.5" type="Word">
+      <attributes paragraph="1" paragraph_position="5" text="at" />
+      <extra dep="case" head="2" lemma="at" orth="at" pos="ADP" tag="IN" />
+    </node>
+    <node ID="0.6" type="Word">
+      <attributes paragraph="1" paragraph_position="6" text="this" />
+      <extra dep="det" head="1" lemma="this" orth="this" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.7" type="Word">
+      <attributes paragraph="1" paragraph_position="7" text="point" />
+      <extra dep="obl" head="-3" lemma="point" orth="point" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.8" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="8" text="-" />
+      <extra dep="punct" head="-4" lemma="-" orth="-" pos="PUNCT" tag="," />
+    </node>
+    <node ID="0.9" type="Word">
+      <attributes paragraph="1" paragraph_position="9" text="it" />
+      <extra dep="nsubj" head="2" lemma="it" orth="it" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.10" type="Word">
+      <attributes paragraph="1" paragraph_position="10" text="would" />
+      <extra dep="aux" head="1" lemma="would" orth="would" pos="AUX" tag="MD" />
+    </node>
+    <node ID="0.11" type="Word">
+      <attributes paragraph="1" paragraph_position="11" text="take" />
+      <extra dep="parataxis" head="-7" lemma="take" orth="take" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.12" type="Word">
+      <attributes paragraph="1" paragraph_position="12" text="all" />
+      <extra dep="advmod" head="3" lemma="all" orth="all" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.13" type="Word">
+      <attributes paragraph="1" paragraph_position="13" text="of" />
+      <extra dep="fixed" head="-1" lemma="of" orth="of" pos="ADP" tag="IN" />
+    </node>
+    <node ID="0.14" type="Word">
+      <attributes paragraph="1" paragraph_position="14" text="10" />
+      <extra dep="nummod" head="1" lemma="10" orth="10" pos="NUM" tag="CD" />
+    </node>
+    <node ID="0.15" type="Word">
+      <attributes paragraph="1" paragraph_position="15" text="min" />
+      <extra dep="obj" head="-4" lemma="minute" orth="min" pos="NOUN" tag="NNS" />
+    </node>
+    <node ID="0.16" type="Word">
+      <attributes paragraph="1" paragraph_position="16" text="for" />
+      <extra dep="mark" head="-5" lemma="for" orth="for" pos="SCONJ" tag="IN" />
+    </node>
+    <node ID="0.17" type="Word">
+      <attributes paragraph="1" paragraph_position="17" text="them" />
+      <extra dep="nsubj" head="2" lemma="they" orth="them" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.18" type="Word">
+      <attributes paragraph="1" paragraph_position="18" text="to" />
+      <extra dep="mark" head="-7" lemma="to" orth="to" pos="PART" tag="TO" />
+    </node>
+    <node ID="0.19" type="Word">
+      <attributes paragraph="1" paragraph_position="19" text="come" />
+      <extra dep="advcl" head="-8" lemma="come" orth="come" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.20" type="Word">
+      <attributes paragraph="1" paragraph_position="20" text="by" />
+      <extra dep="compound" head="-1" lemma="by" orth="by" pos="ADV" tag="RP" />
+    </node>
+    <node ID="0.21" type="Word">
+      <attributes paragraph="1" paragraph_position="21" text="and" />
+      <extra dep="cc" head="-2" lemma="and" orth="and" pos="CCONJ" tag="CC" />
+    </node>
+    <node ID="0.22" type="Word">
+      <attributes paragraph="1" paragraph_position="22" text="replace" />
+      <extra dep="conj" head="-3" lemma="replace" orth="replace" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.23" type="Word">
+      <attributes paragraph="1" paragraph_position="23" text="the" />
+      <extra dep="det" head="2" lemma="the" orth="the" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.24" type="Word">
+      <attributes paragraph="1" paragraph_position="24" text="one" />
+      <extra dep="nummod" head="1" lemma="one" orth="one" pos="NUM" tag="CD" />
+    </node>
+    <node ID="0.25" type="Word">
+      <attributes paragraph="1" paragraph_position="25" text="board" />
+      <extra dep="obj" head="-3" lemma="board" orth="board" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.26" type="Word">
+      <attributes paragraph="1" paragraph_position="26" text="that" />
+      <extra dep="nsubj" head="2" lemma="that" orth="that" pos="PRON" tag="WDT" />
+    </node>
+    <node ID="0.27" type="Word">
+      <attributes paragraph="1" paragraph_position="27" text="is" />
+      <extra dep="aux" head="1" lemma="be" orth="is" pos="AUX" tag="VBZ" />
+    </node>
+    <node ID="0.28" type="Word">
+      <attributes paragraph="1" paragraph_position="28" text="cracked" />
+      <extra dep="acl" head="-3" lemma="crack" orth="cracked" pos="VERB" tag="VBN" />
+    </node>
+    <node ID="0.29" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="29" text="(" />
+      <extra dep="punct" head="4" lemma="(" orth="(" pos="PUNCT" tag="-LRB-" />
+    </node>
+    <node ID="0.30" type="Word">
+      <attributes paragraph="1" paragraph_position="30" text="the" />
+      <extra dep="det" head="1" lemma="the" orth="the" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.31" type="Word">
+      <attributes paragraph="1" paragraph_position="31" text="crack" />
+      <extra dep="nsubj" head="2" lemma="crack" orth="crack" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.32" type="Word">
+      <attributes paragraph="1" paragraph_position="32" text="is" />
+      <extra dep="cop" head="1" lemma="be" orth="is" pos="AUX" tag="VBZ" />
+    </node>
+    <node ID="0.33" type="Word">
+      <attributes paragraph="1" paragraph_position="33" text="deep" />
+      <extra dep="parataxis" head="-8" lemma="deep" orth="deep" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.34" type="Word">
+      <attributes paragraph="1" paragraph_position="34" text="enough" />
+      <extra dep="advmod" head="-1" lemma="enough" orth="enough" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.35" type="Word">
+      <attributes paragraph="1" paragraph_position="35" text="to" />
+      <extra dep="mark" head="-2" lemma="to" orth="to" pos="PART" tag="TO" />
+    </node>
+    <node ID="0.36" type="Word">
+      <attributes paragraph="1" paragraph_position="36" text="stick" />
+      <extra dep="advcl" head="-3" lemma="stick" orth="stick" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.37" type="Word">
+      <attributes paragraph="1" paragraph_position="37" text="a" />
+      <extra dep="det" head="1" lemma="a" orth="a" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.38" type="Word">
+      <attributes paragraph="1" paragraph_position="38" text="penny" />
+      <extra dep="obj" head="-2" lemma="penny" orth="penny" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.39" type="Word">
+      <attributes paragraph="1" paragraph_position="39" text="in" />
+      <extra dep="case" head="1" lemma="in" orth="in" pos="ADP" tag="IN" />
+    </node>
+    <node ID="0.40" type="Word">
+      <attributes paragraph="1" paragraph_position="40" text="it" />
+      <extra dep="obl" head="-4" lemma="it" orth="it" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.41" type="Word">
+      <attributes paragraph="1" paragraph_position="41" text="and" />
+      <extra dep="cc" head="-8" lemma="and" orth="and" pos="CCONJ" tag="CC" />
+    </node>
+    <node ID="0.42" type="Word">
+      <attributes paragraph="1" paragraph_position="42" text="it" />
+      <extra dep="nsubj" head="1" lemma="it" orth="it" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.43" type="Word">
+      <attributes paragraph="1" paragraph_position="43" text="goes" />
+      <extra dep="conj" head="-18" lemma="go" orth="goes" pos="VERB" tag="VBZ" />
+    </node>
+    <node ID="0.44" type="Word">
+      <attributes paragraph="1" paragraph_position="44" text="clear" />
+      <extra dep="advmod" head="1" lemma="clear" orth="clear" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.45" type="Word">
+      <attributes paragraph="1" paragraph_position="45" text="through" />
+      <extra dep="advmod" head="-2" lemma="through" orth="through" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.46" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="46" text=")" />
+      <extra dep="punct" head="-13" lemma=")" orth=")" pos="PUNCT" tag="-RRB-" />
+    </node>
+    <node ID="0.47" type="Word">
+      <attributes paragraph="1" paragraph_position="47" text="yet" />
+      <extra dep="cc" head="-36" lemma="yet" orth="yet" pos="CCONJ" tag="CC" />
+    </node>
+    <node ID="0.48" type="Word">
+      <attributes paragraph="1" paragraph_position="48" text="they" />
+      <extra dep="nsubj" head="3" lemma="they" orth="they" pos="PRON" tag="PRP" />
+    </node>
+    <node ID="0.49" type="Word">
+      <attributes paragraph="1" paragraph_position="49" text="do" />
+      <extra dep="aux" head="2" lemma="do" orth="do" pos="AUX" tag="VBP" />
+    </node>
+    <node ID="0.50" type="Word">
+      <attributes paragraph="1" paragraph_position="50" text="not" />
+      <extra dep="advmod" head="1" lemma="not" orth="not" pos="PART" tag="RB" />
+    </node>
+    <node ID="0.51" type="Word">
+      <attributes paragraph="1" paragraph_position="51" text="want" />
+      <extra dep="conj" head="-47" lemma="want" orth="want" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.52" type="Word">
+      <attributes paragraph="1" paragraph_position="52" text="to" />
+      <extra dep="mark" head="1" lemma="to" orth="to" pos="PART" tag="TO" />
+    </node>
+    <node ID="0.53" type="Word">
+      <attributes paragraph="1" paragraph_position="53" text="take" />
+      <extra dep="xcomp" head="-2" lemma="take" orth="take" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.54" type="Word">
+      <attributes paragraph="1" paragraph_position="54" text="the" />
+      <extra dep="det" head="1" lemma="the" orth="the" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.55" type="Word">
+      <attributes paragraph="1" paragraph_position="55" text="time" />
+      <extra dep="obj" head="-2" lemma="time" orth="time" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.56" type="Word">
+      <attributes paragraph="1" paragraph_position="56" text="to" />
+      <extra dep="mark" head="-3" lemma="to" orth="to" pos="PART" tag="TO" />
+    </node>
+    <node ID="0.57" type="Word">
+      <attributes paragraph="1" paragraph_position="57" text="bother" />
+      <extra dep="advcl" head="-4" lemma="bother" orth="bother" pos="VERB" tag="VB" />
+    </node>
+    <node ID="0.58" type="Word">
+      <attributes paragraph="1" paragraph_position="58" text="with" />
+      <extra dep="case" head="1" lemma="with" orth="with" pos="SCONJ" tag="IN" />
+    </node>
+    <node ID="0.59" type="Word">
+      <attributes paragraph="1" paragraph_position="59" text="what" />
+      <extra dep="obl" head="-2" lemma="what" orth="what" pos="PRON" tag="WP" />
+    </node>
+    <node ID="0.60" type="Word">
+      <attributes paragraph="1" paragraph_position="60" text="once" />
+      <extra dep="advmod" head="4" lemma="once" orth="once" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.61" type="Word">
+      <attributes paragraph="1" paragraph_position="61" text="WAS" />
+      <extra dep="cop" head="3" lemma="be" orth="WAS" pos="AUX" tag="VBD" />
+    </node>
+    <node ID="0.62" type="Word">
+      <attributes paragraph="1" paragraph_position="62" text="a" />
+      <extra dep="det" head="2" lemma="a" orth="a" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.63" type="Word">
+      <attributes paragraph="1" paragraph_position="63" text="happy" />
+      <extra dep="amod" head="1" lemma="happy" orth="happy" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.64" type="Word">
+      <attributes paragraph="1" paragraph_position="64" text="customer" />
+      <extra dep="acl" head="-5" lemma="customer" orth="customer" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.65" type="Word">
+      <attributes paragraph="1" paragraph_position="65" text="and" />
+      <extra dep="cc" head="-1" lemma="and" orth="and" pos="CCONJ" tag="CC" />
+    </node>
+    <node ID="0.66" type="Word">
+      <attributes paragraph="1" paragraph_position="66" text="has" />
+      <extra dep="aux" head="2" lemma="have" orth="has" pos="AUX" tag="VBZ" />
+    </node>
+    <node ID="0.67" type="Word">
+      <attributes paragraph="1" paragraph_position="67" text="now" />
+      <extra dep="advmod" head="1" lemma="now" orth="now" pos="ADV" tag="RB" />
+    </node>
+    <node ID="0.68" type="Word">
+      <attributes paragraph="1" paragraph_position="68" text="become" />
+      <extra dep="conj" head="-4" lemma="become" orth="become" pos="VERB" tag="VBN" />
+    </node>
+    <node ID="0.69" type="Word">
+      <attributes paragraph="1" paragraph_position="69" text="a" />
+      <extra dep="det" head="2" lemma="a" orth="a" pos="DET" tag="DT" />
+    </node>
+    <node ID="0.70" type="Word">
+      <attributes paragraph="1" paragraph_position="70" text="dissatisfied" />
+      <extra dep="amod" head="1" lemma="dissatisfied" orth="dissatisfied" pos="ADJ" tag="JJ" />
+    </node>
+    <node ID="0.71" type="Word">
+      <attributes paragraph="1" paragraph_position="71" text="customer" />
+      <extra dep="xcomp" head="-3" lemma="customer" orth="customer" pos="NOUN" tag="NN" />
+    </node>
+    <node ID="0.72" type="Punctuation">
+      <attributes paragraph="1" paragraph_position="72" text="." />
+      <extra dep="punct" head="-68" lemma="." orth="." pos="PUNCT" tag="." />
+    </node>
+  </layer>
+  <layer layerID="1">
+    <attributes />
+    <node ID="1.1" type="FN">
+      <attributes />
+      <edge toID="1.2" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.10" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.12" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.22" type="L">
+        <attributes />
+        <category tag="L" />
+      </edge>
+      <edge toID="1.23" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.25" type="L">
+        <attributes />
+        <category tag="L" />
+      </edge>
+      <edge toID="1.35" type="L">
+        <attributes />
+        <category tag="L" />
+      </edge>
+      <edge toID="1.36" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+    </node>
+    <node ID="1.2" type="FN">
+      <attributes />
+      <extra node="frustrated" scene_noun="False" />
+      <edge toID="1.3" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.4" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.5" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.6" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+      <edge toID="1.7" type="T">
+        <attributes />
+        <category tag="T" />
+      </edge>
+      <edge toID="1.9" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+      <edge toID="1.14" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+    </node>
+    <node ID="1.3" type="FN">
+      <attributes />
+      <extra node="frustrated" scene_noun="False" />
+      <edge toID="0.4" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.4" type="FN">
+      <attributes />
+      <extra node="I" scene_noun="False" />
+      <edge toID="0.1" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.5" type="FN">
+      <attributes />
+      <extra node="'m" scene_noun="False" />
+      <edge toID="0.2" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.6" type="FN">
+      <attributes />
+      <extra node="very" scene_noun="False" />
+      <edge toID="0.3" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.7" type="FN">
+      <attributes />
+      <extra node="point" scene_noun="False" />
+      <edge toID="1.8" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.15" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+      <edge toID="1.16" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.8" type="FN">
+      <attributes />
+      <extra node="point" scene_noun="False" />
+      <edge toID="0.7" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.9" type="FN">
+      <attributes />
+      <extra node="-" scene_noun="False" />
+      <edge toID="0.8" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.10" type="FN">
+      <attributes />
+      <extra node="take" scene_noun="False" />
+      <edge toID="1.11" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.17" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.18" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.19" type="T">
+        <attributes />
+        <category tag="T" />
+      </edge>
+      <edge toID="1.21" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+    </node>
+    <node ID="1.11" type="FN">
+      <attributes />
+      <extra node="take" scene_noun="False" />
+      <edge toID="0.11" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.12" type="FN">
+      <attributes />
+      <extra node="want" scene_noun="False" />
+      <edge toID="1.13" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.26" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.27" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.28" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+      <edge toID="1.29" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.42" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+    </node>
+    <node ID="1.13" type="FN">
+      <attributes />
+      <extra node="want" scene_noun="False" />
+      <edge toID="0.51" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.14" type="FN">
+      <attributes />
+      <extra node="." scene_noun="False" />
+      <edge toID="0.72" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.15" type="FN">
+      <attributes />
+      <extra node="at" scene_noun="False" />
+      <edge toID="0.5" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.16" type="FN">
+      <attributes />
+      <extra node="this" scene_noun="False" />
+      <edge toID="0.6" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.17" type="FN">
+      <attributes />
+      <extra node="it" scene_noun="False" />
+      <edge toID="0.9" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.18" type="FN">
+      <attributes />
+      <extra node="would" scene_noun="False" />
+      <edge toID="0.10" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.19" type="FN">
+      <attributes />
+      <extra node="min" scene_noun="False" />
+      <edge toID="1.20" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.31" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+      <edge toID="1.32" type="Q">
+        <attributes />
+        <category tag="Q" />
+      </edge>
+    </node>
+    <node ID="1.20" type="FN">
+      <attributes />
+      <extra node="min" scene_noun="False" />
+      <edge toID="0.15" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.21" type="FN">
+      <attributes />
+      <extra node="for" scene_noun="False" />
+      <edge toID="0.16" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.22" type="FN">
+      <attributes />
+      <extra node="to" scene_noun="False" />
+      <edge toID="0.18" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.23" type="FN">
+      <attributes />
+      <extra node="come" scene_noun="False" />
+      <edge toID="1.24" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.33" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.34" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.24" type="FN">
+      <attributes />
+      <extra node="come" scene_noun="False" />
+      <edge toID="0.19" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.25" type="FN">
+      <attributes />
+      <extra node="yet" scene_noun="False" />
+      <edge toID="0.47" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.26" type="FN">
+      <attributes />
+      <extra node="they" scene_noun="False" />
+      <edge toID="0.48" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.27" type="FN">
+      <attributes />
+      <extra node="do" scene_noun="False" />
+      <edge toID="0.49" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.28" type="FN">
+      <attributes />
+      <extra node="not" scene_noun="False" />
+      <edge toID="0.50" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.29" type="FN">
+      <attributes />
+      <extra node="take" scene_noun="False" />
+      <edge toID="1.30" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.38" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.41" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.96" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+    </node>
+    <node ID="1.30" type="FN">
+      <attributes />
+      <extra node="take" scene_noun="False" />
+      <edge toID="0.53" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.31" type="FN">
+      <attributes />
+      <extra node="all" scene_noun="False" />
+      <edge toID="0.12" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+      <edge toID="0.13" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.32" type="FN">
+      <attributes />
+      <extra node="10" scene_noun="False" />
+      <edge toID="0.14" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.33" type="FN">
+      <attributes />
+      <extra node="them" scene_noun="False" />
+      <edge toID="0.17" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.34" type="FN">
+      <attributes />
+      <extra node="by" scene_noun="False" />
+      <edge toID="0.20" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.35" type="FN">
+      <attributes />
+      <extra node="and" scene_noun="False" />
+      <edge toID="0.21" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.36" type="FN">
+      <attributes />
+      <extra node="replace" scene_noun="False" />
+      <edge toID="1.33" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.37" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.44" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+    </node>
+    <node ID="1.37" type="FN">
+      <attributes />
+      <extra node="replace" scene_noun="False" />
+      <edge toID="0.22" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.38" type="FN">
+      <attributes />
+      <extra node="to" scene_noun="False" />
+      <edge toID="0.52" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.39" type="FN">
+      <attributes />
+      <extra node="time" scene_noun="False" />
+      <edge toID="1.40" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.46" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.40" type="FN">
+      <attributes />
+      <extra node="time" scene_noun="False" />
+      <edge toID="0.55" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.41" type="FN">
+      <attributes />
+      <extra node="to" scene_noun="False" />
+      <edge toID="0.56" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.42" type="FN">
+      <attributes />
+      <extra node="bother" scene_noun="False" />
+      <edge toID="1.43" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.47" type="N">
+        <attributes />
+        <category tag="N" />
+      </edge>
+    </node>
+    <node ID="1.43" type="FN">
+      <attributes />
+      <extra node="bother" scene_noun="False" />
+      <edge toID="0.57" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.44" type="FN">
+      <attributes />
+      <extra node="board" scene_noun="False" />
+      <edge toID="1.45" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.49" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.50" type="Q">
+        <attributes />
+        <category tag="Q" />
+      </edge>
+      <edge toID="1.51" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+      <edge toID="1.53" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.55" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.68" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
+      <edge toID="1.70" type="L">
+        <attributes />
+        <category tag="L" />
+      </edge>
+    </node>
+    <node ID="1.45" type="FN">
+      <attributes />
+      <extra node="board" scene_noun="False" />
+      <edge toID="0.25" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.46" type="FN">
+      <attributes />
+      <extra node="the" scene_noun="False" />
+      <edge toID="0.54" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.47" type="FN">
+      <attributes />
+      <extra node="what" scene_noun="False" />
+      <edge toID="1.48" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.57" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+      <edge toID="1.58" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.48" type="FN">
+      <attributes />
+      <extra node="what" scene_noun="False" />
+      <edge toID="0.59" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.49" type="FN">
+      <attributes />
+      <extra node="the" scene_noun="False" />
+      <edge toID="0.23" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.50" type="FN">
+      <attributes />
+      <extra node="one" scene_noun="False" />
+      <edge toID="0.24" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.51" type="FN">
+      <attributes />
+      <extra node="cracked" scene_noun="False" />
+      <edge toID="1.45" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.52" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.60" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.61" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.52" type="FN">
+      <attributes />
+      <extra node="cracked" scene_noun="False" />
+      <edge toID="0.28" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.53" type="FN">
+      <attributes />
+      <extra node="deep" scene_noun="False" />
+      <edge toID="1.54" type="S">
+        <attributes />
+        <category tag="S" />
+      </edge>
+      <edge toID="1.62" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+      <edge toID="1.63" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.65" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.66" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+      <edge toID="1.67" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.71" type="P">
+        <attributes remote="True" />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.74" type="U">
+        <attributes />
+        <category tag="U" />
+      </edge>
+    </node>
+    <node ID="1.54" type="FN">
+      <attributes />
+      <extra node="deep" scene_noun="False" />
+      <edge toID="0.33" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.55" type="FN">
+      <attributes />
+      <extra node="goes" scene_noun="False" />
+      <edge toID="1.56" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.71" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.72" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+    </node>
+    <node ID="1.56" type="FN">
+      <attributes />
+      <extra node="goes" scene_noun="False" />
+      <edge toID="0.43" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.57" type="FN">
+      <attributes />
+      <extra node="with" scene_noun="False" />
+      <edge toID="0.58" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.58" type="FN">
+      <attributes />
+      <extra node="customer" scene_noun="True" />
+      <edge toID="1.59" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.75" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.76" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.77" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.78" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.79" type="N">
+        <attributes />
+        <category tag="N" />
+      </edge>
+      <edge toID="1.80" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+    </node>
+    <node ID="1.59" type="FN">
+      <attributes />
+      <extra node="customer" scene_noun="True" />
+      <edge toID="0.64" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.60" type="FN">
+      <attributes />
+      <extra node="that" scene_noun="False" />
+      <edge toID="0.26" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.61" type="FN">
+      <attributes />
+      <extra node="is" scene_noun="False" />
+      <edge toID="0.27" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.62" type="FN">
+      <attributes />
+      <extra node="(" scene_noun="False" />
+      <edge toID="0.29" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.63" type="FN">
+      <attributes />
+      <extra node="crack" scene_noun="False" />
+      <edge toID="1.64" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.82" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.64" type="FN">
+      <attributes />
+      <extra node="crack" scene_noun="False" />
+      <edge toID="0.31" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.65" type="FN">
+      <attributes />
+      <extra node="is" scene_noun="False" />
+      <edge toID="0.32" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.66" type="FN">
+      <attributes />
+      <extra node="enough" scene_noun="False" />
+      <edge toID="0.34" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.67" type="FN">
+      <attributes />
+      <extra node="to" scene_noun="False" />
+      <edge toID="0.35" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.68" type="FN">
+      <attributes />
+      <extra node="stick" scene_noun="False" />
+      <edge toID="1.69" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.83" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.85" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+    </node>
+    <node ID="1.69" type="FN">
+      <attributes />
+      <extra node="stick" scene_noun="False" />
+      <edge toID="0.36" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.70" type="FN">
+      <attributes />
+      <extra node="and" scene_noun="False" />
+      <edge toID="0.41" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.71" type="FN">
+      <attributes />
+      <extra node="it" scene_noun="False" />
+      <edge toID="0.42" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.72" type="FN">
+      <attributes />
+      <extra node="through" scene_noun="False" />
+      <edge toID="1.73" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.87" type="E">
+        <attributes />
+        <category tag="E" />
+      </edge>
+    </node>
+    <node ID="1.73" type="FN">
+      <attributes />
+      <extra node="through" scene_noun="False" />
+      <edge toID="0.45" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.74" type="FN">
+      <attributes />
+      <extra node=")" scene_noun="False" />
+      <edge toID="0.46" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.75" type="FN">
+      <attributes />
+      <extra node="once" scene_noun="False" />
+      <edge toID="0.60" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.76" type="FN">
+      <attributes />
+      <extra node="WAS" scene_noun="False" />
+      <edge toID="0.61" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.77" type="FN">
+      <attributes />
+      <extra node="a" scene_noun="False" />
+      <edge toID="0.62" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.78" type="FN">
+      <attributes />
+      <extra node="happy" scene_noun="False" />
+      <edge toID="0.63" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.79" type="FN">
+      <attributes />
+      <extra node="and" scene_noun="False" />
+      <edge toID="0.65" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.80" type="FN">
+      <attributes />
+      <extra node="become" scene_noun="False" />
+      <edge toID="1.81" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.88" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.89" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+      <edge toID="1.90" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+    </node>
+    <node ID="1.81" type="FN">
+      <attributes />
+      <extra node="become" scene_noun="False" />
+      <edge toID="0.68" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.82" type="FN">
+      <attributes />
+      <extra node="the" scene_noun="False" />
+      <edge toID="0.30" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.83" type="FN">
+      <attributes />
+      <extra node="penny" scene_noun="False" />
+      <edge toID="1.84" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.92" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+    </node>
+    <node ID="1.84" type="FN">
+      <attributes />
+      <extra node="penny" scene_noun="False" />
+      <edge toID="0.38" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.85" type="FN">
+      <attributes />
+      <extra node="it" scene_noun="False" />
+      <edge toID="1.86" type="C">
+        <attributes />
+        <category tag="C" />
+      </edge>
+      <edge toID="1.93" type="R">
+        <attributes />
+        <category tag="R" />
+      </edge>
+    </node>
+    <node ID="1.86" type="FN">
+      <attributes />
+      <extra node="it" scene_noun="False" />
+      <edge toID="0.40" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.87" type="FN">
+      <attributes />
+      <extra node="clear" scene_noun="False" />
+      <edge toID="0.44" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.88" type="FN">
+      <attributes />
+      <extra node="has" scene_noun="False" />
+      <edge toID="0.66" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.89" type="FN">
+      <attributes />
+      <extra node="now" scene_noun="False" />
+      <edge toID="0.67" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.90" type="FN">
+      <attributes />
+      <extra node="customer" scene_noun="True" />
+      <edge toID="1.91" type="P">
+        <attributes />
+        <category tag="P" />
+      </edge>
+      <edge toID="1.94" type="F">
+        <attributes />
+        <category tag="F" />
+      </edge>
+      <edge toID="1.95" type="D">
+        <attributes />
+        <category tag="D" />
+      </edge>
+    </node>
+    <node ID="1.91" type="FN">
+      <attributes />
+      <extra node="customer" scene_noun="True" />
+      <edge toID="0.71" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.92" type="FN">
+      <attributes />
+      <extra node="a" scene_noun="False" />
+      <edge toID="0.37" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.93" type="FN">
+      <attributes />
+      <extra node="in" scene_noun="False" />
+      <edge toID="0.39" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.94" type="FN">
+      <attributes />
+      <extra node="a" scene_noun="False" />
+      <edge toID="0.69" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.95" type="FN">
+      <attributes />
+      <extra node="dissatisfied" scene_noun="False" />
+      <edge toID="0.70" type="Terminal">
+        <attributes />
+        <category tag="Terminal" />
+      </edge>
+    </node>
+    <node ID="1.96" type="FN">
+      <attributes />
+      <edge toID="1.26" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
+      <edge toID="1.39" type="A">
+        <attributes />
+        <category tag="A" />
+      </edge>
+    </node>
+  </layer>
+</root>
