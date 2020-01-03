@@ -1,11 +1,5 @@
 language: python
-python:
-- '3.6'
-- '3.7'
-install:
-  - pip install tox-travis
-  - pip install -U ucca[visualize]==1.1.7 semstr[amr]==1.1.10 scikit-learn==0.20.2 tqdm depedit==2.1.4 scour
-  - python -m spacy download en_core_web_md
+python: '3.7'
 env:
   global:
     - SCRIPTS=https://raw.githubusercontent.com/UniversalConceptualCognitiveAnnotation/docs/master/scripts
@@ -20,8 +14,12 @@ deploy:
   skip_cleanup: true
 jobs:
   include:
-    - script: tox
-    - script:
+    - install: pip install tox-travis
+      script: tox
+    - install:
+        - pip install -U ucca[visualize]==1.1.7 semstr[amr]==1.1.10 scikit-learn==0.20.2 tqdm depedit==2.1.4 scour
+        - python -m spacy download en_core_web_md
+      script:
         - URL=`git remote get-url origin`
         - python conllulex2ucca.py train/streusle.ud_train.conllulex dev/streusle.ud_dev.conllulex test/streusle.ud_test.conllulex -emo xml -v
         - git checkout --orphan xml
