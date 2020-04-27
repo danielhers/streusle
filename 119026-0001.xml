@@ -959,19 +959,6 @@
     <node ID="1.67" type="FN">
       <attributes />
       <extra node="their" scene_noun="False" />
-      <edge toID="1.60" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.68" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.68" type="FN">
-      <attributes />
-      <extra node="their" scene_noun="False" />
       <edge toID="0.16" type="Terminal">
         <attributes />
         <category tag="Terminal" />

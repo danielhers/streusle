@@ -20,7 +20,7 @@
     </node>
     <node ID="0.5" type="Word">
       <attributes paragraph="1" paragraph_position="5" text="knowledgable" />
-      <extra dep="conj" head="-2" lemma="knowledgable" orth="knowledgable" pos="ADJ" tag="JJ" />
+      <extra dep="conj" head="-2" lemma="knowledgeable" orth="knowledgable" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.6" type="Punctuation">
       <attributes paragraph="1" paragraph_position="6" text="," />
@@ -437,19 +437,6 @@
       </edge>
     </node>
     <node ID="1.32" type="FN">
-      <attributes />
-      <extra node="his" scene_noun="False" />
-      <edge toID="1.30" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.33" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.33" type="FN">
       <attributes />
       <extra node="his" scene_noun="False" />
       <edge toID="0.20" type="Terminal">

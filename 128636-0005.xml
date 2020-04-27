@@ -48,7 +48,7 @@
     </node>
     <node ID="0.12" type="Word">
       <attributes paragraph="1" paragraph_position="12" text="we" />
-      <extra dep="root" head="0" lemma="we" orth="we" pos="VERB" tag="VBD" />
+      <extra dep="root" head="0" lemma="be" orth="we" pos="VERB" tag="VBD" />
     </node>
     <node ID="0.13" type="Word">
       <attributes paragraph="1" paragraph_position="13" text="absolutely" />

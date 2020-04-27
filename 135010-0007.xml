@@ -8,7 +8,7 @@
     </node>
     <node ID="0.2" type="Word">
       <attributes paragraph="1" paragraph_position="2" text="saltimboca" />
-      <extra dep="nsubj" head="2" lemma="saltimboca" orth="saltimboca" pos="NOUN" tag="NN" />
+      <extra dep="nsubj" head="2" lemma="saltimbocca" orth="saltimboca" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="was" />

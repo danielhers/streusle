@@ -16,7 +16,7 @@
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="THERE" />
-      <extra dep="nmod" head="2" lemma="there" orth="THERE" pos="PRON" tag="PRP$" />
+      <extra dep="nmod" head="2" lemma="they" orth="THERE" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.5" type="Word">
       <attributes paragraph="1" paragraph_position="5" text="OWN" />

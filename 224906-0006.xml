@@ -100,7 +100,7 @@
     </node>
     <node ID="0.25" type="Word">
       <attributes paragraph="1" paragraph_position="25" text="wantons" />
-      <extra dep="obj" head="-3" lemma="wanton" orth="wantons" pos="NOUN" tag="NNS" />
+      <extra dep="obj" head="-3" lemma="wonton" orth="wantons" pos="NOUN" tag="NNS" />
     </node>
     <node ID="0.26" type="Word">
       <attributes paragraph="1" paragraph_position="26" text="to" />

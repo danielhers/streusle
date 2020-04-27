@@ -92,7 +92,7 @@
     </node>
     <node ID="0.23" type="Word">
       <attributes paragraph="1" paragraph_position="23" text="thier" />
-      <extra dep="nmod" head="1" lemma="their" orth="thier" pos="PRON" tag="PRP$" />
+      <extra dep="nmod" head="1" lemma="they" orth="thier" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.24" type="Word">
       <attributes paragraph="1" paragraph_position="24" text="years" />

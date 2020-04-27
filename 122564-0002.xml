@@ -24,7 +24,7 @@
     </node>
     <node ID="0.6" type="Word">
       <attributes paragraph="1" paragraph_position="6" text="outsize" />
-      <extra dep="advmod" head="-2" lemma="outsize" orth="outsize" pos="ADV" tag="RB" />
+      <extra dep="advmod" head="-2" lemma="outside" orth="outsize" pos="ADV" tag="RB" />
     </node>
     <node ID="0.7" type="Punctuation">
       <attributes paragraph="1" paragraph_position="7" text="," />

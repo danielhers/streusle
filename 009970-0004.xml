@@ -16,7 +16,7 @@
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="their" />
-      <extra dep="advmod" head="-1" lemma="their" orth="their" pos="ADV" tag="RB" />
+      <extra dep="advmod" head="-1" lemma="there" orth="their" pos="ADV" tag="RB" />
     </node>
     <node ID="0.5" type="Word">
       <attributes paragraph="1" paragraph_position="5" text="are" />
@@ -199,9 +199,9 @@
         <attributes />
         <category tag="P" />
       </edge>
-      <edge toID="1.16" type="D">
+      <edge toID="1.16" type="A">
         <attributes />
-        <category tag="D" />
+        <category tag="A" />
       </edge>
     </node>
     <node ID="1.15" type="FN">

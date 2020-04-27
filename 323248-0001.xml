@@ -16,7 +16,7 @@
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="cheep" />
-      <extra dep="parataxis" head="-3" lemma="cheep" orth="cheep" pos="ADJ" tag="JJ" />
+      <extra dep="parataxis" head="-3" lemma="cheap" orth="cheep" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.5" type="Punctuation">
       <attributes paragraph="1" paragraph_position="5" text="," />

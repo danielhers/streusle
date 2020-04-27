@@ -8,7 +8,7 @@
     </node>
     <node ID="0.2" type="Word">
       <attributes paragraph="1" paragraph_position="2" text="orderd" />
-      <extra dep="root" head="0" lemma="ordered" orth="orderd" pos="VERB" tag="VBP" />
+      <extra dep="root" head="0" lemma="order" orth="orderd" pos="VERB" tag="VBP" />
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="our" />

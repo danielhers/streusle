@@ -32,7 +32,7 @@
     </node>
     <node ID="0.8" type="Word">
       <attributes paragraph="1" paragraph_position="8" text="then" />
-      <extra dep="obj" head="-1" lemma="then" orth="then" pos="PRON" tag="PRP" />
+      <extra dep="obj" head="-1" lemma="they" orth="then" pos="PRON" tag="PRP" />
     </node>
     <node ID="0.9" type="Word">
       <attributes paragraph="1" paragraph_position="9" text="know" />
@@ -159,9 +159,9 @@
         <attributes />
         <category tag="F" />
       </edge>
-      <edge toID="1.14" type="N">
+      <edge toID="1.14" type="A">
         <attributes />
-        <category tag="N" />
+        <category tag="A" />
       </edge>
       <edge toID="1.25" type="P">
         <attributes />
@@ -223,6 +223,10 @@
     <node ID="1.15" type="FN">
       <attributes />
       <extra node="know" scene_noun="False" />
+      <edge toID="1.14" type="A">
+        <attributes remote="True" />
+        <category tag="A" />
+      </edge>
       <edge toID="1.16" type="P">
         <attributes />
         <category tag="P" />

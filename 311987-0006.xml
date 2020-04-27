@@ -40,7 +40,7 @@
     </node>
     <node ID="0.10" type="Word">
       <attributes paragraph="1" paragraph_position="10" text="peddles" />
-      <extra dep="obl" head="-4" lemma="peddle" orth="peddles" pos="NOUN" tag="NNS" />
+      <extra dep="obl" head="-4" lemma="pedal" orth="peddles" pos="NOUN" tag="NNS" />
     </node>
     <node ID="0.11" type="Word">
       <attributes paragraph="1" paragraph_position="11" text="and" />

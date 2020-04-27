@@ -24,7 +24,7 @@
     </node>
     <node ID="0.6" type="Word">
       <attributes paragraph="1" paragraph_position="6" text="knowledge" />
-      <extra dep="root" head="0" lemma="knowledge" orth="knowledge" pos="ADJ" tag="JJ" />
+      <extra dep="root" head="0" lemma="knowledgeable" orth="knowledge" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.7" type="Word">
       <attributes paragraph="1" paragraph_position="7" text="about" />

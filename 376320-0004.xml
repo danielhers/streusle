@@ -60,7 +60,7 @@
     </node>
     <node ID="0.15" type="Word">
       <attributes paragraph="1" paragraph_position="15" text="boarders" />
-      <extra dep="obj" head="-2" lemma="boarder" orth="boarders" pos="NOUN" tag="NNS" />
+      <extra dep="obj" head="-2" lemma="border" orth="boarders" pos="NOUN" tag="NNS" />
     </node>
     <node ID="0.16" type="Word">
       <attributes paragraph="1" paragraph_position="16" text="for" />

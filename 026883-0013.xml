@@ -60,7 +60,7 @@
     </node>
     <node ID="0.15" type="Word">
       <attributes paragraph="1" paragraph_position="15" text="proper" />
-      <extra dep="advmod" head="1" lemma="proper" orth="proper" pos="ADV" tag="RB" />
+      <extra dep="advmod" head="1" lemma="properly" orth="proper" pos="ADV" tag="RB" />
     </node>
     <node ID="0.16" type="Word">
       <attributes paragraph="1" paragraph_position="16" text="set" />

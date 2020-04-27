@@ -4,7 +4,7 @@
     <attributes />
     <node ID="0.1" type="Word">
       <attributes paragraph="1" paragraph_position="1" text="sheisters" />
-      <extra dep="root" head="0" lemma="sheister" orth="sheisters" pos="NOUN" tag="NNS" />
+      <extra dep="root" head="0" lemma="shyster" orth="sheisters" pos="NOUN" tag="NNS" />
     </node>
   </layer>
   <layer layerID="1">

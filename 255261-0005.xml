@@ -44,7 +44,7 @@
     </node>
     <node ID="0.11" type="Word">
       <attributes paragraph="1" paragraph_position="11" text="grandure" />
-      <extra dep="nmod" head="-3" lemma="grandure" orth="grandure" pos="NOUN" tag="NN" />
+      <extra dep="nmod" head="-3" lemma="grandeur" orth="grandure" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.12" type="Punctuation">
       <attributes paragraph="1" paragraph_position="12" text="." />

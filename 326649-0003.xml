@@ -64,7 +64,7 @@
     </node>
     <node ID="0.16" type="Word">
       <attributes paragraph="1" paragraph_position="16" text="there" />
-      <extra dep="nmod" head="1" lemma="there" orth="there" pos="PRON" tag="PRP$" />
+      <extra dep="nmod" head="1" lemma="they" orth="there" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.17" type="Word">
       <attributes paragraph="1" paragraph_position="17" text="money" />

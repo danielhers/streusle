@@ -16,7 +16,7 @@
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="later" />
-      <extra dep="obj" head="-2" lemma="later" orth="later" pos="ADJ" tag="JJR" />
+      <extra dep="obj" head="-2" lemma="latter" orth="later" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.5" type="Punctuation">
       <attributes paragraph="1" paragraph_position="5" text="," />

@@ -44,7 +44,7 @@
     </node>
     <node ID="0.11" type="Word">
       <attributes paragraph="1" paragraph_position="11" text="knowledgable" />
-      <extra dep="conj" head="-6" lemma="knowledgable" orth="knowledgable" pos="ADJ" tag="JJ" />
+      <extra dep="conj" head="-6" lemma="knowledgeable" orth="knowledgable" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.12" type="Punctuation">
       <attributes paragraph="1" paragraph_position="12" text="." />

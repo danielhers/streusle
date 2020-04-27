@@ -219,7 +219,7 @@
         <attributes />
         <category tag="E" />
       </edge>
-      <edge toID="1.20" type="E">
+      <edge toID="1.19" type="E">
         <attributes />
         <category tag="E" />
       </edge>
@@ -251,37 +251,24 @@
     <node ID="1.18" type="FN">
       <attributes />
       <extra node="my" scene_noun="False" />
-      <edge toID="1.15" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.19" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.19" type="FN">
-      <attributes />
-      <extra node="my" scene_noun="False" />
       <edge toID="0.11" type="Terminal">
         <attributes />
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.20" type="FN">
+    <node ID="1.19" type="FN">
       <attributes />
       <extra node="commercial" scene_noun="False" />
       <edge toID="1.15" type="A">
         <attributes remote="True" />
         <category tag="A" />
       </edge>
-      <edge toID="1.21" type="S">
+      <edge toID="1.20" type="S">
         <attributes />
         <category tag="S" />
       </edge>
     </node>
-    <node ID="1.21" type="FN">
+    <node ID="1.20" type="FN">
       <attributes />
       <extra node="commercial" scene_noun="False" />
       <edge toID="0.12" type="Terminal">

@@ -12,7 +12,7 @@
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="use" />
-      <extra dep="root" head="0" lemma="use" orth="use" pos="VERB" tag="VB" />
+      <extra dep="root" head="0" lemma="use" orth="use" pos="VERB" tag="VBN" />
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="them" />

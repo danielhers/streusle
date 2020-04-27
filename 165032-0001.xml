@@ -319,7 +319,7 @@
         <attributes />
         <category tag="E" />
       </edge>
-      <edge toID="1.26" type="R">
+      <edge toID="1.25" type="R">
         <attributes />
         <category tag="R" />
       </edge>
@@ -335,25 +335,12 @@
     <node ID="1.24" type="FN">
       <attributes />
       <extra node="my" scene_noun="False" />
-      <edge toID="1.23" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.25" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.25" type="FN">
-      <attributes />
-      <extra node="my" scene_noun="False" />
       <edge toID="0.7" type="Terminal">
         <attributes />
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.26" type="FN">
+    <node ID="1.25" type="FN">
       <attributes />
       <extra node="'s" scene_noun="False" />
       <edge toID="0.9" type="Terminal">

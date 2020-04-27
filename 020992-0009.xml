@@ -76,7 +76,7 @@
     </node>
     <node ID="0.19" type="Word">
       <attributes paragraph="1" paragraph_position="19" text="effected" />
-      <extra dep="parataxis" head="-7" lemma="effect" orth="effected" pos="VERB" tag="VBN" />
+      <extra dep="parataxis" head="-7" lemma="affect" orth="effected" pos="VERB" tag="VBN" />
     </node>
     <node ID="0.20" type="Punctuation">
       <attributes paragraph="1" paragraph_position="20" text="(" />

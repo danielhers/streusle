@@ -48,7 +48,7 @@
     </node>
     <node ID="0.12" type="Word">
       <attributes paragraph="1" paragraph_position="12" text="resturant" />
-      <extra dep="advcl" head="6" lemma="resturant" orth="resturant" pos="NOUN" tag="NN" />
+      <extra dep="advcl" head="6" lemma="restaurant" orth="resturant" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.13" type="Word">
       <attributes paragraph="1" paragraph_position="13" text="like" />

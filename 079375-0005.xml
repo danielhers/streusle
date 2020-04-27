@@ -12,7 +12,7 @@
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="where" />
-      <extra dep="root" head="0" lemma="where" orth="where" pos="VERB" tag="VBD" />
+      <extra dep="root" head="0" lemma="be" orth="where" pos="VERB" tag="VBD" />
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="super" />
@@ -91,6 +91,10 @@
         <attributes />
         <category tag="L" />
       </edge>
+      <edge toID="1.9" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
     </node>
     <node ID="1.2" type="FN">
       <attributes />
@@ -106,10 +110,6 @@
       <edge toID="1.6" type="A">
         <attributes />
         <category tag="A" />
-      </edge>
-      <edge toID="1.9" type="P">
-        <attributes />
-        <category tag="P" />
       </edge>
       <edge toID="1.11" type="U">
         <attributes />

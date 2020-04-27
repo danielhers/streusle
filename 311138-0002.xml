@@ -36,7 +36,7 @@
     </node>
     <node ID="0.9" type="Word">
       <attributes paragraph="1" paragraph_position="9" text="distain" />
-      <extra dep="obl" head="-3" lemma="distain" orth="distain" pos="NOUN" tag="NN" />
+      <extra dep="obl" head="-3" lemma="disdain" orth="distain" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.10" type="Word">
       <attributes paragraph="1" paragraph_position="10" text="for" />

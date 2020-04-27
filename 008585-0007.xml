@@ -332,19 +332,6 @@
     <node ID="1.25" type="FN">
       <attributes />
       <extra node="your" scene_noun="False" />
-      <edge toID="1.22" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.26" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.26" type="FN">
-      <attributes />
-      <extra node="your" scene_noun="False" />
       <edge toID="0.13" type="Terminal">
         <attributes />
         <category tag="Terminal" />

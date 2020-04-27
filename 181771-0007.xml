@@ -8,7 +8,7 @@
     </node>
     <node ID="0.2" type="Word">
       <attributes paragraph="1" paragraph_position="2" text="thouhgt" />
-      <extra dep="root" head="0" lemma="thought" orth="thouhgt" pos="VERB" tag="VBD" />
+      <extra dep="root" head="0" lemma="think" orth="thouhgt" pos="VERB" tag="VBD" />
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="it" />

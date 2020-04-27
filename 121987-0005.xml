@@ -96,7 +96,7 @@
     </node>
     <node ID="0.24" type="Word">
       <attributes paragraph="1" paragraph_position="24" text="here" />
-      <extra dep="parataxis" head="-11" lemma="here" orth="here" pos="VERB" tag="VB" />
+      <extra dep="parataxis" head="-11" lemma="hear" orth="here" pos="VERB" tag="VB" />
     </node>
     <node ID="0.25" type="Word">
       <attributes paragraph="1" paragraph_position="25" text="my" />

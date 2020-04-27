@@ -116,7 +116,7 @@
     </node>
     <node ID="0.29" type="Word">
       <attributes paragraph="1" paragraph_position="29" text="wonder" />
-      <extra dep="xcomp" head="-7" lemma="wonder" orth="wonder" pos="VERB" tag="VB" />
+      <extra dep="xcomp" head="-7" lemma="wander" orth="wonder" pos="VERB" tag="VB" />
     </node>
     <node ID="0.30" type="Word">
       <attributes paragraph="1" paragraph_position="30" text="around" />

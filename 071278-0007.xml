@@ -64,7 +64,7 @@
     </node>
     <node ID="0.16" type="Word">
       <attributes paragraph="1" paragraph_position="16" text="you" />
-      <extra dep="nmod" head="1" lemma="you" orth="you" pos="PRON" tag="PRP" />
+      <extra dep="nmod" head="1" lemma="you" orth="you" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.17" type="Word">
       <attributes paragraph="1" paragraph_position="17" text="pet" />

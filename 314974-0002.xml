@@ -139,19 +139,19 @@
         <attributes />
         <category tag="H" />
       </edge>
-      <edge toID="1.27" type="L">
+      <edge toID="1.26" type="L">
         <attributes />
         <category tag="L" />
       </edge>
-      <edge toID="1.31" type="H">
+      <edge toID="1.30" type="H">
         <attributes />
         <category tag="H" />
       </edge>
-      <edge toID="1.38" type="L">
+      <edge toID="1.37" type="L">
         <attributes />
         <category tag="L" />
       </edge>
-      <edge toID="1.39" type="H">
+      <edge toID="1.38" type="H">
         <attributes />
         <category tag="H" />
       </edge>
@@ -215,7 +215,7 @@
         <attributes />
         <category tag="P" />
       </edge>
-      <edge toID="1.17" type="A">
+      <edge toID="1.16" type="A">
         <attributes />
         <category tag="A" />
       </edge>
@@ -243,19 +243,19 @@
         <attributes />
         <category tag="S" />
       </edge>
-      <edge toID="1.19" type="A">
+      <edge toID="1.18" type="A">
         <attributes />
         <category tag="A" />
       </edge>
-      <edge toID="1.20" type="F">
+      <edge toID="1.19" type="F">
         <attributes />
         <category tag="F" />
       </edge>
-      <edge toID="1.21" type="D">
+      <edge toID="1.20" type="D">
         <attributes />
         <category tag="D" />
       </edge>
-      <edge toID="1.33" type="U">
+      <edge toID="1.32" type="U">
         <attributes />
         <category tag="U" />
       </edge>
@@ -275,19 +275,19 @@
         <attributes />
         <category tag="S" />
       </edge>
-      <edge toID="1.22" type="U">
+      <edge toID="1.21" type="U">
         <attributes />
         <category tag="U" />
       </edge>
-      <edge toID="1.23" type="A">
+      <edge toID="1.22" type="A">
         <attributes />
         <category tag="A" />
       </edge>
-      <edge toID="1.24" type="F">
+      <edge toID="1.23" type="F">
         <attributes />
         <category tag="F" />
       </edge>
-      <edge toID="1.25" type="D">
+      <edge toID="1.24" type="D">
         <attributes />
         <category tag="D" />
       </edge>
@@ -307,15 +307,15 @@
         <attributes />
         <category tag="S" />
       </edge>
-      <edge toID="1.26" type="U">
+      <edge toID="1.25" type="U">
         <attributes />
         <category tag="U" />
       </edge>
-      <edge toID="1.28" type="A">
+      <edge toID="1.27" type="A">
         <attributes />
         <category tag="A" />
       </edge>
-      <edge toID="1.30" type="F">
+      <edge toID="1.29" type="F">
         <attributes />
         <category tag="F" />
       </edge>
@@ -331,37 +331,24 @@
     <node ID="1.15" type="FN">
       <attributes />
       <extra node="My" scene_noun="False" />
-      <edge toID="1.5" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.16" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.16" type="FN">
-      <attributes />
-      <extra node="My" scene_noun="False" />
       <edge toID="0.1" type="Terminal">
         <attributes />
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.17" type="FN">
+    <node ID="1.16" type="FN">
       <attributes />
       <extra node="Sushi" scene_noun="False" />
-      <edge toID="1.18" type="C">
+      <edge toID="1.17" type="C">
         <attributes />
         <category tag="C" />
       </edge>
-      <edge toID="1.34" type="R">
+      <edge toID="1.33" type="R">
         <attributes />
         <category tag="R" />
       </edge>
     </node>
-    <node ID="1.18" type="FN">
+    <node ID="1.17" type="FN">
       <attributes />
       <extra node="Sushi" scene_noun="False" />
       <edge toID="0.6" type="Terminal">
@@ -373,7 +360,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.19" type="FN">
+    <node ID="1.18" type="FN">
       <attributes />
       <extra node="They" scene_noun="False" />
       <edge toID="0.9" type="Terminal">
@@ -381,7 +368,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.20" type="FN">
+    <node ID="1.19" type="FN">
       <attributes />
       <extra node="are" scene_noun="False" />
       <edge toID="0.10" type="Terminal">
@@ -389,7 +376,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.21" type="FN">
+    <node ID="1.20" type="FN">
       <attributes />
       <extra node="very" scene_noun="False" />
       <edge toID="0.11" type="Terminal">
@@ -397,7 +384,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.22" type="FN">
+    <node ID="1.21" type="FN">
       <attributes />
       <extra node="," scene_noun="False" />
       <edge toID="0.13" type="Terminal">
@@ -405,7 +392,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.23" type="FN">
+    <node ID="1.22" type="FN">
       <attributes />
       <extra node="it" scene_noun="False" />
       <edge toID="0.14" type="Terminal">
@@ -413,7 +400,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.24" type="FN">
+    <node ID="1.23" type="FN">
       <attributes />
       <extra node="is" scene_noun="False" />
       <edge toID="0.15" type="Terminal">
@@ -421,7 +408,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.25" type="FN">
+    <node ID="1.24" type="FN">
       <attributes />
       <extra node="never" scene_noun="False" />
       <edge toID="0.16" type="Terminal">
@@ -429,7 +416,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.26" type="FN">
+    <node ID="1.25" type="FN">
       <attributes />
       <extra node="," scene_noun="False" />
       <edge toID="0.18" type="Terminal">
@@ -437,7 +424,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.27" type="FN">
+    <node ID="1.26" type="FN">
       <attributes />
       <extra node="and" scene_noun="False" />
       <edge toID="0.19" type="Terminal">
@@ -445,19 +432,19 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.28" type="FN">
+    <node ID="1.27" type="FN">
       <attributes />
       <extra node="food" scene_noun="False" />
-      <edge toID="1.29" type="C">
+      <edge toID="1.28" type="C">
         <attributes />
         <category tag="C" />
       </edge>
-      <edge toID="1.35" type="F">
+      <edge toID="1.34" type="F">
         <attributes />
         <category tag="F" />
       </edge>
     </node>
-    <node ID="1.29" type="FN">
+    <node ID="1.28" type="FN">
       <attributes />
       <extra node="food" scene_noun="False" />
       <edge toID="0.21" type="Terminal">
@@ -465,7 +452,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.30" type="FN">
+    <node ID="1.29" type="FN">
       <attributes />
       <extra node="is" scene_noun="False" />
       <edge toID="0.22" type="Terminal">
@@ -473,27 +460,27 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.31" type="FN">
+    <node ID="1.30" type="FN">
       <attributes />
       <extra node="delicious" scene_noun="False" />
-      <edge toID="1.29" type="A">
+      <edge toID="1.28" type="A">
         <attributes remote="True" />
         <category tag="A" />
       </edge>
-      <edge toID="1.32" type="S">
+      <edge toID="1.31" type="S">
         <attributes />
         <category tag="S" />
       </edge>
-      <edge toID="1.36" type="U">
+      <edge toID="1.35" type="U">
         <attributes />
         <category tag="U" />
       </edge>
-      <edge toID="1.37" type="D">
+      <edge toID="1.36" type="D">
         <attributes />
         <category tag="D" />
       </edge>
     </node>
-    <node ID="1.32" type="FN">
+    <node ID="1.31" type="FN">
       <attributes />
       <extra node="delicious" scene_noun="False" />
       <edge toID="0.26" type="Terminal">
@@ -501,7 +488,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.33" type="FN">
+    <node ID="1.32" type="FN">
       <attributes />
       <extra node="!" scene_noun="False" />
       <edge toID="0.29" type="Terminal">
@@ -509,7 +496,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.34" type="FN">
+    <node ID="1.33" type="FN">
       <attributes />
       <extra node="to" scene_noun="False" />
       <edge toID="0.5" type="Terminal">
@@ -517,7 +504,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.35" type="FN">
+    <node ID="1.34" type="FN">
       <attributes />
       <extra node="the" scene_noun="False" />
       <edge toID="0.20" type="Terminal">
@@ -525,7 +512,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.36" type="FN">
+    <node ID="1.35" type="FN">
       <attributes />
       <extra node="," scene_noun="False" />
       <edge toID="0.24" type="Terminal">
@@ -533,7 +520,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.37" type="FN">
+    <node ID="1.36" type="FN">
       <attributes />
       <extra node="very" scene_noun="False" />
       <edge toID="0.25" type="Terminal">
@@ -541,7 +528,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.38" type="FN">
+    <node ID="1.37" type="FN">
       <attributes />
       <extra node="and" scene_noun="False" />
       <edge toID="0.27" type="Terminal">
@@ -549,7 +536,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.39" type="FN">
+    <node ID="1.38" type="FN">
       <attributes />
       <extra node="fresh" scene_noun="False" />
       <edge toID="0.28" type="Terminal">

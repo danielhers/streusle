@@ -108,7 +108,7 @@
     </node>
     <node ID="0.27" type="Word">
       <attributes paragraph="1" paragraph_position="27" text="inquires" />
-      <extra dep="obj" head="-3" lemma="inquire" orth="inquires" pos="NOUN" tag="NNS" />
+      <extra dep="obj" head="-3" lemma="inquiry" orth="inquires" pos="NOUN" tag="NNS" />
     </node>
     <node ID="0.28" type="Punctuation">
       <attributes paragraph="1" paragraph_position="28" text="." />

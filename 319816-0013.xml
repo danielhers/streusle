@@ -371,6 +371,14 @@
         <attributes />
         <category tag="E" />
       </edge>
+      <edge toID="1.30" type="L">
+        <attributes />
+        <category tag="L" />
+      </edge>
+      <edge toID="1.31" type="H">
+        <attributes />
+        <category tag="H" />
+      </edge>
     </node>
     <node ID="1.25" type="FN">
       <attributes />
@@ -399,17 +407,9 @@
     <node ID="1.28" type="FN">
       <attributes />
       <extra node="less" scene_noun="False" />
-      <edge toID="1.29" type="C">
+      <edge toID="1.29" type="S">
         <attributes />
-        <category tag="C" />
-      </edge>
-      <edge toID="1.30" type="R">
-        <attributes />
-        <category tag="R" />
-      </edge>
-      <edge toID="1.31" type="H">
-        <attributes />
-        <category tag="H" />
+        <category tag="S" />
       </edge>
     </node>
     <node ID="1.29" type="FN">

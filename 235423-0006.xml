@@ -52,7 +52,7 @@
     </node>
     <node ID="0.13" type="Word">
       <attributes paragraph="1" paragraph_position="13" text="charger" />
-      <extra dep="xcomp" head="-2" lemma="charger" orth="charger" pos="VERB" tag="VB" />
+      <extra dep="xcomp" head="-2" lemma="charge" orth="charger" pos="VERB" tag="VB" />
     </node>
     <node ID="0.14" type="Word">
       <attributes paragraph="1" paragraph_position="14" text="her" />

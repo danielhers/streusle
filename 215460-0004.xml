@@ -8,7 +8,7 @@
     </node>
     <node ID="0.2" type="Word">
       <attributes paragraph="1" paragraph_position="2" text="advise" />
-      <extra dep="nsubj" head="3" lemma="advise" orth="advise" pos="NOUN" tag="NN" />
+      <extra dep="nsubj" head="3" lemma="advice" orth="advise" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="to" />

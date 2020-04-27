@@ -12,7 +12,7 @@
     </node>
     <node ID="0.3" type="Word">
       <attributes paragraph="1" paragraph_position="3" text="there" />
-      <extra dep="nmod" head="1" lemma="there" orth="there" pos="PRON" tag="PRP$" />
+      <extra dep="nmod" head="1" lemma="they" orth="there" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.4" type="Word">
       <attributes paragraph="1" paragraph_position="4" text="employees" />
@@ -76,7 +76,7 @@
     </node>
     <node ID="0.19" type="Word">
       <attributes paragraph="1" paragraph_position="19" text="there" />
-      <extra dep="nmod" head="1" lemma="there" orth="there" pos="PRON" tag="PRP$" />
+      <extra dep="nmod" head="1" lemma="they" orth="there" pos="PRON" tag="PRP$" />
     </node>
     <node ID="0.20" type="Word">
       <attributes paragraph="1" paragraph_position="20" text="customers" />

@@ -76,7 +76,7 @@
     </node>
     <node ID="0.19" type="Word">
       <attributes paragraph="1" paragraph_position="19" text="through" />
-      <extra dep="amod" head="1" lemma="through" orth="through" pos="ADJ" tag="JJ" />
+      <extra dep="amod" head="1" lemma="thorough" orth="through" pos="ADJ" tag="JJ" />
     </node>
     <node ID="0.20" type="Word">
       <attributes paragraph="1" paragraph_position="20" text="job" />

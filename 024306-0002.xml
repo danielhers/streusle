@@ -56,7 +56,7 @@
     </node>
     <node ID="0.14" type="Word">
       <attributes paragraph="1" paragraph_position="14" text="possible" />
-      <extra dep="advmod" head="3" lemma="possible" orth="possible" pos="ADV" tag="RB" />
+      <extra dep="advmod" head="3" lemma="possibly" orth="possible" pos="ADV" tag="RB" />
     </node>
     <node ID="0.15" type="Word">
       <attributes paragraph="1" paragraph_position="15" text="the" />

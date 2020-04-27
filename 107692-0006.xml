@@ -80,7 +80,7 @@
     </node>
     <node ID="0.20" type="Word">
       <attributes paragraph="1" paragraph_position="20" text="costumer" />
-      <extra dep="compound" head="1" lemma="costumer" orth="costumer" pos="NOUN" tag="NN" />
+      <extra dep="compound" head="1" lemma="customer" orth="costumer" pos="NOUN" tag="NN" />
     </node>
     <node ID="0.21" type="Word">
       <attributes paragraph="1" paragraph_position="21" text="service" />

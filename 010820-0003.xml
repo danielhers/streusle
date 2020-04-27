@@ -40,7 +40,7 @@
     </node>
     <node ID="0.10" type="Word">
       <attributes paragraph="1" paragraph_position="10" text="realy" />
-      <extra dep="advmod" head="1" lemma="realy" orth="realy" pos="ADV" tag="RB" />
+      <extra dep="advmod" head="1" lemma="really" orth="realy" pos="ADV" tag="RB" />
     </node>
     <node ID="0.11" type="Word">
       <attributes paragraph="1" paragraph_position="11" text="demand" />

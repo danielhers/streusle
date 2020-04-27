@@ -1031,7 +1031,7 @@
         <attributes />
         <category tag="P" />
       </edge>
-      <edge toID="1.77" type="A">
+      <edge toID="1.76" type="A">
         <attributes />
         <category tag="A" />
       </edge>
@@ -1091,37 +1091,24 @@
     <node ID="1.75" type="FN">
       <attributes />
       <extra node="their" scene_noun="False" />
-      <edge toID="1.65" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.76" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.76" type="FN">
-      <attributes />
-      <extra node="their" scene_noun="False" />
       <edge toID="0.53" type="Terminal">
         <attributes />
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.77" type="FN">
+    <node ID="1.76" type="FN">
       <attributes />
       <extra node="tire" scene_noun="False" />
-      <edge toID="1.78" type="C">
+      <edge toID="1.77" type="C">
         <attributes />
         <category tag="C" />
       </edge>
-      <edge toID="1.79" type="F">
+      <edge toID="1.78" type="F">
         <attributes />
         <category tag="F" />
       </edge>
     </node>
-    <node ID="1.78" type="FN">
+    <node ID="1.77" type="FN">
       <attributes />
       <extra node="tire" scene_noun="False" />
       <edge toID="0.58" type="Terminal">
@@ -1129,7 +1116,7 @@
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.79" type="FN">
+    <node ID="1.78" type="FN">
       <attributes />
       <extra node="the" scene_noun="False" />
       <edge toID="0.57" type="Terminal">

@@ -411,7 +411,7 @@
         <attributes />
         <category tag="H" />
       </edge>
-      <edge toID="1.84" type="P">
+      <edge toID="1.83" type="P">
         <attributes />
         <category tag="P" />
       </edge>
@@ -891,7 +891,7 @@
         <attributes />
         <category tag="P" />
       </edge>
-      <edge toID="1.85" type="P">
+      <edge toID="1.84" type="P">
         <attributes />
         <category tag="P" />
       </edge>
@@ -1155,32 +1155,19 @@
     <node ID="1.82" type="FN">
       <attributes />
       <extra node="their" scene_noun="False" />
-      <edge toID="1.80" type="A">
-        <attributes remote="True" />
-        <category tag="A" />
-      </edge>
-      <edge toID="1.83" type="S">
-        <attributes />
-        <category tag="S" />
-        <category tag="A" />
-      </edge>
-    </node>
-    <node ID="1.83" type="FN">
-      <attributes />
-      <extra node="their" scene_noun="False" />
       <edge toID="0.55" type="Terminal">
         <attributes />
         <category tag="Terminal" />
       </edge>
     </node>
-    <node ID="1.84" type="FN">
+    <node ID="1.83" type="FN">
       <attributes />
       <edge toID="1.7" type="A">
         <attributes remote="True" />
         <category tag="A" />
       </edge>
     </node>
-    <node ID="1.85" type="FN">
+    <node ID="1.84" type="FN">
       <attributes />
     </node>
   </layer>
