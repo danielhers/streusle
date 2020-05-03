@@ -128,7 +128,7 @@ class ConllulexToUccaConverter:
                                                                      for x in xs)))),  # tree-id in ucca-app
                                     "|".join(sorted(t for x in xs for t in getattr(x, "ftags", [x.ftag])
                                                     or ())),  # category
-                                    "|".join(sorted(t for x in xs for e in x.incoming_basic if e.attrib.get("remote")
+                                    "|".join(sorted(t for x in xs for e in x.incoming if e.attrib.get("remote")
                                                     for t in e.tags)),  # remote
                                     _yes(len([t for x in xs for t in x.terminals]) > 1),  # unanalyzable
                                     ", ".join(map(str, xs))]  # annotation
