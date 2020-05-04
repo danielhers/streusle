@@ -13,7 +13,7 @@ import csv
 import os
 import re
 import sys
-from itertools import groupby
+from itertools import groupby, chain
 from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
 
@@ -77,10 +77,360 @@ class ConllulexToUccaConverter:
                     node.exprs[expr_type] = expr
                     expr.setdefault("nodes", []).append(node)
 
+        #if sent[SENT_ID]=='reviews-245160-0004':
+        #    assert False,nodes
+
         # TODO intermediate structure - annotate units with attributes such as "scene-evoking"
 
         # TODO Create primary UCCA tree
+        unit2expr = {}
+        node2unit = {}
+        node2unit_for_advbl_attachment = {}   # exceptions to node2unit when attaching syntactic dependents:
+        # units for dependents of (node) should attach under (unit)
+
+        def parent_unit_for_dep(node: Node, deprel: str):
+            # deprels that are adverbial, i.e., attach to verbs or copular predicates
+            ADV_RELS = ('nsubj', 'obj', 'iobj', 'csubj', 'ccomp', 'xcomp',
+                        'obl', 'vocative', 'expl', 'dislocated',
+                        'advcl', 'advmod', 'discourse', 'aux', 'cop', 'mark')
+            isAdverbialDeprel = deprel in ADV_RELS or deprel.startswith(tuple(r+':' for r in ADV_RELS))
+            parent = node2unit_for_advbl_attachment.get(node, node2unit.get(node))
+            return parent
+
+        def expr_head(expr: dict) -> 'Node':
+            """Given an expression, return the first (usually only)
+            dependency node that still has a parent (which will be outside the expression)."""
+            nodes = expr["nodes"]
+            headed_nodes = [n for n in nodes if n.head is not None]
+            #if len(headed_nodes)>1:
+            #    print(expr)
+            return headed_nodes[0]
+
         l1 = layer1.Layer1(passage)
+        dummyroot = l1.add_fnode(None, 'DUMMYROOT')
+
+        for expr in chain(sent['swes'].values(), sent['smwes'].values()):
+
+            lvc_scene_lus = []
+            if 'LVC' in expr['lexcat']: # LVC.full or LVC.cause
+                # decide the semantic head (scene-evoker)
+                lvc_scene_lus = [n for n in expr['nodes'] if n.tok['upos'] not in ('VERB', 'DET')]
+                if not lvc_scene_lus:
+                    # a couple are V+V (annotation errors?); take the last word
+                    lvc_scene_lus = [expr['nodes'][-1]]
+                elif len(lvc_scene_lus)>1:
+                    # e.g. "went_on_a_trip"
+                    lvc_scene_lus = [lvc_scene_lus[-1]]
+
+            # decide main cat
+            if expr['lexcat']=='PUNCT':
+                mcat = 'U'
+            elif lvc_scene_lus:
+                mcat = '+'  # LVCs are scene-evoking
+            else:
+                mcat = 'LU'
+
+            outerlu = toplu = lu = l1.add_fnode(dummyroot, mcat)
+            n = expr['nodes'][0]
+            unit2expr[lu] = n.swe or n.smwe # could use walrus operator here
+
+            isUNA = False
+            if len(expr['nodes'])>1 and not lvc_scene_lus:
+                # non-LVC MWE: treat as unanalyzable
+                # TODO: dates should also be unanalyzable, but alas, they're not MWEs
+                isUNA = True
+                toplu = lu = l1.add_fnode(toplu, 'UNA')
+
+            for node in expr['nodes']:
+                if lvc_scene_lus and node not in lvc_scene_lus:
+                    # light verb or determiner in LVC
+                    lu = l1.add_fnode(toplu, 'F')
+                else:
+                    lu = toplu
+                lu.add(layer1.EdgeTags.Terminal, node.terminal)
+
+                unit2expr[lu] = node.swe or node.smwe
+                node2unit[node] = outerlu if isUNA else lu
+                if lvc_scene_lus and node not in lvc_scene_lus and node2unit[node] is lu:
+                    # point to parent unit because things should never attach under F units
+                    node2unit[node] = toplu
+
+                # delete within-MWE dep edges so we don't process them later
+                h = node.head   # could use walrus operator
+                if h in expr['nodes']:
+                    e = node.incoming_basic[0]
+                    node.incoming_basic.remove(e)
+                    h.outgoing_basic.remove(e)
+
+        # decide whether each LU is a scene-evoker ("+") or not ("-")
+        # adjectives and predicative prepositions are marked as "S"
+
+        for u in dummyroot.children:
+            cat = u.ftag
+            if cat=='LU':
+                isSceneEvoking = None
+                expr = unit2expr[u]
+                n = expr['nodes'][0]
+                if n.lexcat=='N':
+                    if n.tok['upos']=='PROPN':
+                        isSceneEvoking = False
+                    elif n.ss in ("n.ACT", "n.EVENT", "n.PHENOMENON", "n.PROCESS"):
+                        isSceneEvoking = True
+                    # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L585
+                elif n.ss and n.ss.startswith('v.'):
+                    isSceneEvoking = True
+                    # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L580
+                else:
+                    isSceneEvoking = False
+                u._fedge().tag = '+' if isSceneEvoking else '-'
+                if n.lexcat=='ADJ' and n.lexlemma not in ('else','such'):
+                    u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
+                elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative'):
+                    h = n.head
+                    if n.deprel=='case' or not (h and h.children_with_rel('case')):    # exclude advmod if sister to case, like "*back* between"
+                        u._fedge().tag = 'S' # predicative PP, so preposition is scene-evoking
+                        node2unit_for_advbl_attachment[h] = u # make preposition unit the attachment site for ADVERBIAL dependents
+
+
+        #if 'surgery' in sent['text']:
+        #    print(l1.root)
+
+        # attach F modifiers
+
+        for u in dummyroot.children:
+            cat = u.ftag
+            if cat not in ('+', '-', 'S', 'LVC'):
+                continue
+            assert u in unit2expr,(str(l1.root),str(u))
+            expr = unit2expr[u]
+
+            # TODO: deal with MWEs later (need to find head)
+            if True or len(expr['nodes'])==1:
+                n = expr_head(expr)
+                h = n.head
+                if h is None:
+                    continue
+                r = n.deprel
+                if r in ('det','aux','cop') or r.startswith(('det:','aux:','cop:')):
+                    if r=='det' or r.startswith('det:'):
+                        assert cat=='-',(str(u),str(l1.root))
+                    # o.w. USUALLY cat=='-', but there are some uses of 'be' and 'get' marked as v.stative or v.change
+
+                    hu = parent_unit_for_dep(h, r)
+                    assert hu is not None,()
+                    dummyroot.remove(u)
+                    if r.startswith('det') and expr['lexlemma'] not in ('a','an','the'):
+                        hu.add('E', u)  # demonstrative dets are E
+                    else:
+                        # F regardless of whether head's unit is scene-evoking
+                        hu.add('F', u)
+                        node2unit[n] = hu   # point to parent unit because things should never attach under F units
+                    #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
+
+
+        for u in dummyroot.children:
+            cat = u.ftag
+            if cat not in ('+', '-', 'S', 'LVC'):
+                continue
+            assert u in unit2expr,(str(l1.root),str(u))
+            expr = unit2expr[u]
+
+            # TODO: deal with MWEs later (need to find head)
+            if True or len(expr['nodes'])==1:
+                n = expr_head(expr)
+                h = n.head
+                if h is None:
+                    continue
+                r = n.deprel
+                hu = parent_unit_for_dep(h, r)
+                if r in ('amod','advmod') or r.startswith(('amod:','advmod:')):
+                    if cat=='-':
+                        hucat = hu.ftag
+                        dummyroot.remove(u)
+                        hu.add('D' if hucat in ('+','S') else 'E', u)
+                    elif cat=='S' or cat=='+':
+                        # adjectives are treated as S thus far
+                        # cat=='+' for e.g. a *personalized* gift
+                        hucat = hu.ftag
+                        dummyroot.remove(u)
+
+                        if hucat=='S' and (r=='amod' or r.startswith('amod:')):  # probably an ADJ compound, like African - American
+                            hu.add('C', u)  # put "African" as C under "American"---that will later become C too
+                        elif hucat=='-':  # E-scene. make node for scene to attach as E
+                            scn = l1.add_fnode(hu, 'E')
+                            scn.add('S', u)
+                        elif hucat=='+':
+                            hu.add('D', u)
+                        else:
+                            assert False,(hucat,str(u),str(l1.root))
+                elif r=='nmod:npmod' and expr['lexlemma'].endswith('self'):
+                    # the surgery *itself*: attach as F (guidelines p. 31, "Reflexives")
+                    assert cat=='-'
+                    dummyroot.remove(u)
+                    hu.add('F', u)
+                elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P'):
+                    assert 'heuristic_relation' in expr,(expr,sent[SENT_ID],sent['text'],'Need to run govobj.py?')
+                    go = expr['heuristic_relation']
+                    govi = go['gov']
+                    obji = go['obj']
+                    config = go['config']
+                    if config.startswith('predicative'):
+                        # predicative PP: prep is the scene-evoker
+                        assert cat=='S',str(l1.root)
+                        # move its gov and obj underneath, unless gov is scene-evoking
+                        if govi is not None:
+                            gov = nodes[govi]
+                            govu = node2unit[gov]
+                            govcat = govu.ftag
+                            assert govcat not in ('+','S','P'),(govcat,str(govu),str(l1.root))
+                            assert govu.fparent is dummyroot,(govcat,str(govu),str(l1.root))
+                            dummyroot.remove(govu)
+                            u.add(govcat, govu)
+                            #print(govcat,str(govu),str(l1.root))
+                        if obji is not None:
+                            obj = nodes[obji]
+                            obju = node2unit[obj]
+                            objcat = obju.ftag
+                            assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
+                            assert obju.fparent is dummyroot,(objcat,str(obju),str(l1.root))
+                            dummyroot.remove(obju)
+                            u.add(objcat, obju)
+                            #assert False,(objcat,str(obju),str(l1.root))
+                        # TODO: T and D PPs (The meeting was on Thursday)
+                    elif obji is not None:
+                        # make prep a relator under its object
+                        obj = nodes[obji]
+                        obju = node2unit[obj]
+                        dummyroot.remove(u)
+                        obju.add('R', u)
+                    elif config=='possessive':
+                        # possessive pronoun
+                        pass    # TODO
+                    else:
+                        assert False,expr
+
+
+        for u in dummyroot.children:
+            cat = u.ftag
+            if cat not in ('+', '-', 'S', 'LVC'):
+                continue
+            assert u in unit2expr,(str(l1.root),str(u))
+            expr = unit2expr[u]
+
+            # TODO: deal with MWEs later (need to find head)
+            if True or len(expr['nodes'])==1:
+                n = expr_head(expr)
+                h = n.head
+                if h is None:
+                    continue
+                r = n.deprel
+                hu = parent_unit_for_dep(h, r)
+                if cat=='-' and (r in ('nsubj','obj','iobj') or r.startswith(('nsubj:','obj:','iobj:'))):
+                    hucat = hu.ftag
+                    if hucat in ('+','S'):
+                        dummyroot.remove(u)
+                        hu.add('A' if hucat=='+' else 'E', u)
+                    else:
+                        # TODO: predicate nominals
+                        #assert False,(str(u),h,node2unit[h],hucat,str(l1.root))
+                        pass
+
+
+        for u in dummyroot.children:
+            cat = u.ftag
+            #if cat not in ('+', '-', 'S', 'LVC'):
+            #    continue
+            assert u in unit2expr,(str(l1.root),str(u))
+            expr = unit2expr[u]
+
+            # TODO: deal with MWEs later (need to find head)
+            if True or len(expr['nodes'])==1:
+                n = expr_head(expr)
+                h = n.head
+                if h is None:
+                    continue
+                r = n.deprel
+                hu = parent_unit_for_dep(h, r)
+                if hu is None:
+                    continue
+                hucat = hu.ftag
+                if r=='conj':
+                    hu.add('CONJ', u)   # later: decide whether this is connected by N or L, and raise as sibling of first conjunct
+                elif cat=='-' and (n.lexcat == "DISC" or n.ss == "p.Purpose" or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
+                    dummyroot.remove(u)
+                    if r=='cc' and hucat=='-':
+                        # Decide N vs. L based on the first conjunct's scene status
+                        # N.B. Depedit moved cc to be under the first conjunct
+                        # Coordination of non-scene unit evokers: coordinators as N and the conjunct heads as C
+
+                        hu.add('N', u)
+                        # for conjunct in h.children_with_rel('conj'):
+                        #     conjunctu = parent_unit_for_dep(conjunct, 'conj')
+                        #     hu.add('C', conjunct)
+
+                        #assert False,(sent[SENT_ID],[(a.head,a.deprel,a) for a in nodes])
+                    else: # linker
+                        if hu is None:
+                            l1.add_fnode(u, 'L')
+                        else:
+                            # add as sister to dependency head
+                            hu.fparent.add('L', u)
+
+
+
+
+
+        """
+        # move node to another parent with same category
+        print(dummyroot)
+        u = dummyroot.children[0]
+        cat = u.incoming[0].tag
+        print('child', u, cat)
+        #assert False,repr(u)
+        dummyroot.remove(u)
+        print(l1.all[0])
+        dummyroot.children[1].add(cat, u)
+        assert False,l1.all[0]
+        """
+
+        #assert not lvc_scene_lus,l1.root
+        if 'For example' in sent['text'] or 'surgery' in sent['text'] or 'eather' in sent['text']:
+            print(l1.root)
+
+        '''
+        1. Identify (unanalyzable) units: expressions with lexcats …
+            For unanalyzable MWEs, note which token is the syntactic head and check that none of the other tokens in the MWE have dependants outside of the MWE
+        2. Intermediate annotation for each lexical unit: scene-evoking or not. For LVCs, mark the syntactic head as an F modifier of the scene-evoking item.
+        3. Handle coordinations of non-scene unit evokers, marking coordinators as N and the conjunct heads as C
+        4. Form non-scene units with C, E, Q, R, F, T, etc. elements, with special attention to (a) possessives, (b) relational nouns, …
+            For prepositions/possessives, consider using govobj information which deals with things like copular predicates and stranding
+        5. Handle coordinations where at least one conjunct is scene-evoking
+        6. Form scene units headed by each scene-evoking lexical unit: A, D, T, F, etc., with special attention to (a) copula constructions, (b) nominally-evoked scenes and possessive participants, (c) relative clauses, ...
+        7. Decide whether each scene-evoking lexical unit is P or S
+        8. Remaining parallel scenes and linkage
+        9. (G? Anaphora? Implicit units? Secondary edges?)
+        '''
+
+        """
+        TODO: Uncovered STREUSLE 4.3 annotation errors in training set
+
+        ## LVCs
+        - Some LVCs include the article, e.g. have_a_bite
+        - has_ 4 studios _planned is tagged as LVC - is "has" a regular verb here (cf. "get")?
+        - had_ ... _replace
+        - 'go on a trip' marked as an LVC
+
+        - 'get busy': should not be aux (not passive get)
+        - 'getting infected': 'getting' is v.body, but that should only apply if an MWE
+        - 'such': inconsistent treatment: sometimes ADJ/det (such nice workers)
+
+        - 'Huge ammount of time wasted time': first 'time' is case
+
+        FIXED
+        - amod(PRON,ADJ) should be xcomp(VERB,ADJ): "saw it *riddled* with..."
+        """
+
+
         # add a child to unit (use unit=None for root), returns the new child: l1.add_fnode(unit, tag)
         # add a child with multiple categories (e.g., P+S): l1.add_fnode_multiple(unit, [(tag,) for tag in tags])
         # add a remote child (units already exist): l1.add_remote(parent, tag, child)
@@ -240,6 +590,9 @@ class Node:
         :return: basic dependency relation str
         """
         return self.incoming_basic[0].baserel if self.incoming_basic else None
+
+    def children_with_rel(self, rel: str) -> List['Node']:
+        return [e.dep for e in self.outgoing_basic if e.deprel==rel]
 
     @property
     def swe(self) -> Optional[dict]:
