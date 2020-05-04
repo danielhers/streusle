@@ -204,28 +204,26 @@ class ConllulexToUccaConverter:
             assert u in unit2expr,(str(l1.root),str(u))
             expr = unit2expr[u]
 
-            # TODO: deal with MWEs later (need to find head)
-            if True or len(expr['nodes'])==1:
-                n = expr_head(expr)
-                h = n.head
-                if h is None:
-                    continue
-                r = n.deprel
-                if r in ('det','aux','cop') or r.startswith(('det:','aux:','cop:')):
-                    if r=='det' or r.startswith('det:'):
-                        assert cat=='-',(str(u),str(l1.root))
-                    # o.w. USUALLY cat=='-', but there are some uses of 'be' and 'get' marked as v.stative or v.change
+            n = expr_head(expr)
+            h = n.head
+            if h is None:
+                continue
+            r = n.deprel
+            if r in ('det','aux','cop') or r.startswith(('det:','aux:','cop:')):
+                if r=='det' or r.startswith('det:'):
+                    assert cat=='-',(str(u),str(l1.root))
+                # o.w. USUALLY cat=='-', but there are some uses of 'be' and 'get' marked as v.stative or v.change
 
-                    hu = parent_unit_for_dep(h, r)
-                    assert hu is not None,()
-                    dummyroot.remove(u)
-                    if r.startswith('det') and expr['lexlemma'] not in ('a','an','the'):
-                        hu.add('E', u)  # demonstrative dets are E
-                    else:
-                        # F regardless of whether head's unit is scene-evoking
-                        hu.add('F', u)
-                        node2unit[n] = hu   # point to parent unit because things should never attach under F units
-                    #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
+                hu = parent_unit_for_dep(h, r)
+                assert hu is not None,()
+                dummyroot.remove(u)
+                if r.startswith('det') and expr['lexlemma'] not in ('a','an','the'):
+                    hu.add('E', u)  # demonstrative dets are E
+                else:
+                    # F regardless of whether head's unit is scene-evoking
+                    hu.add('F', u)
+                    node2unit[n] = hu   # point to parent unit because things should never attach under F units
+                #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
 
 
         for u in dummyroot.children:
@@ -235,79 +233,77 @@ class ConllulexToUccaConverter:
             assert u in unit2expr,(str(l1.root),str(u))
             expr = unit2expr[u]
 
-            # TODO: deal with MWEs later (need to find head)
-            if True or len(expr['nodes'])==1:
-                n = expr_head(expr)
-                h = n.head
-                if h is None:
-                    continue
-                r = n.deprel
-                hu = parent_unit_for_dep(h, r)
-                if r in ('amod','advmod') or r.startswith(('amod:','advmod:')):
-                    if cat=='-':
-                        hucat = hu.ftag
-                        dummyroot.remove(u)
-                        hu.add('D' if hucat in ('+','S') else 'E', u)
-                    elif cat=='S' or cat=='+':
-                        # adjectives are treated as S thus far
-                        # cat=='+' for e.g. a *personalized* gift
-                        hucat = hu.ftag
-                        dummyroot.remove(u)
-
-                        if hucat=='S' and (r=='amod' or r.startswith('amod:')):  # probably an ADJ compound, like African - American
-                            hu.add('C', u)  # put "African" as C under "American"---that will later become C too
-                        elif hucat=='-':  # E-scene. make node for scene to attach as E
-                            scn = l1.add_fnode(hu, 'E')
-                            scn.add('S', u)
-                        elif hucat=='+':
-                            hu.add('D', u)
-                        else:
-                            assert False,(hucat,str(u),str(l1.root))
-                elif r=='nmod:npmod' and expr['lexlemma'].endswith('self'):
-                    # the surgery *itself*: attach as F (guidelines p. 31, "Reflexives")
-                    assert cat=='-'
+            n = expr_head(expr)
+            h = n.head
+            if h is None:
+                continue
+            r = n.deprel
+            hu = parent_unit_for_dep(h, r)
+            if r in ('amod','advmod') or r.startswith(('amod:','advmod:')):
+                if cat=='-':
+                    hucat = hu.ftag
                     dummyroot.remove(u)
-                    hu.add('F', u)
-                elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P'):
-                    assert 'heuristic_relation' in expr,(expr,sent[SENT_ID],sent['text'],'Need to run govobj.py?')
-                    go = expr['heuristic_relation']
-                    govi = go['gov']
-                    obji = go['obj']
-                    config = go['config']
-                    if config.startswith('predicative'):
-                        # predicative PP: prep is the scene-evoker
-                        assert cat=='S',str(l1.root)
-                        # move its gov and obj underneath, unless gov is scene-evoking
-                        if govi is not None:
-                            gov = nodes[govi]
-                            govu = node2unit[gov]
-                            govcat = govu.ftag
-                            assert govcat not in ('+','S','P'),(govcat,str(govu),str(l1.root))
-                            assert govu.fparent is dummyroot,(govcat,str(govu),str(l1.root))
-                            dummyroot.remove(govu)
-                            u.add(govcat, govu)
-                            #print(govcat,str(govu),str(l1.root))
-                        if obji is not None:
-                            obj = nodes[obji]
-                            obju = node2unit[obj]
-                            objcat = obju.ftag
-                            assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
-                            assert obju.fparent is dummyroot,(objcat,str(obju),str(l1.root))
-                            dummyroot.remove(obju)
-                            u.add(objcat, obju)
-                            #assert False,(objcat,str(obju),str(l1.root))
-                        # TODO: T and D PPs (The meeting was on Thursday)
-                    elif obji is not None:
-                        # make prep a relator under its object
+                    hu.add('D' if hucat in ('+','S') else 'E', u)
+                elif cat=='S' or cat=='+':
+                    # adjectives are treated as S thus far
+                    # cat=='+' for e.g. a *personalized* gift
+                    hucat = hu.ftag
+                    dummyroot.remove(u)
+
+                    if hucat=='S' and (r=='amod' or r.startswith('amod:')):  # probably an ADJ compound, like African - American
+                        hu.add('C', u)  # put "African" as C under "American"---that will later become C too
+                    elif hucat=='-':  # E-scene. make node for scene to attach as E
+                        scn = l1.add_fnode(hu, 'E')
+                        scn.add('S', u)
+                    elif hucat=='+':
+                        hu.add('D', u)
+                    else:
+                        assert False,(hucat,str(u),str(l1.root))
+            elif r=='nmod:npmod' and expr['lexlemma'].endswith('self'):
+                # the surgery *itself*: attach as F (guidelines p. 31, "Reflexives")
+                assert cat=='-'
+                dummyroot.remove(u)
+                hu.add('F', u)
+            elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P'):
+                assert 'heuristic_relation' in expr,(expr,sent[SENT_ID],sent['text'],'Need to run govobj.py?')
+                go = expr['heuristic_relation']
+                govi = go['gov']
+                obji = go['obj']
+                config = go['config']
+                if config.startswith('predicative'):
+                    # predicative PP: prep is the scene-evoker
+                    assert cat=='S',str(l1.root)
+                    # move its gov and obj underneath, unless gov is scene-evoking
+                    if govi is not None:
+                        gov = nodes[govi]
+                        govu = node2unit[gov]
+                        govcat = govu.ftag
+                        assert govcat not in ('+','S','P'),(govcat,str(govu),str(l1.root))
+                        assert govu.fparent is dummyroot,(govcat,str(govu),str(l1.root))
+                        dummyroot.remove(govu)
+                        u.add(govcat, govu)
+                        #print(govcat,str(govu),str(l1.root))
+                    if obji is not None:
                         obj = nodes[obji]
                         obju = node2unit[obj]
-                        dummyroot.remove(u)
-                        obju.add('R', u)
-                    elif config=='possessive':
-                        # possessive pronoun
-                        pass    # TODO
-                    else:
-                        assert False,expr
+                        objcat = obju.ftag
+                        assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
+                        assert obju.fparent is dummyroot,(objcat,str(obju),str(l1.root))
+                        dummyroot.remove(obju)
+                        u.add(objcat, obju)
+                        #assert False,(objcat,str(obju),str(l1.root))
+                    # TODO: T and D PPs (The meeting was on Thursday)
+                elif obji is not None:
+                    # make prep a relator under its object
+                    obj = nodes[obji]
+                    obju = node2unit[obj]
+                    dummyroot.remove(u)
+                    obju.add('R', u)
+                elif config=='possessive':
+                    # possessive pronoun
+                    pass    # TODO
+                else:
+                    assert False,expr
 
 
         for u in dummyroot.children:
@@ -316,24 +312,21 @@ class ConllulexToUccaConverter:
                 continue
             assert u in unit2expr,(str(l1.root),str(u))
             expr = unit2expr[u]
-
-            # TODO: deal with MWEs later (need to find head)
-            if True or len(expr['nodes'])==1:
-                n = expr_head(expr)
-                h = n.head
-                if h is None:
-                    continue
-                r = n.deprel
-                hu = parent_unit_for_dep(h, r)
-                if cat=='-' and (r in ('nsubj','obj','iobj') or r.startswith(('nsubj:','obj:','iobj:'))):
-                    hucat = hu.ftag
-                    if hucat in ('+','S'):
-                        dummyroot.remove(u)
-                        hu.add('A' if hucat=='+' else 'E', u)
-                    else:
-                        # TODO: predicate nominals
-                        #assert False,(str(u),h,node2unit[h],hucat,str(l1.root))
-                        pass
+            n = expr_head(expr)
+            h = n.head
+            if h is None:
+                continue
+            r = n.deprel
+            hu = parent_unit_for_dep(h, r)
+            if cat=='-' and (r in ('nsubj','obj','iobj') or r.startswith(('nsubj:','obj:','iobj:'))):
+                hucat = hu.ftag
+                if hucat in ('+','S'):
+                    dummyroot.remove(u)
+                    hu.add('A' if hucat=='+' else 'E', u)
+                else:
+                    # TODO: predicate nominals
+                    #assert False,(str(u),h,node2unit[h],hucat,str(l1.root))
+                    pass
 
 
         for u in dummyroot.children:
@@ -342,39 +335,36 @@ class ConllulexToUccaConverter:
             #    continue
             assert u in unit2expr,(str(l1.root),str(u))
             expr = unit2expr[u]
+            n = expr_head(expr)
+            h = n.head
+            if h is None:
+                continue
+            r = n.deprel
+            hu = parent_unit_for_dep(h, r)
+            if hu is None:
+                continue
+            hucat = hu.ftag
+            if r=='conj':
+                hu.add('CONJ', u)   # later: decide whether this is connected by N or L, and raise as sibling of first conjunct
+            elif cat=='-' and (n.lexcat == "DISC" or n.ss == "p.Purpose" or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
+                dummyroot.remove(u)
+                if r=='cc' and hucat=='-':
+                    # Decide N vs. L based on the first conjunct's scene status
+                    # N.B. Depedit moved cc to be under the first conjunct
+                    # Coordination of non-scene unit evokers: coordinators as N and the conjunct heads as C
 
-            # TODO: deal with MWEs later (need to find head)
-            if True or len(expr['nodes'])==1:
-                n = expr_head(expr)
-                h = n.head
-                if h is None:
-                    continue
-                r = n.deprel
-                hu = parent_unit_for_dep(h, r)
-                if hu is None:
-                    continue
-                hucat = hu.ftag
-                if r=='conj':
-                    hu.add('CONJ', u)   # later: decide whether this is connected by N or L, and raise as sibling of first conjunct
-                elif cat=='-' and (n.lexcat == "DISC" or n.ss == "p.Purpose" or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
-                    dummyroot.remove(u)
-                    if r=='cc' and hucat=='-':
-                        # Decide N vs. L based on the first conjunct's scene status
-                        # N.B. Depedit moved cc to be under the first conjunct
-                        # Coordination of non-scene unit evokers: coordinators as N and the conjunct heads as C
+                    hu.add('N', u)
+                    # for conjunct in h.children_with_rel('conj'):
+                    #     conjunctu = parent_unit_for_dep(conjunct, 'conj')
+                    #     hu.add('C', conjunct)
 
-                        hu.add('N', u)
-                        # for conjunct in h.children_with_rel('conj'):
-                        #     conjunctu = parent_unit_for_dep(conjunct, 'conj')
-                        #     hu.add('C', conjunct)
-
-                        #assert False,(sent[SENT_ID],[(a.head,a.deprel,a) for a in nodes])
-                    else: # linker
-                        if hu is None:
-                            l1.add_fnode(u, 'L')
-                        else:
-                            # add as sister to dependency head
-                            hu.fparent.add('L', u)
+                    #assert False,(sent[SENT_ID],[(a.head,a.deprel,a) for a in nodes])
+                else: # linker
+                    if hu is None:
+                        l1.add_fnode(u, 'L')
+                    else:
+                        # add as sister to dependency head
+                        hu.fparent.add('L', u)
 
 
 
