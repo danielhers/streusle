@@ -44,6 +44,9 @@ DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
 DEPEDIT_TRANSFORMED_DEPRELS = set(re.search(r"(?<=func=/)\w+", t).group(0) for t in DEPEDIT_TRANSFORMATIONS)
 
 
+
+SNACS_TEMPORAL = ('p.Temporal','p.Time','p.StartTime','p.EndTime','p.Frequency','p.Interval')
+
 class ConllulexToUccaConverter:
     def __init__(self):
         self.depedit = DepEdit(DEPEDIT_TRANSFORMATIONS)
@@ -198,7 +201,9 @@ class ConllulexToUccaConverter:
                     isSceneEvoking = True
                 else:
                     isSceneEvoking = False
+
                 u._fedge().tag = '+' if isSceneEvoking else '-'
+
                 if n.lexcat=='ADJ' and n.lexlemma not in ('else','such'):
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
                 elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative'):
@@ -206,6 +211,29 @@ class ConllulexToUccaConverter:
                     if n.deprel=='case' or not (h and h.children_with_rel('case')):    # exclude advmod if sister to case, like "*back* between"
                         u._fedge().tag = 'S' # predicative PP, so preposition is scene-evoking
                         node2unit_for_advbl_attachment[h] = u # make preposition unit the attachment site for ADVERBIAL dependents
+                elif n.deprel=='cop' and n.head.lexcat in ('N','PRON','PROPN') and not n.head.children_with_rel('case'):    # predicate nominal
+                    # copula is head
+                    # TODO: exception of nominal is scene-evoking (e.g. "friend", pred. possessive)
+                    u._fedge().tag = 'S'
+                    h = n.head
+                    node2unit_for_advbl_attachment[h] = u
+                    # invert headedness of copula and nominal, without moving other dependents
+                    # n = copula, h = nominal
+                    assert not n.children
+                    # - delete "cop" deprel
+                    e = n.incoming_basic[0]
+                    n.incoming_basic.remove(e)
+                    h.outgoing_basic.remove(e)
+                    # - nominal deprel moves to copula
+                    e = h.incoming_basic[0]
+                    h.incoming_basic.remove(e)
+                    e.dep = n
+                    n.incoming_basic.append(e)
+                    # - make nominal the obj of copula
+                    e = Edge(head=n,dep=h,deprel='obj')
+                    n.outgoing_basic.append(e)
+                    h.incoming_basic.append(e)
+
 
         ''' # from 2019 converter
         def is_analyzable(self) -> bool:
@@ -315,7 +343,7 @@ class ConllulexToUccaConverter:
                 assert cat=='-'
                 dummyroot.remove(u)
                 hu.add('F', u)
-            elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P'):
+            elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P') and n.ss not in ('p.Explanation','p.Purpose'):
                 assert 'heuristic_relation' in expr,(expr,sent[SENT_ID],sent['text'],'Need to run govobj.py?')
                 go = expr['heuristic_relation']
                 govi = go['gov']
@@ -370,12 +398,12 @@ class ConllulexToUccaConverter:
                 else:
                     assert False,expr
             elif r=='nmod' or r.startswith('nmod:'):    # misc nmod--see rules for obl
-                # TODO: scene obl
+                # TODO: scene nmod
                 if cat not in ('+','S','P'):
                     assert cat=='-',(cat,str(u))
-                    if n.ss=='n.TIME' or r=='nmod:tmod':
+                    if n.ss=='n.TIME' or r=='nmod:tmod' or any(c.ss in SNACS_TEMPORAL for c in n.children):
                         newcat = 'T'
-                    elif any(c.ss=='p.Manner' for c in n.children):
+                    elif n.ss=='p.Approximator' or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
                         newcat = 'D'    # manner adverbials
                     else:
                         newcat = 'A'
@@ -433,9 +461,11 @@ class ConllulexToUccaConverter:
                 # TODO: scene obl
                 if cat not in ('+','S','P'):
                     assert cat=='-',(cat,str(u))
-                    if n.ss=='n.TIME' or r=='obl:tmod':
+                    if any(c.ss in ('p.Purpose','p.Explanation') for c in n.children):
+                        continue #print(str(n)) # skip now, make this a Linker below
+                    if n.ss=='n.TIME' or r=='obl:tmod' or any(c.ss in SNACS_TEMPORAL for c in n.children):
                         newcat = 'T'
-                    elif any(c.ss=='p.Manner' for c in n.children):
+                    elif n.ss=='p.Approximator' or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
                         newcat = 'D'    # manner adverbials
                     else:
                         newcat = 'A'
@@ -468,7 +498,7 @@ class ConllulexToUccaConverter:
                 extrau = l1.add_fnode(hu, 'CONJ')
                 dummyroot.remove(u)
                 extrau.add(cat, u)   # later: decide whether this is connected by N or L, and raise as sibling of first conjunct
-            elif cat=='-' and (n.lexcat == "DISC" or n.ss == "p.Purpose" or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
+            elif cat=='-' and (n.lexcat == "DISC" or n.ss in ('p.Purpose','p.Explanation') or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
                 dummyroot.remove(u)
                 if r=='cc' and hucat=='-':
                     # Decide N vs. L based on the first conjunct's scene status
@@ -582,9 +612,11 @@ class ConllulexToUccaConverter:
                     newcat = 'C'    # conjoined non-scenes
                 pu.remove(u)
                 gpu.add(newcat, u)
+                # TODO: mixed coordination, e.g. money "for antibiotics and a visit to the vet"
+                # (should we add an implicit scene unit for the non-scene conjunct?)
 
 
-        if 'For example' in sent['text'] or 'surgery' in sent['text'] or 'eather' in sent['text'] or 'feed my cat' in sent['text']:
+        if 'For example' in sent['text'] or 'surgery' in sent['text'] or 'eather' in sent['text'] or 'feed my cat' in sent['text'] or 'of the ants' in sent['text']:
             print(l1.root)
 
 
