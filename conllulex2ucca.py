@@ -72,6 +72,10 @@ class ConllulexToUccaConverter:
         for node in nodes:  # Link heads to dependents
             node.link(nodes)
 
+        def print_dep_parse(nodes):
+            print([(n,n.head,n.deprel) for n in nodes])
+
+
         # Link tokens to their single/multi-word expressions and vice versa
         exprs = {expr_type: sent[expr_type].values() for expr_type in MWE_TYPES}
         for expr_type, expr_values in exprs.items():
@@ -98,7 +102,10 @@ class ConllulexToUccaConverter:
                         'obl', 'vocative', 'expl', 'dislocated',
                         'advcl', 'advmod', 'discourse', 'aux', 'cop', 'mark')
             isAdverbialDeprel = deprel in ADV_RELS or deprel.startswith(tuple(r+':' for r in ADV_RELS))
-            parent = node2unit_for_advbl_attachment.get(node, node2unit.get(node))
+            if isAdverbialDeprel:
+                parent = node2unit_for_advbl_attachment.get(node, node2unit.get(node))
+            else:
+                parent = node2unit.get(node)
             return parent
 
         def expr_head(expr: dict) -> 'Node':
@@ -107,15 +114,23 @@ class ConllulexToUccaConverter:
             nodes = expr["nodes"]
             headed_nodes = [n for n in nodes if n.head is not None]
             #if len(headed_nodes)>1:
-            #    print(expr)
+            #    print('multiheaded:',expr)
             return headed_nodes[0]
+
+        def num_dep_parents(expr: dict) -> 'Node':
+            nodes = expr["nodes"]
+            headed_nodes = [n for n in nodes if n.head is not None]
+            #if len(headed_nodes)>1:
+            #    print('multiheaded:',expr)
+            return len(headed_nodes)
 
         l1 = layer1.Layer1(passage)
         dummyroot = l1.add_fnode(None, 'DUMMYROOT')
 
         # print dependency parse
-        # if 'feed my cat' in sent['text']:
-        #     print([(str(n),n.head,n.deprel) for n in nodes])
+        # if sent[SENT_ID]=='reviews-274498-0001':
+        #     print_dep_parse(nodes)
+        #     print(l1.root)
         #     assert False
 
 
@@ -206,18 +221,26 @@ class ConllulexToUccaConverter:
 
                 if n.lexcat=='ADJ' and n.lexlemma not in ('else','such'):
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
-                elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative'):
-                    h = n.head
+                elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative') and n.lexlemma!='nothing but' and not (n.ss2=='p.Extent' and n.lexlemma=='as'):
+                    # a predicative SNACS relation evoked by u
+                    # skip nothing_but, which is treated semantically as P but syntactically as coordination, which causes problems
+                    h = n.head  # TODO: in an idiomatic PP this will not be the head noun, it will be ITS head (because we modified the dep parse for MWEs)
                     if n.deprel=='case' or not (h and h.children_with_rel('case')):    # exclude advmod if sister to case, like "*back* between"
                         u._fedge().tag = 'S' # predicative PP, so preposition is scene-evoking
-                        node2unit_for_advbl_attachment[h] = u # make preposition unit the attachment site for ADVERBIAL dependents
-                elif n.deprel=='cop' and n.head.lexcat in ('N','PRON','PROPN') and not n.head.children_with_rel('case'):    # predicate nominal
+                        if num_dep_parents(expr)>1:
+                            pass    # e.g. "in the midst of"
+                        elif n.deprel!='root' and not n.deprel.startswith('root:') and n.lexcat!='PP' and expr['heuristic_relation']['obj'] is not None:
+                            assert h.lexcat in ('N','PROPN','PRON','NUM','ADJ'),(h,h.lexcat,str(u),str(l1.root))
+                            # adverbial modifiers of the NOMINAL this P case-marks should be semantically under the SNACS-evoked unit
+                            node2unit_for_advbl_attachment[h] = u # make preposition unit the attachment site for ADVERBIAL dependents
+                elif n.deprel=='cop' and n.head.lexcat in ('N','PRON','PROPN','NUM') and not n.head.children_with_rel('case'):    # predicate nominal
                     # copula is head
-                    # TODO: exception of nominal is scene-evoking (e.g. "friend", pred. possessive)
+                    # TODO: exception if nominal is scene-evoking (e.g. "friend", pred. possessive)
                     u._fedge().tag = 'S'
                     h = n.head
                     node2unit_for_advbl_attachment[h] = u
-                    # invert headedness of copula and nominal, without moving other dependents
+                    # invert headedness of copula and nominal
+                    # no need to move other dependents thanks to parent_unit_for_dep()
                     # n = copula, h = nominal
                     assert not n.children
                     # - delete "cop" deprel
@@ -233,6 +256,7 @@ class ConllulexToUccaConverter:
                     e = Edge(head=n,dep=h,deprel='obj')
                     n.outgoing_basic.append(e)
                     h.incoming_basic.append(e)
+
 
 
         ''' # from 2019 converter
@@ -264,9 +288,48 @@ class ConllulexToUccaConverter:
         '''
 
 
+        # fix dep tree to address problem case:
+        # conj of two compound modifiers, the 2nd of which forms an MWE with its head
+        for n in nodes:
+            if n.deprel=='conj' and n.head and n.head.head and n.lexexpr is not n.head.lexexpr and n.lexexpr is n.head.head.lexexpr:
+                print('Removing nasty conj-modifier-in-MWE',sent[SENT_ID],n,n.head,n.head.head)
+                # x --a-> y --conj-> n, where x & n form an MWE that does not include y
+                # transform to
+                # n (<-a--) x --conj-> y
+                # where the <-a-- edge is omitted because it would be MWE-internal
+                y = n.head
+                x = n.head.head
+
+                e_other = y.incoming_basic[0]
+                y.incoming_basic.remove(e_other)
+                x.outgoing_basic.remove(e_other)
+
+                e_conj = n.incoming_basic[0]
+                n.incoming_basic.remove(e_conj)
+                y.outgoing_basic.remove(e_conj)
+                e_conj.head = x
+                e_conj.dep = y
+                x.outgoing_basic.append(e_conj)
+                y.incoming_basic.append(e_conj)
+
+                # In our convention the cc attaches to the conj head.
+                # Initially that was y, so we move it to x.
+                for cc in y.children_with_rel('cc'):
+                    e_cc = cc.incoming_basic[0]
+                    y.outgoing_basic.remove(e_cc)
+                    e_cc.head = x
+                    x.outgoing_basic.append(e_cc)
+
+                print_dep_parse(nodes)
+
+
 
         #if 'surgery' in sent['text']:
         #    print(l1.root)
+        # if sent[SENT_ID]=='reviews-274498-0001':
+        #     print_dep_parse(nodes)
+        #     print(l1.root)
+        #     assert False
 
         # attach F modifiers
 
@@ -289,19 +352,22 @@ class ConllulexToUccaConverter:
 
                 hu = parent_unit_for_dep(h, r)
                 assert hu is not None,()
+                assert hu is not u,(str(n),r,str(h),str(u),str(l1.root))
                 dummyroot.remove(u)
                 if r.startswith('det') and expr['lexlemma'] not in ('a','an','the'):
                     hu.add('E', u)  # demonstrative dets are E
+                elif r.startswith('aux') and n.lexlemma not in ('be','have','do','will','get'):
+                    hu.add('D', u)  # modal auxes are D (but not tense auxes)
                 else:
                     # F regardless of whether head's unit is scene-evoking
                     hu.add('F', u)
                     node2unit[n] = hu   # point to parent unit because things should never attach under F units
                 #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
 
-        if 'cats back' in sent['text']:
-            print(l1.root)
 
         for u in dummyroot.children:
+            if u not in dummyroot.children: # removed in a previous iteration
+                continue
             cat = u.ftag
             #if cat not in ('+', '-', 'S', 'LVC'):
             #    continue
@@ -314,7 +380,8 @@ class ConllulexToUccaConverter:
                 continue
             r = n.deprel
             hu = parent_unit_for_dep(h, r)
-            if r in ('amod','advmod') or r.startswith(('amod:','advmod:')):
+            assert hu is not u,(n,r,h,str(u),str(l1.root))
+            if r in ('amod','advmod','acl') or r.startswith(('amod:','advmod:','acl:')):
                 if cat=='-':
                     hucat = hu.ftag
                     dummyroot.remove(u)
@@ -327,13 +394,21 @@ class ConllulexToUccaConverter:
 
                     if hucat=='S' and (r=='amod' or r.startswith('amod:')):  # probably an ADJ compound, like African - American
                         hu.add('C', u)  # put "African" as C under "American"---that will later become C too
-                    elif hucat=='-':  # E-scene. make node for scene to attach as E
+                    elif hucat in ('-','A','E'):  # E-scene. make node for scene to attach as E
                         scn = l1.add_fnode(hu, 'E')
                         scn.add('S', u)
-                    elif hucat=='+':
-                        hu.add('D', u)
+                    elif hucat in ('+','S'):
+                        # if hucat!='+':
+                        #     print('Decide whether to allow advmod under S',hucat,str(hu))
+                        #     print(cat,str(u),str(l1.root))
+                        hu.add('D', u)  # e.g. aspectual verb particle
                     else:
-                        assert False,(hucat,str(u),str(l1.root))
+                        # maybe not a problem--allow the E strategy under all non-scene units?
+                        # TODO: hucat=='S' + advmod
+                        # TODO: 'when' advcl is apparently an annotation error
+                        # '10 more minutes'
+                        #assert h.lexlemma=='when',(hucat,str(hu),cat,str(u),n,n.deprel,n.head,str(l1.root))
+                        pass
             elif r=='nummod':
                 hucat = hu.ftag
                 dummyroot.remove(u)
@@ -343,7 +418,7 @@ class ConllulexToUccaConverter:
                 assert cat=='-'
                 dummyroot.remove(u)
                 hu.add('F', u)
-            elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P') and n.ss not in ('p.Explanation','p.Purpose'):
+            elif (r=='case' or r=='nmod:poss') and n.lexcat in ('P', 'PP', 'POSS', 'PRON.POSS', 'INF.P') and n.ss not in ('p.Explanation','p.Purpose','p.ComparisonRef') and not (n.ss2=='p.Extent' and n.lexlemma=='as'):
                 assert 'heuristic_relation' in expr,(expr,sent[SENT_ID],sent['text'],'Need to run govobj.py?')
                 go = expr['heuristic_relation']
                 govi = go['gov']
@@ -357,17 +432,18 @@ class ConllulexToUccaConverter:
                         gov = nodes[govi]
                         govu = node2unit[gov]
                         govcat = govu.ftag
-                        assert govcat not in ('+','S','P'),(govcat,str(govu),str(l1.root))
+                        #assert govcat not in ('+','S','P'),(govcat,str(govu),str(l1.root))
                         assert govu.fparent is dummyroot,(govcat,str(govu),str(l1.root))
                         dummyroot.remove(govu)
                         u.add(govcat, govu)
                         #print(govcat,str(govu),str(l1.root))
-                    if obji is not None:
+                    if obji is not None and 'stranded' not in config:
+                        # TODO: stranded preps require a remote unit
                         obj = nodes[obji]
                         obju = node2unit[obj]
                         objcat = obju.ftag
-                        assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
-                        assert obju.fparent is dummyroot,(objcat,str(obju),str(l1.root))
+                        #assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
+                        assert obju.fparent is dummyroot,(str(u),go,objcat,str(obju),str(l1.root))
                         dummyroot.remove(obju)
                         u.add(objcat, obju)
                         #assert False,(objcat,str(obju),str(l1.root))
@@ -383,6 +459,8 @@ class ConllulexToUccaConverter:
                         govu.add('S', u)
                         u.add('A', obju)
                         # there would also be a remote edge from the possession scene to the gov
+                    #elif n.ss=='p.Extent':
+                    #    assert False,(str(n),str(l1.root))
                     else:   # make prep/possessive a relator under its object
                         obju.add('R', u)
                 elif config=='possessive':
@@ -397,22 +475,36 @@ class ConllulexToUccaConverter:
                     govu.add('E', u)
                 else:
                     assert False,expr
-            elif r=='nmod' or r.startswith('nmod:'):    # misc nmod--see rules for obl
+            elif r in ('nmod','compound') or r.startswith(('nmod:','compound:')):    # misc nmod--see rules for obl
                 # TODO: scene nmod
+                hucat = hu.ftag
                 if cat not in ('+','S','P'):
                     assert cat=='-',(cat,str(u))
                     if n.ss=='n.TIME' or r=='nmod:tmod' or any(c.ss in SNACS_TEMPORAL for c in n.children):
-                        newcat = 'T'
-                    elif n.ss=='p.Approximator' or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
-                        newcat = 'D'    # manner adverbials
+                        newcat = 'T' if hucat in ('+','S','P') else 'E'
+                        # TODO: "books *from the 1900s*" would be E?
+                    elif n.ss in ('p.Approximator','p.Manner','p.Extent') or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
+                        newcat = 'D' if hucat in ('+','S','P') else 'E'
                     else:
-                        newcat = 'A'
+                        newcat = 'A' if hucat in ('+','S','P') else 'E'
                     dummyroot.remove(u)
                     hu.add(newcat, u)
+            elif r=='appos' and cat not in ('+','S','P'):
+                if n.lexcat=='PROPN':
+                    # TODO: make the head an E
+                    assert False,('PROPN as C in apposition:',cat,n.lexlemma,h.lexlemma)
+                else:
+                    # make this an E
+                    assert cat=='-',(cat,n,str(u),hucat,h,str(hu))
+                    dummyroot.remove(u)
+                    hu.add('E', u)
 
-        if 'feed my cat' in sent['text']:
-            print(l1.root)
+        # TODO: consider order of operations for case vs. nmod/amod/etc.
 
+        # if 'feed my cat' in sent['text'] or 'nothing but frustrating' in sent['text']:
+        #     print(l1.root)
+
+        # argument structure
 
         for u in dummyroot.children:
             cat = u.ftag
@@ -428,14 +520,24 @@ class ConllulexToUccaConverter:
             hu = parent_unit_for_dep(h, r)
             hucat = hu.ftag if hu else None
             if cat=='-' and (r in ('nsubj','obj','iobj') or r.startswith(('nsubj:','obj:','iobj:'))):
+
                 if hucat in ('+','S','P'):
+                    # am I a relative pronoun?
+                    if h.deprel=='acl:relcl' and n.lexcat=='PRON' and n is sorted(h.children, key=lambda x: x.position)[0] and n.lexlemma in ('that','who','whom','what','when','where','why','how'):
+                        # leftmost dependent of relative clause head and a relative pronoun type...so probably
+                        # relative pronouns should be R
+                        newcat = 'R'
+                    elif hucat in ('+','S','P'):
+                        newcat = 'A'
+                    else:
+                        newcat = 'E'
+
                     dummyroot.remove(u)
-                    hu.add('A' if hucat in ('+','S','P') else 'E', u)
+                    hu.add(newcat, u)
                 else:
                     # TODO: predicate nominals
                     #assert False,(str(u),h,node2unit[h],hucat,str(l1.root))
                     pass
-            # TODO: relative pronoun (nsubj of acl:relcl verb)
             elif cat in ('+','S','P') and hucat in ('+','S','P') and (r in ('nsubj','obj','iobj','csubj','ccomp','xcomp') or r.startswith(('nsubj:','obj:','iobj:','csubj:','ccomp:','xcomp:'))):
                 # syntactically core args
                 # xcomp would involve a remote
@@ -444,7 +546,7 @@ class ConllulexToUccaConverter:
                 participantu.add(cat, u)
             elif r=='expl' or r.startswith('expl:'):
                 assert cat=='-'
-                assert expr["lexlemma"] in ('it','there')
+                assert expr["lexlemma"] in ('it','there'),(expr,sent['text'])
                 if expr["lexlemma"]=='it':
                     # expletive 'it' -> F
                     dummyroot.remove(u)
@@ -454,18 +556,21 @@ class ConllulexToUccaConverter:
                     dummyroot.remove(u)
                     hu.add('S', u)
             elif r=='mark' and n.lexlemma in ('to','that','which') and n.ss != "p.Purpose":
-                assert hucat!='-',(expr,str(hu),str(l1.root))
+                if hucat=='-':
+                    print('Weird attachment of inf/complementizer to non-scene unit',expr,str(hu),str(l1.root))
                 dummyroot.remove(u)
                 hu.add('R', u)
             elif r=='obl' or r.startswith('obl:'):
                 # TODO: scene obl
+
                 if cat not in ('+','S','P'):
                     assert cat=='-',(cat,str(u))
-                    if any(c.ss in ('p.Purpose','p.Explanation') for c in n.children):
+                    if any(c.ss in ('p.Purpose','p.Explanation','p.ComparisonRef') for c in n.children_with_rels(('case','mark'))):
                         continue #print(str(n)) # skip now, make this a Linker below
+
                     if n.ss=='n.TIME' or r=='obl:tmod' or any(c.ss in SNACS_TEMPORAL for c in n.children):
                         newcat = 'T'
-                    elif n.ss=='p.Approximator' or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
+                    elif n.ss in ('p.Approximator','p.Manner','p.Extent') or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
                         newcat = 'D'    # manner adverbials
                     else:
                         newcat = 'A'
@@ -473,11 +578,7 @@ class ConllulexToUccaConverter:
                     hu.add(newcat, u)
 
 
-
-        # print dependency parse
-        # if 'feed my cat' in sent['text']:
-        #     print([(str(n),n.head,n.deprel) for n in nodes])
-        #     assert False
+        # coordination and connectives
 
         for u in dummyroot.children:
             cat = u.ftag
@@ -498,25 +599,21 @@ class ConllulexToUccaConverter:
                 extrau = l1.add_fnode(hu, 'CONJ')
                 dummyroot.remove(u)
                 extrau.add(cat, u)   # later: decide whether this is connected by N or L, and raise as sibling of first conjunct
-            elif cat=='-' and (n.lexcat == "DISC" or n.ss in ('p.Purpose','p.Explanation') or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
+            elif cat=='-' and (n.lexcat == "DISC" or n.ss in ('p.Purpose','p.Explanation','p.ComparisonRef') or r=='cc' or r.startswith('cc:') or (r=='mark' and n.lexlemma not in ('to','that','which'))):
                 dummyroot.remove(u)
-                if r=='cc' and hucat=='-':
+                if r=='cc' and hucat not in ('+','P','S'):
                     # Decide N vs. L based on the first conjunct's scene status
                     # N.B. Depedit moved cc to be under the first conjunct
                     # Coordination of non-scene unit evokers: coordinators as N and the conjunct heads as C
-
                     hu.add('N', u)
-                    # for conjunct in h.children_with_rel('conj'):
-                    #     conjunctu = parent_unit_for_dep(conjunct, 'conj')
-                    #     hu.add('C', conjunct)
-
-                    #assert False,(sent[SENT_ID],[(a.head,a.deprel,a) for a in nodes])
                 else: # linker
                     if hu is None:
-                        l1.add_fnode(u, 'L')
+                        newu = l1.add_fnode(None, 'L')
+                        newu.add(u)
                     else:
                         # add as sister to dependency head
                         hu.fparent.add('L', u)
+
 
         # decide S or P for remaining "+" scenes
 
@@ -536,8 +633,6 @@ class ConllulexToUccaConverter:
                     assert False,(u,u.ftag,n,expr)
 
         #assert not lvc_scene_lus,l1.root
-        if 'For example' in sent['text'] or 'surgery' in sent['text'] or 'eather' in sent['text'] or 'feed my cat' in sent['text']:
-            print(l1.root)
 
         # any P or S unit that is under the root: wrap in H
         for u in dummyroot.children:
@@ -578,6 +673,7 @@ class ConllulexToUccaConverter:
         for u in l1.all:
             if len(u.children)>1 and any(cu.incoming[0].tag in (layer1.EdgeTags.Terminal, 'UNA') for cu in u.children):
                 pu = u.fparent
+                assert pu,(str(u),str(l1.root))
                 if len(pu.children)>1:
                     # we need to create a new node to wrap just the current contents of u
                     ucat = u.ftag
@@ -593,6 +689,7 @@ class ConllulexToUccaConverter:
                         pu.add(cucat, cu)
                 # now u will consist only of terminals
 
+
         def dfs_order_subtree(unit):
             items = [unit]
             for u in unit.children:
@@ -601,53 +698,37 @@ class ConllulexToUccaConverter:
 
         # traversing top down, move CONJ up and decide H or C based on L/N sister
 
+        # [- [R to] [E his] [C friends] [N [UNA rather than] ] [CONJ [E his] [- customers] ] ]
+        # CONJ is non-unary -> change CONJ to C
+
         for u in dfs_order_subtree(dummyroot):
             if isinstance(u,layer1.FoundationalNode) and u.ftag=='CONJ':
                 pu = u.fparent
-                gpu = pu.fparent
-                if any(sib.ftag in ('H','L') for sib in gpu.children):
-                    assert not any(sib.ftag=='N' for sib in gpu.children)
-                    newcat = 'H'    # scene linkage
+                pucat = pu.ftag
+                if len(u.children)>1 and pucat not in ('+','P','S','H'):   # need to keep this unit span but change CONJ to H/C
+                    if any(sib.ftag in ('H','L') for sib in pu.children):
+                        assert not any(sib.ftag=='N' for sib in pu.children),(str(gpu),sent['text'])
+                        newcat = 'H'    # scene linkage
+                    else:
+                        newcat = 'C'    # conjoined non-scenes
+                    u._fedge().tag = newcat
                 else:
-                    newcat = 'C'    # conjoined non-scenes
-                pu.remove(u)
-                gpu.add(newcat, u)
+                    gpu = pu.fparent
+                    if pucat in ('+','P','S','H') or any(sib.ftag in ('H','L') for sib in gpu.children):
+                        assert not any(sib.ftag=='N' for sib in gpu.children),(str(gpu),sent['text'])
+                        newcat = 'H'    # scene linkage
+                    else:
+                        newcat = 'C'    # conjoined non-scenes
+                    pu.remove(u)
+                    gpu.add(newcat, u)
                 # TODO: mixed coordination, e.g. money "for antibiotics and a visit to the vet"
                 # (should we add an implicit scene unit for the non-scene conjunct?)
 
-
-        if 'For example' in sent['text'] or 'surgery' in sent['text'] or 'eather' in sent['text'] or 'feed my cat' in sent['text'] or 'of the ants' in sent['text']:
+        KEYWORDS = ('ufc fighter','kitchen and wait staff','For example','would have been distorted','surgery','eather','feed my cat','of the ants','patrons willing','were back quickly','worst Verizon store','as proper as')
+        if any(kwd in sent['text'] for kwd in KEYWORDS):
             print(l1.root)
 
 
-        # for u0 in l0.all:
-        #     #expr = unit2expr.get(u)
-        #     #if expr is None:
-        #     #    continue
-        #     #if expr['lexlemma']=='out' and 'gave us our cats' in sent['text']:
-        #     #    print(u,u.ftag,expr,str(l1.root))
-        #     u = u0.incoming[0].parent
-        #     if u.ftag=='UNA':
-        #         if u.children[0] is u0:
-        #             u = u.fparent
-        #             u0 = u
-        #         else:
-        #             continue    # only process UNA once, when its first terminal is reached
-        #
-        #     ucat = u0.incoming[0].tag
-        #     if len(u.children)>1:
-        #         u.remove(u.children[0])
-        #         assert False,(str(u0),str(u),u.children,str(l1.root))
-        #         # insert a unary C unit
-        #         u.remove(u0)
-        #         newu = l1.add_fnode(u, 'C')
-        #         newu.add(ucat, u0)
-        #     #if expr['lexlemma']=='out' and 'gave us our cats' in sent['text']:
-        #     #    assert False,(expr,str(l1.root))
-
-
-
-        # TODO: deal with CONJ
 
         """
         # move node to another parent with same category
@@ -693,8 +774,17 @@ class ConllulexToUccaConverter:
 
         - 'Huge ammount of time wasted time': first 'time' is case
 
+        - when + clause: when often advmod when it should be mark
+
+        - preposition stranding not consistent: ADP <case@L _ vs. ADP <obl _
+            govobj.py workaround
+        - ADV <advmod (NOUN|PRON !>cop _)   -- advmod attachments to nouns. many look weird
+
+        - typos: !L=there&!L=it <expl _
+
         FIXED
         - amod(PRON,ADJ) should be xcomp(VERB,ADJ): "saw it *riddled* with..."
+        - typo expl THERE
         """
 
 
@@ -865,6 +955,10 @@ class Node:
     def children_with_rel(self, rel: str) -> List['Node']:
         return [e.dep for e in self.outgoing_basic if e.deprel==rel]
 
+    def children_with_rels(self, rels: (str,)) -> List['Node']:
+        return [e.dep for e in self.outgoing_basic if e.deprel in rels]
+
+
     @property
     def swe(self) -> Optional[dict]:
         return self.exprs.get("swes")
@@ -886,6 +980,14 @@ class Node:
         return ""
 
     @property
+    def ss2(self) -> Optional[str]:
+        for expr in self.exprs.values():
+            ss = expr.get("ss2")
+            if ss:
+                return ss
+        return ""
+
+    @property
     def lexcat(self) -> Optional[str]:
         for expr in self.exprs.values():
             lexcat = expr.get("lexcat")
@@ -900,6 +1002,15 @@ class Node:
             if lexlemma:
                 return lexlemma
         return ""
+
+    @property
+    def lexexpr(self) -> dict:
+        if self.exprs.get("swes"):   # walrus
+            assert "smwes" not in self.exprs
+            return self.exprs.get("swes")
+        if self.exprs.get("smwes"):
+            return self.exprs.get("smwes")
+        assert self.position==0,(self,self.exprs)   # must be root if no lexexpr
 
     def __str__(self):
         return "ROOT"  # Overridden in Token
