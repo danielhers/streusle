@@ -188,6 +188,8 @@ class ConllulexToUccaConverter:
                     node.incoming_basic.remove(e)
                     h.outgoing_basic.remove(e)
 
+        # TODO: treat all 'discourse' subtrees as G with no internal structure, like an MWE?
+
         # decide whether each LU is a scene-evoker ("+") or not ("-")
         # adjectives and predicative prepositions are marked as "S"
 
@@ -219,7 +221,7 @@ class ConllulexToUccaConverter:
 
                 u._fedge().tag = '+' if isSceneEvoking else '-'
 
-                if n.lexcat=='ADJ' and n.lexlemma not in ('else','such'):
+                if n.lexcat=='ADJ' and n.lexlemma not in ('else','such') and n.deprel!='discourse':
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
                 elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative') and n.lexlemma!='nothing but' and not (n.ss2=='p.Extent' and n.lexlemma=='as'):
                     # a predicative SNACS relation evoked by u
@@ -331,7 +333,7 @@ class ConllulexToUccaConverter:
         #     print(l1.root)
         #     assert False
 
-        # attach F modifiers
+        # functional modifiers, discourse/G
 
         for u in dummyroot.children:
             cat = u.ftag
@@ -363,6 +365,10 @@ class ConllulexToUccaConverter:
                     hu.add('F', u)
                     node2unit[n] = hu   # point to parent unit because things should never attach under F units
                 #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
+            elif r=='discourse' and cat=='-':
+                #assert cat=='-',(cat,n,r,h)
+                # keep at root
+                u._fedge().tag = 'G'
 
 
         for u in dummyroot.children:
@@ -724,7 +730,7 @@ class ConllulexToUccaConverter:
                 # TODO: mixed coordination, e.g. money "for antibiotics and a visit to the vet"
                 # (should we add an implicit scene unit for the non-scene conjunct?)
 
-        KEYWORDS = ('ufc fighter','kitchen and wait staff','For example','would have been distorted','surgery','eather','feed my cat','of the ants','patrons willing','were back quickly','worst Verizon store','as proper as')
+        KEYWORDS = ('mircles','ufc fighter','kitchen and wait staff','For example','would have been distorted','surgery','eather','feed my cat','of the ants','patrons willing','were back quickly','worst Verizon store','as proper as')
         if any(kwd in sent['text'] for kwd in KEYWORDS):
             print(l1.root)
 
