@@ -561,11 +561,11 @@ class ConllulexToUccaConverter:
                     # existential 'there' -> S
                     dummyroot.remove(u)
                     hu.add('S', u)
-            elif r=='mark' and n.lexlemma in ('to','that','which') and n.ss != "p.Purpose":
+            elif r=='mark' and n.lexlemma in ('to','that') and n.ss != "p.Purpose":
                 if hucat=='-':
                     print('Weird attachment of inf/complementizer to non-scene unit',expr,str(hu),str(l1.root))
                 dummyroot.remove(u)
-                hu.add('R', u)
+                hu.add('F' if n.lexlemma=='to' else 'R', u) # infinitive TO = F, complementizer THAT = R
             elif r=='obl' or r.startswith('obl:'):
                 # TODO: scene obl
 
