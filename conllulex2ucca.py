@@ -390,7 +390,7 @@ class ConllulexToUccaConverter:
                 u._fedge().tag = 'G'
 
         printMe = False
-        if 'Grimy work' in sent['text']:
+        if False:
             printMe = True
             print('111111111', l1.root)
 
@@ -440,7 +440,13 @@ class ConllulexToUccaConverter:
                         # TODO: 'when' advcl is apparently an annotation error
                         # '10 more minutes'
                         #assert h.lexlemma=='when',(hucat,str(hu),cat,str(u),n,n.deprel,n.head,str(l1.root))
-                        pass
+
+                        # e.g. "Thanks for *doing* such great work..."
+                        # make an A-scene
+                        # TODO: revisit
+                        #newu = l1.add_fnode(hu, 'A')
+                        #newu.add(cat, u)
+                        hu.add(cat, u)
             elif r=='nummod':
                 hucat = hu.ftag
                 dummyroot.remove(u)
@@ -477,7 +483,7 @@ class ConllulexToUccaConverter:
                         #assert objcat not in ('+','S','P'),(objcat,str(obju),str(l1.root))
                         assert obju.fparent is dummyroot,(str(u),go,objcat,str(obju),str(l1.root))
                         if objcat=='-':
-                            objcat = decide_nominal_cat(n, hucat)
+                            objcat = decide_nominal_cat(n, '+') # TODO: check '+' is correct for pred. complement
                         dummyroot.remove(obju)
                         u.add(objcat, obju)
                         #assert False,(objcat,str(obju),str(l1.root))
@@ -657,7 +663,7 @@ class ConllulexToUccaConverter:
                         newu.add(u)
                     else:
                         # add as sister to dependency head
-                        hu.fparent.add('L', u)
+                        (hu.fparent or hu).add('L', u)
 
         for u in dummyroot.children:
             cat = u.ftag
@@ -741,6 +747,9 @@ class ConllulexToUccaConverter:
                     # if ucat=='-':
                     #     u._fedge().tag = 'C'
 
+                    # TODO: Not quite right? see "Thanks for doing such great work"
+                    # where [+ [F doing] ... work] should become [H [F doing] ... [P work]]
+                    # but instead becomes [P [F doing] ... [C work]]
                     newu = l1.add_fnode(pu, ucat)
                     pu.remove(u)
                     newu.add('C', u)
@@ -762,8 +771,8 @@ class ConllulexToUccaConverter:
         for u in dummyroot.children:
             cat = u.ftag
             if cat=='U':
-                assert u in unit2expr,(str(l1.root),str(u))
-                expr = unit2expr[u]
+                expr = unit2expr.get(u)
+                if not expr: continue
                 n = expr_head(expr)
                 h = n.head
                 if h is None:
@@ -798,7 +807,8 @@ class ConllulexToUccaConverter:
                 pucat = pu.ftag
                 if len(u.children)>1 and pucat not in ('+','P','S'):   # need to keep this unit span but change CONJ to H/C
                     if any(sib.ftag in ('H','L') for sib in pu.children):
-                        assert not any(sib.ftag=='N' for sib in pu.children),(str(gpu),sent['text'])
+                        #assert not any(sib.ftag=='N' for sib in pu.children),(str(pu),sent['text'])
+                        # TODO: maybe add assert back when coordination is less broken
                         newcat = 'H'    # scene linkage
                     else:
                         newcat = 'C'    # conjoined non-scenes
@@ -806,7 +816,8 @@ class ConllulexToUccaConverter:
                 else:
                     gpu = pu.fparent
                     if pucat in ('+','P','S') or any(sib.ftag in ('H','L') for sib in gpu.children):
-                        assert not any(sib.ftag=='N' for sib in gpu.children),(str(gpu),sent['text'])
+                        #assert not any(sib.ftag=='N' for sib in gpu.children),(str(gpu),sent['text'])
+                        # TODO: maybe add assert back when coordination is less broken
                         newcat = 'H'    # scene linkage
                     else:
                         newcat = 'C'    # conjoined non-scenes
