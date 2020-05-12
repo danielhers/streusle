@@ -13,6 +13,7 @@ import csv
 import os
 import re
 import sys
+from collections import Counter
 from itertools import groupby, chain
 from operator import attrgetter, itemgetter
 from typing import List, Iterable, Optional
@@ -32,6 +33,33 @@ import random
 
 SENT_ID = "sent_id"
 MWE_TYPES = ("swes", "smwes", "wmwes")
+
+
+"""
+Various syntactic verb/adjective predicates are treated as semantically secondary ("D")
+to an embedded predicate, typically an xcomp.
+
+Guidelines pp. 23-24:
+
+BEGINNING: begin,start,finish,complete,continue(with)
+TRYING: try,attempt,succeed,fail,practice
+WANTING: want,wish(for);hope(for);need,require;expect;intend;pretend
+POSTPONING: postpone,delay,defer,avoid
+MAKING: make,force,cause,tempt;let,permit,allow,prevent,spare,ensure
+HELPING: help,aid,assist
+
+A manually filtered list of xcomp governors from training data:
+{'have to': 70, 'want': 45, 'have': 28, 'try': 23, 'need': 23, 'get': 22,
+'make': 18, 'let': 16, 'able': 15, 'help': 12, 'hope': 9, 'keep': 8, 'use to': 6, 'willing': 6,
+'be suppose to': 5, 'continue': 5, 'end up': 5, 'would like': 5, 'stop': 5}
+"""
+XCOMP_SECONDARY_HEADS = set(('begin,end,start,stop,finish,commence,complete,continue,'
+    'try,attempt,succeed,manage,fail,practice,want,desire,wish,hope,need,require,expect,intend,pretend,'
+    'postpone,delay,defer,avoid,make,force,cause,tempt,let,permit,allow,prevent,spare,ensure,'
+    'help,aid,assist,'
+    'have to,have,get,become,keep,stay,remain,use to,be suppose to,end up,would like,'
+    'willing,eager,ready,prepared,inclined,likely').split(','))
+    # easy,hard,tough: tough-constructions are treated sometimes as ccomp, sometimes as advcl
 
 # Rules to assimilate UD to UCCA, based on https://www.aclweb.org/anthology/N19-1047/
 DEPEDIT_TRANSFORMATIONS = ["\t".join(transformation) for transformation in [
@@ -181,7 +209,7 @@ class ConllulexToUccaConverter:
             for node in expr['nodes']:
                 if lvc_scene_lus and node not in lvc_scene_lus:
                     # light verb or determiner in LVC
-                    lu = l1.add_fnode(toplu, 'F')
+                    lu = l1.add_fnode(toplu, 'D' if expr['lexcat']=='V.LVC.cause' else 'F')
                 else:
                     lu = toplu
                 lu.add(layer1.EdgeTags.Terminal, node.terminal)
@@ -444,10 +472,11 @@ class ConllulexToUccaConverter:
                         scn = l1.add_fnode(hu, 'E')
                         scn.add(cat, u)
                     elif hucat in ('+','S','P'):
-                        # if hucat!='+':
-                        #     print('Decide whether to allow advmod under S',hucat,str(hu))
-                        #     print(cat,str(u),str(l1.root))
-                        hu.add('D', u)  # e.g. aspectual verb particle
+                        # locative pro-adverbs are "A"
+                        if n.lexlemma in ("here", "there", "nowhere", "somewhere", "anywhere", "everywhere"):
+                            hu.add('A', u)
+                        else:
+                            hu.add('D', u)  # e.g. aspectual verb particle
                     else:
                         # maybe not a problem--allow the E strategy under all non-scene units?
                         # TODO: hucat=='S' + advmod
@@ -602,10 +631,13 @@ class ConllulexToUccaConverter:
                     pass
             elif cat in ('+','S','P') and hucat in ('+','S','P') and (r in ('nsubj','obj','iobj','csubj','ccomp','xcomp') or r.startswith(('nsubj:','obj:','iobj:','csubj:','ccomp:','xcomp:'))):
                 # syntactically core args
-                # xcomp would involve a remote
-                participantu = l1.add_fnode(hu, 'A')
+                if n.head.lexlemma in XCOMP_SECONDARY_HEADS:
+                    subsceneu = l1.add_fnode(hu, '^')   # "^": an indication to promote the embedded scene to primary and demote the parent scene head to "D"
+                else:
+                    # TODO: remote, typically
+                    subsceneu = l1.add_fnode(hu, 'A')
                 dummyroot.remove(u)
-                participantu.add(cat, u)
+                subsceneu.add(cat, u)
             elif r=='expl' or r.startswith('expl:'):
                 assert expr["lexlemma"] in ('it','there'),(expr,sent['text'])
                 if expr["lexlemma"]=='it':
@@ -777,26 +809,59 @@ class ConllulexToUccaConverter:
 
 
         # decide S or P for remaining "+" scenes
-        # TODO: +(COORD)
+
+
+
+        hasSec = any(n for n in l1.all if n.ftag in ('^',))
+
+
 
         for u in l1.all:
-            if u.ftag=='+':
+            if u.ftag and u.ftag=='+':  # TODO: startswith('+') for +(COORD)
+                rest = u.ftag[1:]   # could be +(COORD)
                 expr = unit2expr[u]
                 n = expr_head(expr)
                 if n.ss=='v.stative' and n.lexlemma in ('be','have'):
-                    u._fedge().tag = 'S'
+                    u._fedge().tag = 'S' + rest
                 elif n.ss.startswith('v.'):
-                    u._fedge().tag = 'P'
+                    u._fedge().tag = 'P' + rest
                 elif n.ss in ("n.ACT", "n.PHENOMENON", "n.PROCESS", "n.EVENT"):
-                    u._fedge().tag = 'P'
+                    u._fedge().tag = 'P' + rest
                 elif n.lexcat=='AUX':   # e.g. due to ellipsis
-                    u._fedge().tag = 'P'
+                    u._fedge().tag = 'P' + rest
                 else:
-                    u._fedge().tag = 'S'
+                    u._fedge().tag = 'S' + rest
                     print('Weird scene, defaulting to S:',u,u.ftag,n,expr)
 
         #assert not lvc_scene_lus,l1.root
 
+        # Where an embedded scene was marked as "^", it means the main scene predicate
+        # should be considered secondary and the embedded scene promoted.
+        for u in l1.all:
+            if u.ftag and u.ftag.startswith('^'):
+                assert u.ftag=='^',str(l1.all)
+                pu = u.fparent
+                for c in pu.children:
+                    if not isinstance(c, layer1.FoundationalNode) or c.ftag=='UNA':
+                        # terminal/UNA and putative scene head--demote to D
+                        remove_unit(c)
+                        pu.add('D', c)
+                if pu.ftag in ('S','P'): # exclude S(COORD) and P(COORD) to avoid complications
+                    # merge the child scene with the parent scene
+                    pu.remove(u)
+                    if len(u.children)==1 and u.children[0].ftag in ('S','P'):
+                        # promote scene type to parent unit
+                        c = u.children[0]
+                        pu._fedge().tag = c.ftag
+                        u.remove(c)
+                        u = c
+                    for c in u.children:
+                        ccat = c.incoming[0].tag
+                        remove_unit(c)
+                        pu.add(ccat, c)
+
+        #if hasSec:
+        #    print('__',l1.root, file=sys.stderr)
 
         if printMe:
             print('555555555', l1.root)
@@ -944,7 +1009,6 @@ class ConllulexToUccaConverter:
 
         if any(n for n in l1.all if n.ftag in ('+','-')):
             print(l1.root)
-
 
 
 
