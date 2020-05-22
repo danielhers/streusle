@@ -77,6 +77,40 @@ DEPEDIT_TRANSFORMED_DEPRELS = set(re.search(r"(?<=func=/)\w+", t).group(0) for t
 
 SNACS_TEMPORAL = ('p.Temporal','p.Time','p.StartTime','p.EndTime','p.Frequency','p.Interval')
 
+
+def pass_through_C(unit):
+    if unit.ftag=='C':
+        return unit.fparent
+    return unit
+
+def children_with_cat(unit, cat, remote=False):
+    if not remote:
+        return [c for c in unit.children if isinstance(c, layer1.FoundationalNode) and c.fparent is unit and c.ftag==cat]
+        # the isinstance() check is necessary for some of the reference parses, e.g. "Raging Taco Raging Burrito" missing "&"
+    return [c for c in unit.children if any(e.tag==cat for e in c.incoming[1:])]
+
+cwc = children_with_cat
+
+def describe_context(units):
+    if not units: return ''
+    if len(units)>1:
+        return "|".join(sorted(pass_through_C(u).ftag or '-' for u in units))
+    u = pass_through_C(units[0])
+    par = u.fparent
+    if u.ftag in ('P','S'):
+        return (f'{u.ftag} ~ A={len(cwc(par,"A"))}({len(cwc(par,"A",True))})'
+                          f' T={len(cwc(par,"T"))}({len(cwc(par,"T",True))})'
+                          f' D={len(cwc(par,"D"))}({len(cwc(par,"D",True))})')
+    elif u.ftag == 'E':
+        return (f'{u.ftag} ~ C={len(cwc(par,"C"))}({len(cwc(par,"C",True))})'
+                          f' Q={len(cwc(par,"Q"))}({len(cwc(par,"Q",True))})'
+                          f' E={len(cwc(par,"E"))-1}({len(cwc(par,"E",True))})')
+    elif u.ftag == 'Q':
+        return (f'{u.ftag} ~ C={len(cwc(par,"C"))}({len(cwc(par,"C",True))})'
+                          f' Q={len(cwc(par,"Q"))-1}({len(cwc(par,"Q",True))})'
+                          f' E={len(cwc(par,"E"))}({len(cwc(par,"E",True))})')
+    return u.ftag
+
 class ConllulexToUccaConverter:
     def __init__(self):
         self.depedit = DepEdit(DEPEDIT_TRANSFORMATIONS)
@@ -246,7 +280,7 @@ class ConllulexToUccaConverter:
                     if n.tok['upos']=='PROPN':
                         isSceneEvoking = False
                     elif n.ss in ("n.ACT", "n.PHENOMENON", "n.PROCESS") or n.ss=='n.EVENT' and n.lexlemma not in ('time','day','night','morning','evening','afternoon'):
-                        isSceneEvoking = True
+                        isSceneEvoking = True   # these will default to P. S evokers like n.ATTRIBUTE below
                     # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L585
                 elif n.ss and n.ss.startswith('v.'):
                     isSceneEvoking = True
@@ -326,6 +360,8 @@ class ConllulexToUccaConverter:
                     e = Edge(head=n,dep=h,deprel='obj')
                     n.outgoing_basic.append(e)
                     h.incoming_basic.append(e)
+                elif n.ss in ("n.ATTRIBUTE", "n.FEELING", "n.STATE"):
+                    u._fedge().tag = 'S'
 
 
         def decide_nominal_cat(n: Node, parent_unit_cat: str):
@@ -372,7 +408,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if 'asdfmeticulous care' in sent['text']:
+        if 'asdfRaging Taco' in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -446,8 +482,19 @@ class ConllulexToUccaConverter:
                     hucat = hu.ftag
                     dummyroot.remove(u)
                     if hucat in ('+','S','P'):
-                        hu.add('T' if n.ss in SNACS_TEMPORAL or n.ss=='n.TIME' else 'D', u)
-                        # T e.g. intransitive 'before'
+                        if n.lexlemma in ("here", "there", "nowhere", "somewhere", "anywhere", "everywhere") and n.tok['upos']=='ADV':
+                            # locative pro-adverbs are "A"
+                            hu.add('A', u)
+                        elif n.ss in SNACS_TEMPORAL or n.ss=='n.TIME':
+                            hu.add('T', u)
+                        elif n.lexlemma in ("now", "yesterday", "tomorrow", "early", "earlier", "late", "later",
+                            "before", "previous", "previously", "after", "subsequent", "subsequently", "recent", "recently",
+                            "soon", "eventual", "eventually", "already", "yet",
+                            "often", "frequent", "infrequent", "frequently", "infrequently", "rare", "rarely", "current", "ongoing"):
+                            # temporal deictic and frequency adjectives/adverbs are "T"
+                            hu.add('T', u)
+                        else:
+                            hu.add('D', u)
                     else:
                         hu.add('E', u)
                 elif cat=='S' or cat=='+':
@@ -472,11 +519,7 @@ class ConllulexToUccaConverter:
                         scn = l1.add_fnode(hu, 'E')
                         scn.add(cat, u)
                     elif hucat in ('+','S','P'):
-                        # locative pro-adverbs are "A"
-                        if n.lexlemma in ("here", "there", "nowhere", "somewhere", "anywhere", "everywhere"):
-                            hu.add('A', u)
-                        else:
-                            hu.add('D', u)  # e.g. aspectual verb particle
+                        hu.add('D', u)  # e.g. aspectual verb particle
                     else:
                         # maybe not a problem--allow the E strategy under all non-scene units?
                         # TODO: hucat=='S' + advmod
@@ -495,7 +538,7 @@ class ConllulexToUccaConverter:
             elif r=='nummod':
                 hucat = hu.ftag
                 dummyroot.remove(u)
-                hu.add('Q' if hucat=='-' else 'D', u)
+                hu.add('Q' if hucat not in ('+','S','P') else 'D', u)
             elif r=='nmod:npmod' and expr['lexlemma'].endswith('self'):
                 # the surgery *itself*: attach as F (guidelines p. 31, "Reflexives")
                 assert cat=='-'
@@ -569,10 +612,16 @@ class ConllulexToUccaConverter:
                     newcat = decide_nominal_cat(n, hucat)
                     dummyroot.remove(u)
                     hu.add(newcat, u)
-                else:
+                elif hucat in ('+','S','P'):
                     # scene-modifying-scene: D seems like the best bet
                     dummyroot.remove(u)
                     hu.add('D', u)
+                else:
+                    # scene-modifying-nonscene: E-scene
+                    newu = l1.add_fnode(hu, 'E')
+                    dummyroot.remove(u)
+                    newu.add(cat, u)
+                    # TODO: consider adding head noun under newu as remote
             elif r=='appos' and cat not in ('+','S','P'):
                 if n.tok["upos"]=='PROPN':
                     # TODO: make the head an E
@@ -762,8 +811,8 @@ class ConllulexToUccaConverter:
             # r = n.deprel
             # hu = parent_unit_for_dep(h, r)
             hu = u.fparent
-            if any(node2unit[c] is hu for c in n.children_with_rel('conj')):
-                # due presumably to an MWE, one of the conjuncts also belongs to the parent unit
+            if any(node2unit[c] is u or node2unit[c] is hu for c in n.children_with_rel('conj')):
+                # due presumably to an MWE, one of the conjuncts also belongs to this unit or the parent unit
                 # so go up a level
                 hu = hu.fparent
 
@@ -842,9 +891,14 @@ class ConllulexToUccaConverter:
                 assert u.ftag=='^',str(l1.all)
                 pu = u.fparent
                 for c in pu.children:
-                    if not isinstance(c, layer1.FoundationalNode) or c.ftag=='UNA':
-                        # terminal/UNA and putative scene head--demote to D
+                    if not isinstance(c, layer1.FoundationalNode):
+                        # terminal and putative scene head--wrap in D unit
+                        wrapper = l1.add_fnode(pu, 'D')
                         remove_unit(c)
+                        wrapper.add(layer1.EdgeTags.Terminal, c)
+                    elif c.ftag=='UNA':
+                        # UNA and putative scene head--demote to D
+                        pu.remove(c)
                         pu.add('D', c)
                 if pu.ftag in ('S','P'): # exclude S(COORD) and P(COORD) to avoid complications
                     # merge the child scene with the parent scene
@@ -977,13 +1031,7 @@ class ConllulexToUccaConverter:
             print('aaaaaaaaa', l1.root)
 
 
-        # ensure top-level cat is valid
-        toplevel = [c for c in dummyroot.children if c.ftag!='U']
-        # top-level units must be H or L, so change - ones to H
-        for u in toplevel:
-            if u.ftag=='-':
-                u._fedge().tag = 'H'
-                # TODO: add implicit unit?
+
 
         # remove "COORD" designations and replace "+" with "H"
         for u in l1.all:
@@ -994,12 +1042,34 @@ class ConllulexToUccaConverter:
                     cat = 'H'
                 u.incoming[0].tag = cat
 
+        # ensure top-level cat is valid
+        toplevel = [c for c in dummyroot.children if c.ftag!='U']
+        # top-level units must be H or L, so change - ones to H
+        for u in toplevel:
+            if u.ftag=='-':
+                u._fedge().tag = 'H'
+                # TODO: add implicit unit?
+
+        # remove "H" under unary parent (except at top level)
+        for u in l1.all:
+            if u.incoming and u.incoming[0].tag=='H' and u not in toplevel:
+                pu = u.fparent
+                if len(pu.children)==1:
+                    assert pu.ftag in ('A','E','H'),(pu.ftag,str(pu))
+                    pu.remove(u)
+                    for c in u.children:
+                        ccat = c.incoming[0].tag
+                        remove_unit(c)
+                        pu.add(ccat, c)
+
+
+
 
 
         KEYWORDS = ('good dentists in Fernandina','Esp. the mole','mircles','ufc fighter','kitchen and wait staff',
             'For example','would have been distorted','surgery','eather','feed my cat',
             'of the ants','patrons willing','were back quickly','worst Verizon store',
-            'as proper as')
+            'as proper as','Raging Taco')
         if any(kwd in sent['text'] for kwd in KEYWORDS) or random.random()>.9:
             print(l1.root)
 
@@ -1007,7 +1077,10 @@ class ConllulexToUccaConverter:
             print(l1.root)
             assert False
 
-        if any(n for n in l1.all if n.ftag in ('+','-')):
+        if any(n for n in dummyroot.children if n.ftag in ('+','-')):
+            print(l1.root)
+            assert False
+        elif any(n for n in l1.all if n.ftag in ('+','-')):
             print(l1.root)
 
 
@@ -1058,6 +1131,12 @@ class ConllulexToUccaConverter:
         FIXED
         - amod(PRON,ADJ) should be xcomp(VERB,ADJ): "saw it *riddled* with..."
         - typo expl THERE
+
+
+        STREUSLE/UD LIMITATIONS
+        1) Which adverbs are discourse connectives and which are within-clause modifiers.
+        2) n.COGNITION, n.COMMUNICATION, n.POSSESSION are broad semantic fields covering entities, states, and processes.
+        3) Institutionalized phrases (collection agency) are treated as MWEs in STREUSLE but not UCCA.
         """
 
 
@@ -1108,6 +1187,7 @@ class ConllulexToUccaConverter:
                                                                      for x in xs)))),  # tree-id in ucca-app
                                     "|".join(sorted(t for x in xs for t in getattr(x, "ftags", [x.ftag])
                                                     or ())),  # category
+                                    describe_context(xs),  # context
                                     "|".join(sorted(t for x in xs for e in x.incoming if e.attrib.get("remote")
                                                     for t in e.tags)),  # remote
                                     _yes(len([t for x in xs for t in x.terminals]) > 1),  # unanalyzable
@@ -1123,15 +1203,16 @@ class ConllulexToUccaConverter:
                         ]
                         fields += _unit_attrs(ref_units) + _unit_attrs(pred_units)
                         report.writerow([f or "" for f in fields])
-        return (evaluation.evaluate(converted_passage, reference_passage), reference_passage.ID,
+        VERBOSE=False
+        return (evaluation.evaluate(converted_passage, reference_passage, errors=VERBOSE, units=VERBOSE, verbose=VERBOSE), reference_passage.ID,
                 " ".join(t.text for t in sorted(reference_passage.layer(layer0.LAYER_ID).all, key=attrgetter(
                     "position"))), str(converted_passage), str(reference_passage))
 
 
 REPORT_HEADERS = [
     "sent_id", "text", "deprel", "upos", "edeps", "expr_id", "expr_type", "lexcat", "ss", "ss2",
-    "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_remote", "ref_unanalyzable",
-    "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_remote", "pred_unanalyzable",
+    "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_context", "ref_remote", "ref_unanalyzable",
+    "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_context", "pred_remote", "pred_unanalyzable",
     "pred_annotation"]
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
@@ -1391,9 +1472,11 @@ def run(args, converter):
                                 validate_pos=False, validate_type=False))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
-        if False and len(converted)<2522:
+        if False and 'Raging Taco' not in sent['text']:
             converted[sent[SENT_ID]] = None
             continue
+        # if len(converted)>10:
+        #     break
 
         passage = converter.convert(sent)
         if args.normalize:
