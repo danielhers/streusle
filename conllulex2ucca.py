@@ -13,6 +13,7 @@ import csv
 import os
 import re
 import sys
+import urllib
 from collections import Counter
 from itertools import groupby, chain
 from operator import attrgetter, itemgetter
@@ -28,6 +29,7 @@ from ucca.normalization import normalize
 
 from conllulex2json import load_sents
 from supersenses import coarsen_pss
+from relnoun_lists import RELNOUNS
 
 import random
 
@@ -77,6 +79,33 @@ DEPEDIT_TRANSFORMED_DEPRELS = set(re.search(r"(?<=func=/)\w+", t).group(0) for t
 
 SNACS_TEMPORAL = ('p.Temporal','p.Time','p.StartTime','p.EndTime','p.Frequency','p.Interval')
 
+
+def read_amr_roles(role_type):
+    file_name = "have-" + role_type + "-role-91-roles-v1.06.txt"
+    if not os.path.exists(file_name):
+        url = "http://amr.isi.edu/download/lists/" + file_name
+        try:
+            urllib.request.urlretrieve(url, file_name)
+        except OSError as e:
+            raise IOError(f"Must download {url} and have it in the current directory when running the script") from e
+    with open(file_name) as f:
+        entries = set()
+        for line in map(str.strip, f):
+            if line and not line.startswith(("#", "MAYBE")):
+                entry = line.split()[1]
+                if '-' in entry:    # tokenize hyphens (and make them optional)
+                    entries.add(entry.replace('-', ' - '))
+                    entries.add(entry.replace('-', ' '))
+                else:
+                    entries.add(entry)
+        return sorted(entries)
+
+
+AMR_ROLE = {role_type: read_amr_roles(role_type) for role_type in ("org", "rel")}
+ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
+
+RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
+# With simple suffix matching, false positives: fee, flower, list. Require a preceding nonadjacent vowel?
 
 def pass_through_C(unit):
     if unit.ftag=='C':
@@ -281,6 +310,16 @@ class ConllulexToUccaConverter:
                         isSceneEvoking = False
                     elif n.ss in ("n.ACT", "n.PHENOMENON", "n.PROCESS") or n.ss=='n.EVENT' and n.lexlemma not in ('time','day','night','morning','evening','afternoon'):
                         isSceneEvoking = True   # these will default to P. S evokers like n.ATTRIBUTE below
+                    elif n.ss in ('n.PERSON','n.GROUP') and n.lexlemma in AMR_ROLE["rel"] + AMR_ROLE["org"] + RELNOUNS:
+                        # relational noun: employee, sister, friend
+                        # TODO: really a hybrid scene-nonscene unit. To most syntactic cxns, except perhaps possessives/compounds/PPs,
+                        # is is like a non-scene nominal. E.g. we don't want coordination involving a relational noun ("wife and I") to be treated as linkage.
+                        isSceneEvoking = True
+                    elif n.ss in ('n.PERSON',) and n.lexlemma.endswith(RELATIONAL_PERSON_SUFFIXES): #and ' ' not in n.lexlemma and not n.lexlemma.endswith(('ment','ness')) and re.search(r'[aeiou][^aeiou]+[aeiou]', n.lexlemma, re.I):
+                        # probably relational noun: last vowel (cluster) belongs to a suffix, and there is another preceding vowel cluster separated by a consonant
+                        # false positives: infant
+                        # omit n.GROUP, which includes false positives like "restaurant" and "business"
+                        isSceneEvoking = True
                     # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L585
                 elif n.ss and n.ss.startswith('v.'):
                     isSceneEvoking = True
@@ -408,7 +447,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if 'asdfRaging Taco' in sent['text']:
+        if 'asdfBlue Cross/Blue Shield' in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -490,7 +529,8 @@ class ConllulexToUccaConverter:
                         elif n.lexlemma in ("now", "yesterday", "tomorrow", "early", "earlier", "late", "later",
                             "before", "previous", "previously", "after", "subsequent", "subsequently", "recent", "recently",
                             "soon", "eventual", "eventually", "already", "yet",
-                            "often", "frequent", "infrequent", "frequently", "infrequently", "rare", "rarely", "current", "ongoing"):
+                            "often", "frequent", "infrequent", "frequently", "infrequently", "rare", "rarely", "current", "ongoing",
+                            "sometime", "anytime", "everytime", "ever", "never"):
                             # temporal deictic and frequency adjectives/adverbs are "T"
                             hu.add('T', u)
                         else:
@@ -591,16 +631,38 @@ class ConllulexToUccaConverter:
                     #    assert False,(str(n),str(l1.root))
                     else:   # make prep/possessive a relator under its object
                         obju.add('R', u)
-                elif config=='possessive':
-                    # possessive pronoun
-                    # TODO: scene-evoking head noun
-                    # TODO: ownership (S+A)
-
-                    # default to E
-                    dummyroot.remove(u)
+                elif config=='possessive':  # possessive pronoun
                     gov = nodes[govi]
                     govu = node2unit[gov]
-                    govu.add('E', u)
+                    gucat = govu.ftag
+
+                    dummyroot.remove(u)
+                    if gucat in ('+','S','P'):  # scene-evoking head noun: relational or eventive
+                        govu.add('A', u)
+                    elif n.ss=='p.Originator' and gov.ss=='n.COMMUNICATION':
+                        # possessive + communication noun ambiguous between process and content ("my answer/order/request/...")
+                        # TODO: change the communication noun to P (maybe do this above)
+                        govu.add('A', u)
+                    elif n.ss in ('p.Possessor','p.Originator','p.Recipient','p.SocialRel','p.OrgMember'):
+                        # possessive pron marked S+A embedded in E
+                        # - Possessor = ownership scene
+                        # - SocialRel with non-relational head noun (e.g. "MY tire guy")
+                        # - OrgMember (e.g. "my company")
+                        # - Originator (e.g. "their food")
+                        # TODO: double-check this is the right policy for OrgMember (data appear to be inconsistent)
+                        possscn = l1.add_fnode(govu, 'E')
+                        possscn.add_multiple([('A',),('S',)], u)   #A|S. Put the A first so other rules don't treat this like a scene and wrap in H
+
+                        # remote to the lexical head of govu
+                        if govu.terminals:
+                            remlu = l1.add_fnode(possscn, 'A')
+                            for t in govu.terminals:
+                                remlu.add(layer1.EdgeTags.Terminal, t)
+                        else:   # UNA
+                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                            l1.add_remote(possscn, 'A', t)
+                    else:
+                        govu.add('E', u)
                 else:
                     assert False,expr
             elif r in ('nmod','compound') or r.startswith(('nmod:','compound:')):    # misc nmod--see rules for obl
@@ -769,17 +831,6 @@ class ConllulexToUccaConverter:
             print('333333333', l1.root)
 
 
-        def remove_unit(u):
-            if isinstance(u, layer1.FoundationalNode):
-                u.fparent.remove(u)
-            else:
-                # can't call parent.remove(terminal) due to a bug
-                # so instead we remove the edges
-                for e in u.incoming:
-                    e.parent._outgoing.remove(e)
-                u._incoming[:] = []
-
-
 
         def dfs_order_subtree(unit):
             items = [unit]
@@ -894,7 +945,7 @@ class ConllulexToUccaConverter:
                     if not isinstance(c, layer1.FoundationalNode):
                         # terminal and putative scene head--wrap in D unit
                         wrapper = l1.add_fnode(pu, 'D')
-                        remove_unit(c)
+                        pu.remove(c)
                         wrapper.add(layer1.EdgeTags.Terminal, c)
                     elif c.ftag=='UNA':
                         # UNA and putative scene head--demote to D
@@ -911,7 +962,7 @@ class ConllulexToUccaConverter:
                         u = c
                     for c in u.children:
                         ccat = c.incoming[0].tag
-                        remove_unit(c)
+                        u.remove(c)
                         pu.add(ccat, c)
 
         #if hasSec:
@@ -926,16 +977,16 @@ class ConllulexToUccaConverter:
         # and their parent units need to be adjusted, as well as coordination
         # structures.
 
-        # Traverse the graph bottom-up to
-        #  - Raise terminals/UNA so they have a unary unit with a foundational unit category
-        #    If parent unit is a scene (P or S), use that category label
+        # Traverse the graph bottom-up:
+        # Raise terminals/UNA so they have a unary unit with a foundational unit category
+        # If parent unit is a scene (P or S), use that category label
         #    and change the scene unit category to H.
-        #    Else if the parent unit has category `-`, change it to C.
-        #    Else create a unary C node to wrap the lexical unit.
+        # Else if the parent unit has category `-`, change it to C.
+        # Else create a unary C node to wrap the lexical unit.
         #
         # Leave COORD alone?
         #
-        #    N.B. This will create some superfluous unary nesting e.g. [A [H ...]]
+        # N.B. This will create some superfluous unary nesting e.g. [A [H ...]], which we remove later.
 
         h_units_to_relabel = []
         for u in dfs_order_subtree(dummyroot)[::-1]:    # bottom-up
@@ -959,19 +1010,31 @@ class ConllulexToUccaConverter:
                     pucat = pu.ftag
                     newcat = {'H(P)': 'P', 'H(S)': 'S'}[pucat]
                     newu = l1.add_fnode(pu, newcat)
-                    remove_unit(u)
+                    pu.remove(u)
                     newu.add(cat, u)
                 elif pucat=='-':
                     if len(pu.children)==1: # change to C
                         pu._fedge().tag = 'C'
+                        newu = pu
                     else:
                         newu = l1.add_fnode(pu, 'C')
-                        remove_unit(u)
+                        pu.remove(u)
                         newu.add(cat, u)
                 elif pucat!='UNA' and len(pu.children)>1:   # add an intermediate unary C unit
                     newu = l1.add_fnode(pu, 'C')
-                    remove_unit(u)
+                    pu.remove(u)
                     newu.add(cat, u)
+                else:
+                    continue
+
+                if cat==layer1.EdgeTags.Terminal:   # terminal is already used elsewhere as a remote. we need the C unit to be remote instead
+                    for e in u.incoming:
+                        if e.parent is not newu and e.parent is not dummyroot and e.parent.fparent is not dummyroot:
+                            assert e.tags==[layer1.EdgeTags.Terminal]
+                            dest = e.parent.fparent
+                            tags = list(map(tuple, e.parent.incoming[0].tags))
+                            dest.remove(e.parent)  # remove unit with direct remote edge to terminal
+                            l1.add_remote_multiple(dest, tags, newu)    # add remote edge to unit containing terminal
 
 
         if printMe:
@@ -1059,7 +1122,7 @@ class ConllulexToUccaConverter:
                     pu.remove(u)
                     for c in u.children:
                         ccat = c.incoming[0].tag
-                        remove_unit(c)
+                        u.remove(c)
                         pu.add(ccat, c)
 
 
