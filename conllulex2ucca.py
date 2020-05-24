@@ -116,11 +116,12 @@ def pass_through_C(unit):
         return unit.fparent
     return unit
 
+def primary_children(unit):
+    return [e.child for e in unit.outgoing if not e.attrib.get('remote')]
+
 def children_with_cat(unit, cat, remote=False):
-    if not remote:
-        return [c for c in unit.children if isinstance(c, layer1.FoundationalNode) and c.fparent is unit and c.ftag==cat]
-        # the isinstance() check is necessary for some of the reference parses, e.g. "Raging Taco Raging Burrito" missing "&"
-    return [c for c in unit.children if any(e.tag==cat for e in c.incoming[1:])]
+    """Note: checks just the first tag against cat; A|S will count as A"""
+    return [e.child for e in unit.outgoing if e.tag==cat and bool(e.attrib.get('remote'))==remote]
 
 cwc = children_with_cat
 
@@ -458,7 +459,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfKim's" in sent['text']:
+        if "asdfANYONE and everyone" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -569,6 +570,8 @@ class ConllulexToUccaConverter:
                     elif hucat in ('-','A','E'):  # E-scene. make node for scene to attach as E
                         scn = l1.add_fnode(hu, 'E')
                         scn.add(cat, u)
+                        govlu, = layer1._multiple_children_by_tag(hu, 'UNA')
+                        l1.add_remote(u, 'A', govlu)
                     elif hucat in ('+','S','P'):
                         hu.add('D', u)  # e.g. aspectual verb particle
                     else:
@@ -971,22 +974,23 @@ class ConllulexToUccaConverter:
             if u.ftag and u.ftag.startswith('^'):
                 assert u.ftag=='^',str(l1.all)
                 pu = u.fparent
-                for c in pu.children:
-                    if c.ftag=='UNA':
-                        # UNA and putative scene head--demote to D
-                        pu.remove(c)
-                        pu.add('D', c)
+                for c in children_with_cat(pu, 'UNA'):
+                    # UNA and putative scene head--demote to D
+                    pu.remove(c)
+                    pu.add('D', c)
                 if pu.ftag in ('S','P'): # exclude S(COORD) and P(COORD) to avoid complications
                     # merge the child scene with the parent scene
                     pu.remove(u)
-                    if len(u.children)==1 and u.children[0].ftag in ('S','P'):
+                    cc = primary_children(u)
+                    if len(cc)==1 and cc[0].ftag in ('S','P'):
                         # promote scene type to parent unit
-                        c = u.children[0]
+                        c = cc[0]
                         pu._fedge().tag = c.ftag
                         u.remove(c)
                         u = c
-                    for c in u.children:
-                        ccat = c.incoming[0].tag
+                    cc = primary_children(u)
+                    for c in cc:
+                        ccat = c.ftag
                         u.remove(c)
                         pu.add(ccat, c)
 
@@ -1019,7 +1023,13 @@ class ConllulexToUccaConverter:
             if u.ftag=='UNA':
                 # raise me!
 
-                cat = nonremote(u.incoming).tag
+                try:
+                    cat = nonremote(u.incoming).tag
+                except:
+                    print(u)
+                    print(u.incoming)
+                    print(l1.root)
+                    raise
 
                 pu = nonremote(u.incoming).parent   # .fparent only if a foundational node (UNA)
                 pucat = pu.ftag
@@ -1123,7 +1133,7 @@ class ConllulexToUccaConverter:
         toplevel = [c for c in dummyroot.children if c.ftag!='U']
         # top-level units must be H or L, so change - ones to H
         for u in toplevel:
-            if u.ftag=='-':
+            if u.ftag in ('-','UNA'):
                 u._fedge().tag = 'H'
                 # TODO: add implicit unit?
 
@@ -1151,10 +1161,10 @@ class ConllulexToUccaConverter:
                 pu = u.fparent
                 assert len(pu.children)==1
                 assert len(pu.incoming)==1
-                pucat = pu.ftag
+                pucats = pu.ftags
                 gpu = pu.fparent
                 gpu.remove(pu)
-                gpu.add(pucat, u)
+                gpu.add_multiple(list(map(tuple, pucats)), u)
 
 
 
