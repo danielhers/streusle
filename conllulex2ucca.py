@@ -107,6 +107,10 @@ ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue
 RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
 # With simple suffix matching, false positives: fee, flower, list. Require a preceding nonadjacent vowel?
 
+def nonremote(edges):
+    edge, = [e for e in edges if not e.attrib.get('remote')]
+    return edge
+
 def pass_through_C(unit):
     if unit.ftag=='C':
         return unit.fparent
@@ -447,7 +451,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if 'asdfBlue Cross/Blue Shield' in sent['text']:
+        if "asdfKim's business" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -620,13 +624,32 @@ class ConllulexToUccaConverter:
                     obj = nodes[obji]
                     obju = node2unit[obj]
                     dummyroot.remove(u)
-                    if n.lexcat=='POSS' and n.ss in ('n.Possessor',):
+                    if n.lexcat=='POSS' and n.ss in ('p.Possessor',):
                         # ownership -> possessive particle is scene-evoking
                         gov = nodes[govi]
                         govu = node2unit[gov]
-                        govu.add('S', u)
-                        u.add('A', obju)
-                        # there would also be a remote edge from the possession scene to the gov
+
+                        #govu.add('S', u)
+                        objcats = obju.ftags
+                        obju.fparent.remove(obju)
+                        escn = l1.add_fnode(govu, 'E')   # possessive = E-scene
+                        #govu.add_multiple([('_',),('S',)], u)   # _ to block further rules from treating this as a main scene wrapped in H
+                        escn.add('S', u)
+                        possscn = u
+                        if objcats==['E'] or objcats==['-']:
+                            u.add('A', obju)
+                        else:
+                            objwrapu = l1.add_fnode(u, 'A')
+                            objwrapu.add_multiple(list(map(tuple, objcats)), obju)
+                        # remote from possession scene to the lexical head of govu
+                        # e.g. [E [S [A Kim] 's [A* business cards] ] ] [C business cards]
+                        if govu.terminals:
+                            remlu = l1.add_fnode(possscn, 'A')
+                            for t in govu.terminals:
+                                remlu.add(layer1.EdgeTags.Terminal, t)
+                        else:   # UNA
+                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                            l1.add_remote(possscn, 'A', t)
                     #elif n.ss=='p.Extent':
                     #    assert False,(str(n),str(l1.root))
                     else:   # make prep/possessive a relator under its object
@@ -675,11 +698,11 @@ class ConllulexToUccaConverter:
                     dummyroot.remove(u)
                     hu.add(newcat, u)
                 elif hucat in ('+','S','P'):
-                    # scene-modifying-scene: D seems like the best bet
+                    # scene modifying scene: D seems like the best bet
                     dummyroot.remove(u)
                     hu.add('D', u)
                 else:
-                    # scene-modifying-nonscene: E-scene
+                    # scene modifying nonscene: E-scene
                     newu = l1.add_fnode(hu, 'E')
                     dummyroot.remove(u)
                     newu.add(cat, u)
@@ -830,6 +853,8 @@ class ConllulexToUccaConverter:
         if printMe:
             print('333333333', l1.root)
 
+        for u in l1.all:
+            assert u is dummyroot.fparent or u.incoming and (all(e.tag==layer1.EdgeTags.Terminal for e in u.incoming) or nonremote(u.incoming)),(str(u),str(l1.root))
 
 
         def dfs_order_subtree(unit):
@@ -846,6 +871,11 @@ class ConllulexToUccaConverter:
         # the conjunct's head will correspond to a lexically-evoked unit
         processed_conj_heads = []   # to make sure we don't revisit a node via multiple units
         for u in dfs_order_subtree(dummyroot):
+            try:
+                assert u is dummyroot.fparent or u.incoming and (all(e.tag==layer1.EdgeTags.Terminal for e in u.incoming) or nonremote(u.incoming)),(str(u),str(l1.root))
+            except:
+                print(str(u),str(l1.root))
+                raise
 
             if u not in unit2expr or not isinstance(u, layer1.FoundationalNode):
                 continue
@@ -917,6 +947,7 @@ class ConllulexToUccaConverter:
 
 
         for u in l1.all:
+            assert u is dummyroot.fparent or (u.incoming and nonremote(u.incoming)),(str(u),str(l1.root))
             if u.ftag and u.ftag=='+':  # TODO: startswith('+') for +(COORD)
                 rest = u.ftag[1:]   # could be +(COORD)
                 expr = unit2expr[u]
@@ -993,9 +1024,10 @@ class ConllulexToUccaConverter:
 
             if not isinstance(u, layer1.FoundationalNode) or u.ftag=='UNA':
                 # raise me!
-                cat = u.incoming[0].tag
 
-                pu = u.incoming[0].parent   # .fparent only if a foundational node (UNA)
+                cat = nonremote(u.incoming).tag
+
+                pu = nonremote(u.incoming).parent   # .fparent only if a foundational node (UNA)
                 pucat = pu.ftag
 
                 if pu is dummyroot or pucat in ('+','H'):
@@ -1032,7 +1064,7 @@ class ConllulexToUccaConverter:
                         if e.parent is not newu and e.parent is not dummyroot and e.parent.fparent is not dummyroot:
                             assert e.tags==[layer1.EdgeTags.Terminal]
                             dest = e.parent.fparent
-                            tags = list(map(tuple, e.parent.incoming[0].tags))
+                            tags = list(map(tuple, nonremote(e.parent.incoming).tags))
                             dest.remove(e.parent)  # remove unit with direct remote edge to terminal
                             l1.add_remote_multiple(dest, tags, newu)    # add remote edge to unit containing terminal
 
@@ -1099,11 +1131,13 @@ class ConllulexToUccaConverter:
         # remove "COORD" designations and replace "+" with "H"
         for u in l1.all:
             if u.incoming:
-                cat = u.incoming[0].tag
+                cat = nonremote(u.incoming).tag
                 cat = cat.replace('(COORD)','')
                 if cat=='+':
                     cat = 'H'
-                u.incoming[0].tag = cat
+                nonremote(u.incoming).tag = cat
+
+
 
         # ensure top-level cat is valid
         toplevel = [c for c in dummyroot.children if c.ftag!='U']
@@ -1113,17 +1147,19 @@ class ConllulexToUccaConverter:
                 u._fedge().tag = 'H'
                 # TODO: add implicit unit?
 
+        if printMe:
+            print('bbbbbbbbb', l1.root)
+
         # remove "H" under unary parent (except at top level)
         for u in l1.all:
-            if u.incoming and u.incoming[0].tag=='H' and u not in toplevel:
+            if u.incoming and nonremote(u.incoming).tag=='H' and u not in toplevel:
                 pu = u.fparent
                 if len(pu.children)==1:
                     assert pu.ftag in ('A','E','H'),(pu.ftag,str(pu))
                     pu.remove(u)
-                    for c in u.children:
-                        ccat = c.incoming[0].tag
-                        u.remove(c)
-                        pu.add(ccat, c)
+                    for e in u.outgoing:
+                        u.remove(e.child)
+                        pu.add_multiple(list(map(tuple, e.tags)), e.child, edge_attrib=e.attrib)
 
 
 
@@ -1535,7 +1571,7 @@ def run(args, converter):
                                 validate_pos=False, validate_type=False))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
-        if False and 'Raging Taco' not in sent['text']:
+        if False and "Kim's" not in sent['text']:
             converted[sent[SENT_ID]] = None
             continue
         # if len(converted)>10:
