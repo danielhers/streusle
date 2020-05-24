@@ -254,39 +254,46 @@ class ConllulexToUccaConverter:
                     # e.g. "went_on_a_trip"
                     lvc_scene_lus = [lvc_scene_lus[-1]]
 
-            # decide main cat
-            if expr['lexcat']=='PUNCT':
-                mcat = 'U'
-            elif lvc_scene_lus:
-                mcat = '+'  # LVCs are scene-evoking
+
+            if lvc_scene_lus:
+                # LVCs are scene-evoking
+                outerlu = l1.add_fnode(dummyroot, '+')
+                n = expr['nodes'][0]
+                unit2expr[outerlu] = n.smwe # could use walrus operator here
+
+                for node in expr['nodes']:
+                    if node not in lvc_scene_lus:
+                        # light verb or determiner in LVC
+                        lu = l1.add_fnode(outerlu, 'D' if expr['lexcat']=='V.LVC.cause' else 'F')
+                        lu.add(layer1.EdgeTags.Terminal, node.terminal)
+                        # point to parent unit because things should never attach under F units
+                        unit2expr[lu] = n.smwe
+                        node2unit[node] = outerlu
+                    else:   # no "LU" for LVC
+                        lu = l1.add_fnode(outerlu, 'UNA')
+                        lu.add(layer1.EdgeTags.Terminal, node.terminal)
+                        unit2expr[lu] = node.smwe
+                        node2unit[node] = outerlu
+
+            elif expr['lexcat']=='PUNCT':
+                lu = l1.add_fnode(dummyroot, 'U')
+                n = expr['nodes'][0]
+                assert n.swe
+                unit2expr[lu] = n.swe
+                lu.add(layer1.EdgeTags.Terminal, n.terminal)
+                node2unit[n] = lu
             else:
-                mcat = 'LU'
+                outerlu = l1.add_fnode(dummyroot, 'LU')
+                lu = l1.add_fnode(outerlu, 'UNA')
+                n = expr['nodes'][0]
+                unit2expr[outerlu] = n.swe or n.smwe # could use walrus operator here
+                unit2expr[lu] = n.swe or n.smwe
 
-            outerlu = toplu = lu = l1.add_fnode(dummyroot, mcat)
-            n = expr['nodes'][0]
-            unit2expr[lu] = n.swe or n.smwe # could use walrus operator here
-
-            isUNA = False
-            if len(expr['nodes'])>1 and not lvc_scene_lus:
-                # non-LVC MWE: treat as unanalyzable
-                # TODO: dates should also be unanalyzable, but alas, they're not MWEs
-                isUNA = True
-                toplu = lu = l1.add_fnode(toplu, 'UNA')
+                for node in expr['nodes']:
+                    lu.add(layer1.EdgeTags.Terminal, node.terminal)
+                    node2unit[node] = outerlu
 
             for node in expr['nodes']:
-                if lvc_scene_lus and node not in lvc_scene_lus:
-                    # light verb or determiner in LVC
-                    lu = l1.add_fnode(toplu, 'D' if expr['lexcat']=='V.LVC.cause' else 'F')
-                else:
-                    lu = toplu
-                lu.add(layer1.EdgeTags.Terminal, node.terminal)
-
-                unit2expr[lu] = node.swe or node.smwe
-                node2unit[node] = outerlu if isUNA else lu
-                if lvc_scene_lus and node not in lvc_scene_lus and node2unit[node] is lu:
-                    # point to parent unit because things should never attach under F units
-                    node2unit[node] = toplu
-
                 # delete within-MWE dep edges so we don't process them later
                 h = node.head   # could use walrus operator
                 if h in expr['nodes']:
@@ -451,7 +458,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfKim's business" in sent['text']:
+        if "asdfKim's" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -642,14 +649,9 @@ class ConllulexToUccaConverter:
                             objwrapu = l1.add_fnode(u, 'A')
                             objwrapu.add_multiple(list(map(tuple, objcats)), obju)
                         # remote from possession scene to the lexical head of govu
-                        # e.g. [E [S [A Kim] 's [A* business cards] ] ] [C business cards]
-                        if govu.terminals:
-                            remlu = l1.add_fnode(possscn, 'A')
-                            for t in govu.terminals:
-                                remlu.add(layer1.EdgeTags.Terminal, t)
-                        else:   # UNA
-                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
-                            l1.add_remote(possscn, 'A', t)
+                        # e.g. [E [S [A [UNA Kim]] [UNA 's] [A* business cards] ] ] [C [UNA business cards]]
+                        t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                        l1.add_remote(possscn, 'A', t)
                     #elif n.ss=='p.Extent':
                     #    assert False,(str(n),str(l1.root))
                     else:   # make prep/possessive a relator under its object
@@ -677,13 +679,8 @@ class ConllulexToUccaConverter:
                         possscn.add_multiple([('A',),('S',)], u)   #A|S. Put the A first so other rules don't treat this like a scene and wrap in H
 
                         # remote to the lexical head of govu
-                        if govu.terminals:
-                            remlu = l1.add_fnode(possscn, 'A')
-                            for t in govu.terminals:
-                                remlu.add(layer1.EdgeTags.Terminal, t)
-                        else:   # UNA
-                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
-                            l1.add_remote(possscn, 'A', t)
+                        t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                        l1.add_remote(possscn, 'A', t)
                     else:
                         govu.add('E', u)
                 else:
@@ -858,9 +855,11 @@ class ConllulexToUccaConverter:
 
 
         def dfs_order_subtree(unit):
+            """Traverse primary foundational unit descendents in DFS order"""
             items = [unit]
-            for u in unit.children:
-                items.extend(dfs_order_subtree(u))
+            for e in unit.outgoing:
+                if not e.attrib.get('remote') and e.tag!=layer1.EdgeTags.Terminal:
+                    items.extend(dfs_order_subtree(e.child))
             return items
 
         # by now we should have processed all dependencies except for conj and cc
@@ -877,7 +876,7 @@ class ConllulexToUccaConverter:
                 print(str(u),str(l1.root))
                 raise
 
-            if u not in unit2expr or not isinstance(u, layer1.FoundationalNode):
+            if u not in unit2expr:
                 continue
             expr = unit2expr[u]
             n = expr_head(expr)
@@ -973,12 +972,7 @@ class ConllulexToUccaConverter:
                 assert u.ftag=='^',str(l1.all)
                 pu = u.fparent
                 for c in pu.children:
-                    if not isinstance(c, layer1.FoundationalNode):
-                        # terminal and putative scene head--wrap in D unit
-                        wrapper = l1.add_fnode(pu, 'D')
-                        pu.remove(c)
-                        wrapper.add(layer1.EdgeTags.Terminal, c)
-                    elif c.ftag=='UNA':
+                    if c.ftag=='UNA':
                         # UNA and putative scene head--demote to D
                         pu.remove(c)
                         pu.add('D', c)
@@ -1022,7 +1016,7 @@ class ConllulexToUccaConverter:
         h_units_to_relabel = []
         for u in dfs_order_subtree(dummyroot)[::-1]:    # bottom-up
 
-            if not isinstance(u, layer1.FoundationalNode) or u.ftag=='UNA':
+            if u.ftag=='UNA':
                 # raise me!
 
                 cat = nonremote(u.incoming).tag
@@ -1052,21 +1046,12 @@ class ConllulexToUccaConverter:
                         newu = l1.add_fnode(pu, 'C')
                         pu.remove(u)
                         newu.add(cat, u)
-                elif pucat!='UNA' and len(pu.children)>1:   # add an intermediate unary C unit
+                elif len(pu.children)>1:   # add an intermediate unary C unit
                     newu = l1.add_fnode(pu, 'C')
                     pu.remove(u)
                     newu.add(cat, u)
                 else:
                     continue
-
-                if cat==layer1.EdgeTags.Terminal:   # terminal is already used elsewhere as a remote. we need the C unit to be remote instead
-                    for e in u.incoming:
-                        if e.parent is not newu and e.parent is not dummyroot and e.parent.fparent is not dummyroot:
-                            assert e.tags==[layer1.EdgeTags.Terminal]
-                            dest = e.parent.fparent
-                            tags = list(map(tuple, nonremote(e.parent.incoming).tags))
-                            dest.remove(e.parent)  # remove unit with direct remote edge to terminal
-                            l1.add_remote_multiple(dest, tags, newu)    # add remote edge to unit containing terminal
 
 
         if printMe:
@@ -1083,12 +1068,7 @@ class ConllulexToUccaConverter:
             print('777777777', l1.root)
 
         for u in l1.all:
-            if not isinstance(u, layer1.FoundationalNode):
-                if u.incoming[0].parent.tag=='UNA' or len(u.incoming[0].parent.children)==1: #,(str(u),str(l1.root)):
-                    pass
-                else:
-                    print('STRUCTURE VIOLATION:', str(l1.root), file=sys.stderr)
-            elif u.ftag=='UNA':
+            if u.ftag=='UNA':
                 if len(u.fparent.children)==1:  #,(str(u),str(u.fparent),str(l1.root))
                     pass
                 else:
@@ -1160,6 +1140,21 @@ class ConllulexToUccaConverter:
                     for e in u.outgoing:
                         u.remove(e.child)
                         pu.add_multiple(list(map(tuple, e.tags)), e.child, edge_attrib=e.attrib)
+
+
+        # Remove "UNA" by merging with unary parent
+        # The UNA-child unit may be a remote elsewhere, so instead of discarding it
+        # we replace the unary primary parent with it
+        for u in l1.all:
+            cat = u.ftag
+            if cat=='UNA':
+                pu = u.fparent
+                assert len(pu.children)==1
+                assert len(pu.incoming)==1
+                pucat = pu.ftag
+                gpu = pu.fparent
+                gpu.remove(pu)
+                gpu.add(pucat, u)
 
 
 
