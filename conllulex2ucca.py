@@ -25,7 +25,7 @@ from tqdm import tqdm
 from ucca import core, layer0, layer1, evaluation
 from ucca.evaluation import UNLABELED, LABELED
 from ucca.ioutil import get_passages
-from ucca.normalization import normalize
+from ucca.normalization import normalize, COORDINATED_MAIN_REL
 
 from conllulex2json import load_sents
 from supersenses import coarsen_pss
@@ -100,12 +100,18 @@ def read_amr_roles(role_type):
                     entries.add(entry)
         return sorted(entries)
 
+OCCUPATION = set(RELNOUNS + read_amr_roles('org'))
+KINSHIP = set(read_amr_roles('rel')) # also SOCIOPERSONAL ASSOCIATE (friend, buddy, comrade, mate, enemy, peer) and COHABITANT (housemate, roommate, shipmate)
+for itm in ('boss','practitioner','therapist','patient','landlord','tenant','client'):
+    KINSHIP.remove(itm)
+    OCCUPATION.add(itm)
 
-AMR_ROLE = {role_type: read_amr_roles(role_type) for role_type in ("org", "rel")}
 ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
 
 RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
-# With simple suffix matching, false positives: fee, flower, list. Require a preceding nonadjacent vowel?
+
+def entuple_items(items):
+    return [(x,) for x in items]
 
 def nonremote(edges):
     edge, = [e for e in edges if not e.attrib.get('remote')]
@@ -311,40 +317,8 @@ class ConllulexToUccaConverter:
         for u in dummyroot.children:
             cat = u.ftag
             if cat=='LU':
-                isSceneEvoking = None
                 expr = unit2expr[u]
-
-                # TODO: check if UNA nodes are scene-evoking
-
                 n = expr_head(expr)
-                if n.lexcat=='N':
-                    if n.tok['upos']=='PROPN':
-                        isSceneEvoking = False
-                    elif n.ss in ("n.ACT", "n.PHENOMENON", "n.PROCESS") or n.ss=='n.EVENT' and n.lexlemma not in ('time','day','night','morning','evening','afternoon'):
-                        isSceneEvoking = True   # these will default to P. S evokers like n.ATTRIBUTE below
-                    elif n.ss in ('n.PERSON','n.GROUP') and n.lexlemma in AMR_ROLE["rel"] + AMR_ROLE["org"] + RELNOUNS:
-                        # relational noun: employee, sister, friend
-                        # TODO: really a hybrid scene-nonscene unit. To most syntactic cxns, except perhaps possessives/compounds/PPs,
-                        # is is like a non-scene nominal. E.g. we don't want coordination involving a relational noun ("wife and I") to be treated as linkage.
-                        isSceneEvoking = True
-                    elif n.ss in ('n.PERSON',) and n.lexlemma.endswith(RELATIONAL_PERSON_SUFFIXES): #and ' ' not in n.lexlemma and not n.lexlemma.endswith(('ment','ness')) and re.search(r'[aeiou][^aeiou]+[aeiou]', n.lexlemma, re.I):
-                        # probably relational noun: last vowel (cluster) belongs to a suffix, and there is another preceding vowel cluster separated by a consonant
-                        # false positives: infant
-                        # omit n.GROUP, which includes false positives like "restaurant" and "business"
-                        isSceneEvoking = True
-                    # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L585
-                elif n.ss and n.ss.startswith('v.'):
-                    isSceneEvoking = True
-                    # TODO: more heuristics from https://github.com/danielhers/streusle/blob/streusle2ucca-2019/conllulex2ucca.py#L580
-                elif n.lexcat=='AUX' and not n.deprel.startswith(('aux','cop')):
-                    # auxiliary or copula has been promoted to head (e.g. VP Ellipsis)
-                    # "We were told that we couldn't today because they were closing soon."
-                    # TODO: really we want an implicit unit
-                    isSceneEvoking = True
-                else:
-                    isSceneEvoking = False
-
-                u._fedge().tag = '+' if isSceneEvoking else '-'
 
                 if n.lexcat=='ADJ' and n.lexlemma not in ('else','such') and n.deprel!='discourse':
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
@@ -388,6 +362,10 @@ class ConllulexToUccaConverter:
                             assert h.lexcat in ('N','PRON','NUM','ADJ'),(h,h.lexcat,str(u),str(l1.root))
                             # adverbial modifiers of the NOMINAL this P case-marks should be semantically under the SNACS-evoked unit
                             node2unit_for_advbl_attachment[h] = u # make preposition unit the attachment site for ADVERBIAL dependents
+                        else:
+                            u._fedge().tag = '-'
+                    else:
+                        u._fedge().tag = '-'
                 elif n.deprel=='cop' and n.head.lexcat in ('N','PRON','NUM') and not n.head.children_with_rel('case'):    # predicate nominal
                     # make copula the head
                     # TODO: exception if nominal is scene-evoking (e.g. "friend", pred. possessive)
@@ -411,8 +389,49 @@ class ConllulexToUccaConverter:
                     e = Edge(head=n,dep=h,deprel='obj')
                     n.outgoing_basic.append(e)
                     h.incoming_basic.append(e)
-                elif n.ss in ("n.ATTRIBUTE", "n.FEELING", "n.STATE"):
-                    u._fedge().tag = 'S'
+                elif n.lexcat=='N':
+                    if n.tok['upos']=='PROPN':
+                        u._fedge().tag = '-'
+                    elif n.ss in ("n.ATTRIBUTE", "n.FEELING", "n.STATE"):
+                        u._fedge().tag = 'S'
+                    elif n.ss in ("n.ACT", "n.PHENOMENON", "n.PROCESS") or n.ss=='n.EVENT' and n.lexlemma not in ('time','day','night','morning','evening','afternoon'):
+                        u._fedge().tag = 'P'
+                    elif n.ss in ('n.PERSON','n.GROUP') and n.lexlemma in KINSHIP | OCCUPATION:
+                        # relational noun: employee, sister, friend
+                        # Really a hybrid scene-nonscene unit. To most syntactic cxns, except perhaps possessives/compounds/PPs,
+                        # is is like a non-scene nominal. E.g. we don't want coordination involving a relational noun ("wife and I") to be treated as linkage.
+                        wrapper = l1.add_fnode(dummyroot, '-')
+                        dummyroot.remove(u)
+                        # [- [UNA|A|S [UNA friend]]] or [- [UNA|A|P [UNA doctor]]] to reflect hybrid status
+                        # extra UNA to signal that this is the lexical head of parent
+                        wrapper.add_multiple([('UNA',), ('A',), ('S' if n.lexlemma in KINSHIP else 'P',)], u)
+                        unit2expr[wrapper] = unit2expr[u]
+                        node2unit[n] = wrapper
+                        node2unit_for_advbl_attachment[n] = u
+                    elif n.ss in ('n.PERSON',) and n.lexlemma.endswith(RELATIONAL_PERSON_SUFFIXES):
+                        # false positives: infant?
+                        # omit n.GROUP, which includes false positives like "restaurant" and "business"
+                        wrapper = l1.add_fnode(dummyroot, '-')
+                        dummyroot.remove(u)
+                        # [- [UNA|A|P inspector]] to reflect hybrid status
+                        # extra UNA to signal that this is the lexical head of parent
+                        wrapper.add_multiple([('UNA',), ('A',), ('P',)], u)
+                        unit2expr[wrapper] = unit2expr[u]
+                        node2unit[n] = wrapper
+                        node2unit_for_advbl_attachment[n] = u
+                    else:
+                        u._fedge().tag = '-'
+                elif n.ss and n.ss.startswith('v.'):
+                    u._fedge().tag = '+'
+                    # secondary verbs (ASPECT_VERBS, XCOMP_SECONDARY_HEADS) will be demoted to D later
+                elif n.lexcat=='AUX' and not n.deprel.startswith(('aux','cop')):
+                    # auxiliary or copula has been promoted to head (e.g. VP Ellipsis)
+                    # "We were told that we couldn't today because they were closing soon."
+                    # TODO: really we want an implicit unit
+                    u._fedge().tag = '+'
+                else:
+                    u._fedge().tag = '-'
+
 
 
         def decide_nominal_cat(n: Node, parent_unit_cat: str):
@@ -459,7 +478,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfANYONE and everyone" in sent['text']:
+        if "asdfIncredibly rude" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -469,9 +488,9 @@ class ConllulexToUccaConverter:
 
         for u in dummyroot.children:
             cat = u.ftag
-            if cat not in ('+', '-', 'S', 'LVC'):
+            if cat not in ('+', '-', 'S'):
                 continue
-            assert u in unit2expr,(str(l1.root),str(u))
+            assert u in unit2expr,(cat,str(u),str(l1.root))
             expr = unit2expr[u]
 
             n = expr_head(expr)
@@ -549,7 +568,7 @@ class ConllulexToUccaConverter:
                             hu.add('D', u)
                     else:
                         hu.add('E', u)
-                elif cat=='S' or cat=='+':
+                elif cat in ('+','S','P'):
                     # adjectives are treated as S thus far
                     # cat=='+' for e.g. a *personalized* gift
                     hucat = hu.ftag
@@ -571,8 +590,14 @@ class ConllulexToUccaConverter:
                         scn = l1.add_fnode(hu, 'E')
                         scn.add(cat, u)
                         govlu, = layer1._multiple_children_by_tag(hu, 'UNA')
+                        if len(govlu.ftags)>1:  # relational nouns have e.g. [UNA|A|P [UNA doctor]]
+                            govlu, = layer1._multiple_children_by_tag(govlu, 'UNA')
                         l1.add_remote(u, 'A', govlu)
                     elif hucat in ('+','S','P'):
+                        if n.children_with_rels(('nsubj','obj','iobj','obl','ccomp','xcomp')):
+                            # e.g. "get a nice deal... which I *did*": aux promoted by ellipsis to head of embedded clause
+                            # TODO
+                            pass
                         hu.add('D', u)  # e.g. aspectual verb particle
                     else:
                         # maybe not a problem--allow the E strategy under all non-scene units?
@@ -588,7 +613,7 @@ class ConllulexToUccaConverter:
                         #newu.add(cat, u)
                         hu.add(cat, u)
                 else:
-                    assert False,(n,r,h,sent['text'])
+                    assert False,(n,r,h,cat,hucat,sent['text'])
             elif r=='nummod':
                 hucat = hu.ftag
                 dummyroot.remove(u)
@@ -650,10 +675,12 @@ class ConllulexToUccaConverter:
                             u.add('A', obju)
                         else:
                             objwrapu = l1.add_fnode(u, 'A')
-                            objwrapu.add_multiple(list(map(tuple, objcats)), obju)
+                            objwrapu.add_multiple(entuple_items(objcats), obju)
                         # remote from possession scene to the lexical head of govu
                         # e.g. [E [S [A [UNA Kim]] [UNA 's] [A* business cards] ] ] [C [UNA business cards]]
                         t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                        if len(t.ftags)>1:  # relational nouns have e.g. [UNA|A|P [UNA doctor]]
+                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
                         l1.add_remote(possscn, 'A', t)
                     #elif n.ss=='p.Extent':
                     #    assert False,(str(n),str(l1.root))
@@ -661,11 +688,11 @@ class ConllulexToUccaConverter:
                         obju.add('R', u)
                 elif config=='possessive':  # possessive pronoun
                     gov = nodes[govi]
-                    govu = node2unit[gov]
-                    gucat = govu.ftag
+                    govu = node2unit_for_advbl_attachment.get(gov, node2unit[gov])
+                    gucats = set(govu.ftags)
 
                     dummyroot.remove(u)
-                    if gucat in ('+','S','P'):  # scene-evoking head noun: relational or eventive
+                    if gucats & {'+','S','P'}:  # scene-evoking head noun: relational or eventive
                         govu.add('A', u)
                     elif n.ss=='p.Originator' and gov.ss=='n.COMMUNICATION':
                         # possessive + communication noun ambiguous between process and content ("my answer/order/request/...")
@@ -682,7 +709,13 @@ class ConllulexToUccaConverter:
                         possscn.add_multiple([('A',),('S',)], u)   #A|S. Put the A first so other rules don't treat this like a scene and wrap in H
 
                         # remote to the lexical head of govu
-                        t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                        try:
+                            t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                            if len(t.ftags)>1:  # relational nouns have e.g. [UNA|A|P [UNA doctor]]
+                                t, = layer1._multiple_children_by_tag(govu, 'UNA')
+                        except:
+                            print(str(govu))
+                            raise
                         l1.add_remote(possscn, 'A', t)
                     else:
                         govu.add('E', u)
@@ -765,7 +798,7 @@ class ConllulexToUccaConverter:
                     pass
             elif cat in ('+','S','P') and hucat in ('+','S','P') and (r in ('nsubj','obj','iobj','csubj','ccomp','xcomp') or r.startswith(('nsubj:','obj:','iobj:','csubj:','ccomp:','xcomp:'))):
                 # syntactically core args
-                if n.head.lexlemma in XCOMP_SECONDARY_HEADS:
+                if n.head.lexlemma in XCOMP_SECONDARY_HEADS or n.head.lexlemma in ASPECT_VERBS:
                     subsceneu = l1.add_fnode(hu, '^')   # "^": an indication to promote the embedded scene to primary and demote the parent scene head to "D"
                 else:
                     # TODO: remote, typically
@@ -883,16 +916,19 @@ class ConllulexToUccaConverter:
                 continue
             expr = unit2expr[u]
             n = expr_head(expr)
-            cat = u.ftag
 
             if not n.children_with_rels(('cc','cc:preconj','conj')) or n in processed_conj_heads:
                 continue
 
             # n is the first conjunct node, with other conjuncts and ccs as daughters
 
-            # h = n.head
-            # r = n.deprel
-            # hu = parent_unit_for_dep(h, r)
+            h = n.head
+            r = n.deprel
+            uu = node2unit_for_advbl_attachment.get(n)
+            if uu and uu is not u and len(uu.ftags)==1:  # len constraint is because relational noun categories like A|S are one reason for a node2unit_for_advbl_attachment entry
+                u = uu
+
+            cat = u.ftag
             hu = u.fparent
             if any(node2unit[c] is u or node2unit[c] is hu for c in n.children_with_rel('conj')):
                 # due presumably to an MWE, one of the conjuncts also belongs to this unit or the parent unit
@@ -902,14 +938,14 @@ class ConllulexToUccaConverter:
             hucat = hu.ftag
 
             if printMe:
-                print('yyyyyyyyy', n,n.ss,n.deprel,n.head,cat,str(u),hucat,str(hu), '      ', str(l1.root))
+                print('yyyy&&&&&', n,n.ss,n.deprel,n.head,cat,str(u),hucat,str(hu), '      ', str(l1.root))
 
 
             # create coordination wrapper unit under n's parent
             coordu = l1.add_fnode(hu, f'{cat}(COORD)')
             # move u underneath
             u.fparent.remove(u)
-            conjcat = cat if cat!='-' else 'C'
+            conjcat = cat if cat not in ('-','A','E','D') else 'C'
             coordu.add(conjcat, u)  # TODO: revisit cat and hucat
 
 
@@ -937,7 +973,7 @@ class ConllulexToUccaConverter:
 
 
             if printMe:
-                print('444444444', l1.root)
+                print('4444&&&&&', l1.root)
 
 
         # decide S or P for remaining "+" scenes
@@ -965,8 +1001,16 @@ class ConllulexToUccaConverter:
                 else:
                     u._fedge().tag = 'S' + rest
                     print('Weird scene, defaulting to S:',u,u.ftag,n,expr)
+            elif u.ftag=='+(COORD)':
+                # e.g. coordinated scene-evoking verbs
+                u.attrib[COORDINATED_MAIN_REL] = True   # TODO: does the eval code use this?
+
 
         #assert not lvc_scene_lus,l1.root
+
+
+        if printMe:
+            print('555555555', l1.root)
 
         # Where an embedded scene was marked as "^", it means the main scene predicate
         # should be considered secondary and the embedded scene promoted.
@@ -976,8 +1020,9 @@ class ConllulexToUccaConverter:
                 pu = u.fparent
                 for c in children_with_cat(pu, 'UNA'):
                     # UNA and putative scene head--demote to D
+                    newu = l1.add_fnode(pu, 'D')
                     pu.remove(c)
-                    pu.add('D', c)
+                    newu.add('UNA', c)
                 if pu.ftag in ('S','P'): # exclude S(COORD) and P(COORD) to avoid complications
                     # merge the child scene with the parent scene
                     pu.remove(u)
@@ -998,7 +1043,7 @@ class ConllulexToUccaConverter:
         #    print('__',l1.root, file=sys.stderr)
 
         if printMe:
-            print('555555555', l1.root)
+            print('^^^^^^^^^', l1.root)
 
         # ARTICULATION
         # We currently have a version of the UCCA graph where units are headed
@@ -1024,44 +1069,54 @@ class ConllulexToUccaConverter:
                 # raise me!
 
                 try:
-                    cat = nonremote(u.incoming).tag
+                    assert nonremote(u.incoming)
+                    cat = u.ftag
+                    cats = u.ftags
                 except:
                     print(u)
                     print(u.incoming)
                     print(l1.root)
                     raise
 
-                pu = nonremote(u.incoming).parent   # .fparent only if a foundational node (UNA)
+                pu = u.fparent
                 pucat = pu.ftag
+                pucats = set(pu.ftags)
 
                 if pu is dummyroot or pucat in ('+','H'):
                     assert False,(pucat,str(u),str(l1.root))
-                elif pucat in ('P','S','H(P)','H(S)'):
+                elif pucats & {'P','S','H(P)','H(S)'}:
                     # copy the category and change the parent unit category to H
                     # temporarily mark the parent H(P) or H(S) in case there are
                     # other siblings to be processed
-                    if pucat in ('P','S'):
-                        pu._fedge().tag = f'H({pucat})'
+                    if pucats & {'P','S'}:
+                        pu._fedge().tag = f'H({"|".join(sorted(pucats - {"UNA"}))})'
                         h_units_to_relabel.append(pu)
                     pucat = pu.ftag
-                    newcat = {'H(P)': 'P', 'H(S)': 'S'}[pucat]
-                    newu = l1.add_fnode(pu, newcat)
+                    newcats = {'H(P)': ['P'], 'H(S)': ['S'], 'H(A|S)': ['A','S'], 'H(A|P)': ['A','P']}[pucat]
+                    newu = l1.add_fnode_multiple(pu, entuple_items(newcats))
+                    if printMe and len(pucats)>1:
+                        print('zzzz00@@@', cats,u,pucats,pu, l1.root)
                     pu.remove(u)
-                    newu.add(cat, u)
-                elif pucat=='-':
-                    if len(pu.children)==1: # change to C
-                        pu._fedge().tag = 'C'
-                        newu = pu
-                    else:
-                        newu = l1.add_fnode(pu, 'C')
-                        pu.remove(u)
-                        newu.add(cat, u)
-                elif len(pu.children)>1:   # add an intermediate unary C unit
+
+                    newu.add_multiple(entuple_items(cats), u)
+                elif pucat=='-' and len(pu.children)==1: # change to C
+                    pu._fedge().tag = 'C'
+                    newu = pu
+                elif pucat=='-' or len(pu.children)>1:   # add an intermediate unary C unit
                     newu = l1.add_fnode(pu, 'C')
                     pu.remove(u)
-                    newu.add(cat, u)
+                    newu.add_multiple(entuple_items(cats), u)
                 else:
                     continue
+
+
+
+        for u in dfs_order_subtree(dummyroot):  # top-down
+            if u.ftag in ('+(COORD)','P(COORD)','S(COORD)') and u.fparent is not dummyroot and u.fparent.ftag in ('+','S','P'):
+                # no direct child main relation (head) for the scene,
+                # so the scene unit will still bear a main relation category:
+                # e.g. [P [+(COORD) [P verb1] [L and] [P verb2] ] ]
+                u.fparent._fedge().tag = 'H'
 
 
         if printMe:
@@ -1069,9 +1124,10 @@ class ConllulexToUccaConverter:
 
         for hunit in h_units_to_relabel:
             cat = hunit.ftag
-            newcat = {'H(P)': 'H', 'H(S)': 'H'}[cat]
-            hunit._fedge().tag = newcat
-
+            newcat = {'H(P)': 'H', 'H(S)': 'H', 'H(A|S)': 'C', 'H(A|P)': 'C'}[cat]
+            # If H(A|S) or H(A|P), we don't want a H unit containing the relational noun, so we use C.
+            hunit._fedge()._categories[:] = []
+            hunit._fedge().add(newcat)
 
 
         if printMe:
@@ -1122,10 +1178,8 @@ class ConllulexToUccaConverter:
         for u in l1.all:
             if u.incoming:
                 cat = nonremote(u.incoming).tag
-                cat = cat.replace('(COORD)','')
-                if cat=='+':
-                    cat = 'H'
-                nonremote(u.incoming).tag = cat
+                if '(COORD)' in cat or cat=='+':
+                    nonremote(u.incoming).tag = 'H'
 
 
 
@@ -1140,16 +1194,23 @@ class ConllulexToUccaConverter:
         if printMe:
             print('bbbbbbbbb', l1.root)
 
+        for u in l1.all:
+            if u.ftag in ('P', 'S'):
+                if not (len(u.children)==1 and u.children[0].ftag=='UNA'):
+                    print('Fixing stray P/S, possibly due to ellipsis:', l1.root, file=sys.stderr)
+                    u._fedge().tag = 'H'
+
+
         # remove "H" under unary parent (except at top level)
         for u in l1.all:
             if u.incoming and nonremote(u.incoming).tag=='H' and u not in toplevel:
                 pu = u.fparent
                 if len(pu.children)==1:
-                    assert pu.ftag in ('A','E','H'),(pu.ftag,str(pu))
+                    assert pu.ftag in ('A','E','H'),(pu.ftag,str(pu),str(l1.root))
                     pu.remove(u)
                     for e in u.outgoing:
                         u.remove(e.child)
-                        pu.add_multiple(list(map(tuple, e.tags)), e.child, edge_attrib=e.attrib)
+                        pu.add_multiple(entuple_items(e.tags), e.child, edge_attrib=e.attrib)
 
 
         # Remove "UNA" by merging with unary parent
@@ -1158,13 +1219,17 @@ class ConllulexToUccaConverter:
         for u in l1.all:
             cat = u.ftag
             if cat=='UNA':
-                pu = u.fparent
-                assert len(pu.children)==1
-                assert len(pu.incoming)==1
-                pucats = pu.ftags
-                gpu = pu.fparent
-                gpu.remove(pu)
-                gpu.add_multiple(list(map(tuple, pucats)), u)
+                if len(u.ftags)>1:
+                    UNA_obj = next(cobj for cobj in u._fedge().categories if cobj.tag=='UNA')
+                    u._fedge().categories.remove(UNA_obj)
+                else:
+                    pu = u.fparent
+                    assert len(pu.children)==1
+                    assert len(pu.incoming)==1,(cat,str(u),pu.ftags,str(pu),pu.incoming,str(l1.root))
+                    pucats = pu.ftags
+                    gpu = pu.fparent
+                    gpu.remove(pu)
+                    gpu.add_multiple(entuple_items(pucats), u)
 
 
 
@@ -1241,6 +1306,12 @@ class ConllulexToUccaConverter:
         1) Which adverbs are discourse connectives and which are within-clause modifiers.
         2) n.COGNITION, n.COMMUNICATION, n.POSSESSION are broad semantic fields covering entities, states, and processes.
         3) Institutionalized phrases (collection agency) are treated as MWEs in STREUSLE but not UCCA.
+
+
+        GOOD example/torture test
+        "audience members" sentence has coordinated main relations, existential, "plenty of parking",
+        relative clause, relational noun ("members"), LVC ("had issue"), secondary aspectual verb ("*stop* talking"),
+        concrete possession ("their cellphones")
         """
 
 
@@ -1576,7 +1647,7 @@ def run(args, converter):
                                 validate_pos=False, validate_type=False))
     converted = {}
     for sent in tqdm(sentences, unit=" sentences", desc="Converting"):
-        if False and "Kim's" not in sent['text']:
+        if False and "audience members" not in sent['text']:
             converted[sent[SENT_ID]] = None
             continue
         # if len(converted)>10:
