@@ -108,6 +108,8 @@ for itm in ('boss','practitioner','therapist','patient','landlord','tenant','cli
 
 ASPECT_VERBS = ['start', 'stop', 'begin', 'end', 'finish', 'complete', 'continue', 'resume', 'get', 'become']
 
+QUANT_ADJ = ('many', 'numerous', 'most', 'several', 'few', 'a few')
+
 RELATIONAL_PERSON_SUFFIXES = ('er', 'ess', 'or', 'ant', 'ent', 'ee', 'ian', 'ist')
 
 def entuple_items(items):
@@ -320,7 +322,7 @@ class ConllulexToUccaConverter:
                 expr = unit2expr[u]
                 n = expr_head(expr)
 
-                if n.lexcat=='ADJ' and n.lexlemma not in ('else','such') and n.deprel!='discourse':
+                if n.lexcat=='ADJ' and n.lexlemma not in ('else','such') + QUANT_ADJ and n.deprel!='discourse':
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
                 elif n.deprel=='expl' and n.lexlemma=='there':  # existential there
                     u._fedge().tag = 'S'
@@ -478,7 +480,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfIncredibly rude" in sent['text']:
+        if "asdfmany of" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -512,7 +514,12 @@ class ConllulexToUccaConverter:
                 assert hu is not u,(str(n),r,str(h),str(u),str(l1.root))
                 dummyroot.remove(u)
                 if r.startswith('det') and expr['lexlemma'] not in ('a','an','the'):
-                    hu.add('E', u)  # demonstrative dets are E
+                    if expr['lexlemma'] in ('all','each','every','some'):
+                        hu.add('T' if hu.ftag in ('+','S','P') else 'Q', u)
+                    elif expr['lexlemma']=='no':    # 'no' is normally D
+                        hu.add('Q' if h.lexlemma=='one' else 'D', u)
+                    else:
+                        hu.add('D' if hu.ftag in ('+','S','P') else 'E', u)  # demonstrative dets are E
                 elif r.startswith('aux') and n.lexlemma not in ('be','have','do','will','get'):
                     hu.add('D', u)  # modal auxes are D (but not tense auxes)
                 else:
@@ -567,7 +574,10 @@ class ConllulexToUccaConverter:
                         else:
                             hu.add('D', u)
                     else:
-                        hu.add('E', u)
+                        if r=='amod' and n.lexlemma in QUANT_ADJ:
+                            hu.add('Q', u)
+                        else:
+                            hu.add('E', u)
                 elif cat in ('+','S','P'):
                     # adjectives are treated as S thus far
                     # cat=='+' for e.g. a *personalized* gift
@@ -1078,6 +1088,7 @@ class ConllulexToUccaConverter:
                     print(l1.root)
                     raise
 
+                n = expr_head(unit2expr[u])
                 pu = u.fparent
                 pucat = pu.ftag
                 pucats = set(pu.ftags)
@@ -1099,13 +1110,36 @@ class ConllulexToUccaConverter:
                     pu.remove(u)
 
                     newu.add_multiple(entuple_items(cats), u)
-                elif pucat=='-' and len(pu.children)==1: # change to C
-                    pu._fedge().tag = 'C'
-                    newu = pu
-                elif pucat=='-' or len(pu.children)>1:   # add an intermediate unary C unit
-                    newu = l1.add_fnode(pu, 'C')
-                    pu.remove(u)
-                    newu.add_multiple(entuple_items(cats), u)
+                elif pucat=='-' or len(pu.children)>1:
+                    # mark head as C, unless a special "X of Y" construction
+                    ofGrandchildren = [gc for c in n.children_with_rel('nmod') for gc in c.children if gc.ss in ('p.QuantityItem','p.Stuff','p.Species')]
+                    if ofGrandchildren:
+                        pnode = ofGrandchildren[0]
+                        newcat = 'E' if pnode.ss=='p.Species' else 'Q'
+                        #assert False,(n,cat,str(u),pucat,str(pu))
+                    else:
+                        newcat = 'C'
+
+                    if pucat=='-' and len(pu.children)==1:  # change to C
+                        pu._fedge().tag = newcat
+                        newu = pu
+                    else:   # add an intermediate unary C unit
+                        newu = l1.add_fnode(pu, newcat)
+                        pu.remove(u)
+                        newu.add_multiple(entuple_items(cats), u)
+
+                    if ofGrandchildren:
+                        # promote quantified of-PP unit from E to C
+                        pexpr = pnode.swe or pnode.smwe
+                        obji = pexpr['heuristic_relation']['obj']
+                        if obji is not None:
+                            obj = nodes[obji]
+                            obju = node2unit[obj]
+                            objcat = obju.ftag
+                            #assert objcat=='E',(obj,objcat,str(obju),str(l1.root))
+                            if objcat=='E': # will miss some cases (e.g. coordinated PP objects)
+                                assert len(obju.ftags)==1
+                                obju._fedge().tag = 'C'
                 else:
                     continue
 
@@ -1306,6 +1340,18 @@ class ConllulexToUccaConverter:
         1) Which adverbs are discourse connectives and which are within-clause modifiers.
         2) n.COGNITION, n.COMMUNICATION, n.POSSESSION are broad semantic fields covering entities, states, and processes.
         3) Institutionalized phrases (collection agency) are treated as MWEs in STREUSLE but not UCCA.
+
+
+        UCCA INCONSISTENCIES
+        - determiner "no": guidelines say D, but often E (and why not Q?)
+        - some articles are E, should be F
+        - possessives: evoke scene or not?
+
+        AGENDA ITEMS
+        - Better heuristics for linkers
+        - Implicits
+        - Remotes for control and coordination using Enhanced UD
+        - Article + eventive noun (possibly discontinuous)?
 
 
         GOOD example/torture test
