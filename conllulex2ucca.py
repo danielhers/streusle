@@ -439,7 +439,7 @@ class ConllulexToUccaConverter:
         def decide_nominal_cat(n: Node, parent_unit_cat: str):
             if n.ss=='n.TIME' or n.deprel=='nmod:tmod' or any(c.ss in SNACS_TEMPORAL for c in n.children):
                 newcat = 'T' if parent_unit_cat in ('+','S','P') else 'E'
-                # TODO: "books *from the 1900s*" would be E?
+                # this is a strict rule, e.g. "books *from the 1900s*" would be E
             elif n.ss in ('p.Approximator','p.Manner','p.Extent') or any(c.ss in ('p.Manner','p.Extent') for c in n.children):
                 newcat = 'D' if parent_unit_cat in ('+','S','P') else 'E'
             else:
@@ -732,8 +732,8 @@ class ConllulexToUccaConverter:
                 else:
                     assert False,expr
             elif r in ('nmod','compound') or r.startswith(('nmod:','compound:')):    # misc nmod--see rules for obl
-                # TODO: scene nmod
-                # TODO: 'X of Y' nmod relations (p. 13)
+                # For 'X of Y' nmod relations, see the articulation procedure
+                # as these involve changing what is the C of the non-scene unit
                 hucat = hu.ftag
                 if cat not in ('+','S','P'):
                     assert cat=='-',(cat,str(u))
@@ -763,8 +763,6 @@ class ConllulexToUccaConverter:
 
         if printMe:
             print('222222222', l1.root)
-
-        # TODO: consider order of operations for case vs. nmod/amod/etc.
 
         # if 'feed my cat' in sent['text'] or 'nothing but frustrating' in sent['text']:
         #     print(l1.root)
