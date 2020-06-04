@@ -178,6 +178,8 @@ class ConllulexToUccaConverter:
         for node in nodes:  # Link heads to dependents
             node.link(nodes)
 
+        nodes_dfs = nodes[0].dfs
+
         def print_dep_parse(nodes):
             print([(n,n.head,n.deprel) for n in nodes])
 
@@ -314,9 +316,14 @@ class ConllulexToUccaConverter:
         # TODO: turn remaining 'fixed' attachments into UNA ('so that')
 
         # decide whether each LU is a scene-evoker ("+") or not ("-")
-        # adjectives and predicative prepositions are marked as "S"
+        # adjectives, existential "there", and most predicative complements are marked as "S";
+        # relational nouns are "A|S" or "A|P"
 
-        for u in dummyroot.children:
+        for n in nodes_dfs:  # top-down dependency parse traversal, to ensure
+            # predicate complement heads will be visited before the 'cop' edge
+            # so we can check whether the predicate is scene-evoking to decide
+            # whether the copula is scene-evoking
+            u = node2unit[n]
             cat = u.ftag
             if cat=='LU':
                 expr = unit2expr[u]
@@ -369,28 +376,34 @@ class ConllulexToUccaConverter:
                     else:
                         u._fedge().tag = '-'
                 elif n.deprel=='cop' and n.head.lexcat in ('N','PRON','NUM') and not n.head.children_with_rel('case'):    # predicate nominal
-                    # make copula the head
-                    # TODO: exception if nominal is scene-evoking (e.g. "friend", pred. possessive)
-                    u._fedge().tag = 'S'
+                    # check if predicate nominal is scene-evoking (we've already processed its unit)
                     h = n.head
-                    node2unit_for_advbl_attachment[h] = u
-                    # invert headedness of copula and nominal
-                    # no need to move other dependents thanks to parent_unit_for_dep()
-                    # n = copula, h = nominal
-                    assert not n.children
-                    # - delete "cop" deprel
-                    e = n.incoming_basic[0]
-                    n.incoming_basic.remove(e)
-                    h.outgoing_basic.remove(e)
-                    # - nominal deprel moves to copula
-                    e = h.incoming_basic[0]
-                    h.incoming_basic.remove(e)
-                    e.dep = n
-                    n.incoming_basic.append(e)
-                    # - make nominal the obj of copula
-                    e = Edge(head=n,dep=h,deprel='obj')
-                    n.outgoing_basic.append(e)
-                    h.incoming_basic.append(e)
+                    hu = parent_unit_for_dep(h, 'cop')
+                    hucat = hu.ftag
+                    assert hucat in ('-','+','P','S') or 'P' in hu.ftags or 'S' in hu.ftags,(hu.ftags,str(hu))
+                    if hucat!='-':  # nominal is scene-evoking (e.g. "friend", pred. possessive), so copula is not!
+                        u._fedge().tag = '-'
+                    else:   # make copula the head
+                        u._fedge().tag = 'S'
+
+                        node2unit_for_advbl_attachment[h] = u
+                        # invert headedness of copula and nominal
+                        # no need to move other dependents thanks to parent_unit_for_dep()
+                        # n = copula, h = nominal
+                        assert not n.children
+                        # - delete "cop" deprel
+                        e = n.incoming_basic[0]
+                        n.incoming_basic.remove(e)
+                        h.outgoing_basic.remove(e)
+                        # - nominal deprel moves to copula
+                        e = h.incoming_basic[0]
+                        h.incoming_basic.remove(e)
+                        e.dep = n
+                        n.incoming_basic.append(e)
+                        # - make nominal the obj of copula
+                        e = Edge(head=n,dep=h,deprel='obj')
+                        n.outgoing_basic.append(e)
+                        h.incoming_basic.append(e)
                 elif n.lexcat=='N':
                     if n.tok['upos']=='PROPN':
                         u._fedge().tag = '-'
@@ -402,7 +415,9 @@ class ConllulexToUccaConverter:
                         # relational noun: employee, sister, friend
                         # Really a hybrid scene-nonscene unit. To most syntactic cxns, except perhaps possessives/compounds/PPs,
                         # is is like a non-scene nominal. E.g. we don't want coordination involving a relational noun ("wife and I") to be treated as linkage.
-                        wrapper = l1.add_fnode(dummyroot, '-')
+                        wrapper = l1.add_fnode(dummyroot, '+' if n.children_with_rel('cop') else '-')
+                        # If this is a predicate, make outer unit '+' so coordination rules treat as linkage
+                        # ("I have been a friend and customer" should also be linkage, though it's NP coordination)
                         dummyroot.remove(u)
                         # [- [UNA|A|S [UNA friend]]] or [- [UNA|A|P [UNA doctor]]] to reflect hybrid status
                         # extra UNA to signal that this is the lexical head of parent
@@ -413,7 +428,8 @@ class ConllulexToUccaConverter:
                     elif n.ss in ('n.PERSON',) and n.lexlemma.endswith(RELATIONAL_PERSON_SUFFIXES):
                         # false positives: infant?
                         # omit n.GROUP, which includes false positives like "restaurant" and "business"
-                        wrapper = l1.add_fnode(dummyroot, '-')
+                        wrapper = l1.add_fnode(dummyroot, '+' if n.children_with_rel('cop') else '-')
+                        # If this is a predicate, make outer unit '+' so coordination rules treat as linkage
                         dummyroot.remove(u)
                         # [- [UNA|A|P inspector]] to reflect hybrid status
                         # extra UNA to signal that this is the lexical head of parent
@@ -480,7 +496,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfmany of" in sent['text']:
+        if "asdfSierra was my stylist" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -623,7 +639,7 @@ class ConllulexToUccaConverter:
                         #newu.add(cat, u)
                         hu.add(cat, u)
                 else:
-                    assert False,(n,r,h,cat,hucat,sent['text'])
+                    assert False,(n,r,h,cat,sent['text'])
             elif r=='nummod':
                 hucat = hu.ftag
                 dummyroot.remove(u)
@@ -800,9 +816,20 @@ class ConllulexToUccaConverter:
 
                     dummyroot.remove(u)
                     hu.add(newcat, u)
-                else:
-                    # TODO: predicate nominals
-                    #assert False,(str(u),h,node2unit[h],hucat,str(l1.root))
+                elif 'P' in hu.ftags or 'S' in hu.ftags:    # walrus
+                    # relational predicate noun
+                    # e.g. "Mary is a doctor"
+                    # [UNA|A|P [UNA doctor]] ->
+                    # [UNA|P [UNA doctor] [A [UNA Mary]]]
+                    if 'A' in hu.ftags:
+                        A_obj = next(cobj for cobj in hu._fedge().categories if cobj.tag=='A')
+                        hu._fedge().categories.remove(A_obj)
+                    newcat = 'A'
+                    dummyroot.remove(u)
+                    hu.add(newcat, u)
+                else:   # TODO: largely acl/advcl that have been attached as D but should be something else
+                    #print('arg:',str(u), 'pred:',hu.ftags,str(hu), file=sys.stderr)
+                    #assert False,(str(u),h,str(node2unit[h]),hucat,str(l1.root))
                     pass
             elif cat in ('+','S','P') and hucat in ('+','S','P') and (r in ('nsubj','obj','iobj','csubj','ccomp','xcomp') or r.startswith(('nsubj:','obj:','iobj:','csubj:','ccomp:','xcomp:'))):
                 # syntactically core args
@@ -899,7 +926,7 @@ class ConllulexToUccaConverter:
 
 
         def dfs_order_subtree(unit):
-            """Traverse primary foundational unit descendents in DFS order"""
+            """Traverse primary foundational unit descendants in DFS order"""
             items = [unit]
             for e in unit.outgoing:
                 if not e.attrib.get('remote') and e.tag!=layer1.EdgeTags.Terminal:
@@ -937,6 +964,10 @@ class ConllulexToUccaConverter:
                 u = uu
 
             cat = u.ftag
+            if cat=='UNA':
+                assert len(u.ftags)>1
+                cat = u.ftags[-1]
+                assert cat in ('S','P'),cat
             hu = u.fparent
             if any(node2unit[c] is u or node2unit[c] is hu for c in n.children_with_rel('conj')):
                 # due presumably to an MWE, one of the conjuncts also belongs to this unit or the parent unit
@@ -1261,6 +1292,7 @@ class ConllulexToUccaConverter:
                     pucats = pu.ftags
                     gpu = pu.fparent
                     gpu.remove(pu)
+                    pu.remove(u)
                     gpu.add_multiple(entuple_items(pucats), u)
 
 
@@ -1531,6 +1563,14 @@ class Node:
     def children_with_rels(self, rels: (str,)) -> List['Node']:
         return [e.dep for e in self.outgoing_basic if e.deprel in rels]
 
+    @property
+    def dfs(self):
+        """Descendants visited in DFS order"""
+        items = []
+        for c in self.children:
+            items.append(c)
+            items.extend(c.dfs)
+        return items
 
     @property
     def swe(self) -> Optional[dict]:
