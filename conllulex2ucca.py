@@ -36,6 +36,24 @@ import random
 SENT_ID = "sent_id"
 MWE_TYPES = ("swes", "smwes", "wmwes")
 
+LINKERS = [
+    "additionally", "after", "already", "also", "although", "anytime", "anyway", "anyways",
+    "apart from", #"as",
+    "because", "before",
+    "but", "cause", "despite", "during", "either", "esp", "especially", "etc.", "even though", # was "even"
+    "except", "except for", # added "except for"
+    "finally", "first", "firstly",
+    "hence", "however", "in addition to", "in spite of", "if", "including", #"just",
+    "knowing", #"left",
+    "next",
+    #"only",
+    "overall", "respectively", "seeing", "since", "so", "so that", # added "so that"
+    "still",
+    "than", "then", "therefore", "though",
+    "throughout", "thus", "unless", "until", "upon", "well", "whenever",
+    "whether", "while", "without", "yet",
+    #"how", "when", "where", "what", "which", "who",
+]   # only allow "too" if postmodifying
 
 """
 Various syntactic verb/adjective predicates are treated as semantically secondary ("D")
@@ -587,6 +605,20 @@ class ConllulexToUccaConverter:
                             "sometime", "anytime", "everytime", "ever", "never"):
                             # temporal deictic and frequency adjectives/adverbs are "T"
                             hu.add('T', u)
+                        elif r=='advmod' and n.lexlemma in LINKERS and h.deprel not in ('amod','advmod'):
+                            # adverbial linkers, where head is not amod or advmod
+                            # treat as D, not L if it falls between its head on the right and subject or copula on the left
+                            # only treat "too" as L if postmodifying
+                            # only treat "so", "still", "well", "first", "next", "then" as L if premodifying
+                            subj_or_cop_nodes = h.children_with_rels(('expl','nsubj','nsubj:pass','cop'))
+                            if n.lexlemma=="too" and h.position>n.position or n.lexlemma in ("so", "still", "well", "first", "next", "then") and h.position<n.position:
+                                hu.add('D', u)
+                            elif subj_or_cop_nodes and subj_or_cop_nodes[0].position<n.position<h.position:
+                                hu.add('D', u)
+                            else:
+                                hu.fparent.add('L', u)
+                        elif n.lexlemma in ('fortunately', 'unfortunately', 'hopefully', 'luckily'):
+                            hu.add('G', u)
                         else:
                             hu.add('D', u)
                     else:
@@ -638,6 +670,9 @@ class ConllulexToUccaConverter:
                         #newu = l1.add_fnode(hu, 'A')
                         #newu.add(cat, u)
                         hu.add(cat, u)
+                elif u.ftag=='G':
+                    # e.g. 'unfortunately', already handled
+                    continue
                 else:
                     assert False,(n,r,h,cat,sent['text'])
             elif r=='nummod':
@@ -1376,9 +1411,9 @@ class ConllulexToUccaConverter:
         - determiner "no": guidelines say D, but often E (and why not Q?)
         - some articles are E, should be F
         - possessives: evoke scene or not?
+        - discourse "anyway(s)": L or G
 
         AGENDA ITEMS
-        - Better heuristics for linkers
         - Implicits
         - Remotes for control and coordination using Enhanced UD
         - Article + eventive noun (possibly discontinuous)?
