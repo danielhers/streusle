@@ -173,7 +173,7 @@ WORKERS = [
     'yardman', 'yardmaster'
 ]
 
-RELNOUNS = LEADERS + PROFESSIONALS + WORKERS + ['family', 'guest', 'host', 'staff', 'team']
+RELNOUNS = LEADERS + PROFESSIONALS + WORKERS + ['guest', 'host', 'staff', 'team']
 
 """
 The above lists of LEADERS, PROFESSIONALS, WORKERS were created using WordNet:

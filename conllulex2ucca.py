@@ -120,6 +120,7 @@ def read_amr_roles(role_type):
 
 OCCUPATION = set(RELNOUNS + read_amr_roles('org'))
 KINSHIP = set(read_amr_roles('rel')) # also SOCIOPERSONAL ASSOCIATE (friend, buddy, comrade, mate, enemy, peer) and COHABITANT (housemate, roommate, shipmate)
+KINSHIP.add('family')
 for itm in ('boss','practitioner','therapist','patient','landlord','tenant','client'):
     KINSHIP.remove(itm)
     OCCUPATION.add(itm)
