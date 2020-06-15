@@ -515,7 +515,7 @@ class ConllulexToUccaConverter:
 
 
         printMe = False
-        if "asdfSierra was my stylist" in sent['text']:
+        if "asdfdifficulty taking down" in sent['text']:
             printMe = True
             print('000000000', l1.root)
 
@@ -657,7 +657,12 @@ class ConllulexToUccaConverter:
                             # e.g. "get a nice deal... which I *did*": aux promoted by ellipsis to head of embedded clause
                             # TODO
                             pass
-                        hu.add('D', u)  # e.g. aspectual verb particle
+                        if r in ('acl', 'advcl'):
+                            # make an A-scene, though some should be e.g. parallel scenes
+                            scn = l1.add_fnode(hu, 'A')
+                            scn.add(cat, u)
+                        else:
+                            hu.add('D', u)  # e.g. aspectual verb particle
                     else:
                         # maybe not a problem--allow the E strategy under all non-scene units?
                         # TODO: hucat=='S' + advmod
