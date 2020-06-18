@@ -1455,6 +1455,8 @@ class ConllulexToUccaConverter:
             toks = {tok["#"]: tok for tok in sent["toks"]}
             exprs = {frozenset(expr["toknums"]): (expr_id, expr_type, expr) for expr_type in ("swes", "smwes", "wmwes")
                      for expr_id, expr in sent[expr_type].items()}
+            ref_full = str(reference_passage.layer(layer1.LAYER_ID).root)
+            pred_full = str(converted_passage.layer(layer1.LAYER_ID).root)
             converted_units, reference_units = [{positions: list(units) for positions, units in
                                                  groupby(sorted(passage.layer(layer1.LAYER_ID).all,
                                                                 key=evaluation.get_yield),
@@ -1493,7 +1495,7 @@ class ConllulexToUccaConverter:
                             expr_id, expr_type, expr.get("lexcat"), expr.get("ss"), expr.get("ss2"),
                             _yes(len({tok["head"] for tok in tokens} - positions) <= 1),  # is a dependency subtree?
                         ]
-                        fields += _unit_attrs(ref_units) + _unit_attrs(pred_units)
+                        fields += _unit_attrs(ref_units) + [ref_full] + _unit_attrs(pred_units) + [pred_full]
                         report.writerow([f or "" for f in fields])
         VERBOSE=False
         return (evaluation.evaluate(converted_passage, reference_passage, errors=VERBOSE, units=VERBOSE, verbose=VERBOSE), reference_passage.ID,
@@ -1504,8 +1506,9 @@ class ConllulexToUccaConverter:
 REPORT_HEADERS = [
     "sent_id", "text", "deprel", "upos", "edeps", "expr_id", "expr_type", "lexcat", "ss", "ss2",
     "subtree", "ref_unit_id", "ref_tree_id", "ref_category", "ref_context", "ref_remote", "ref_unanalyzable",
-    "ref_annotation", "pred_unit_id", "pred_tree_id", "pred_category", "pred_context", "pred_remote", "pred_unanalyzable",
-    "pred_annotation"]
+    "ref_annotation", "ref_full",
+    "pred_unit_id", "pred_tree_id", "pred_category", "pred_context", "pred_remote", "pred_unanalyzable",
+    "pred_annotation", "pred_full"]
 
 DEPEDIT_FIELDS = dict(  # Map UD/STREUSLE word properties to DepEdit token properties
     tok_id="#", text="word", lemma="lemma", pos="upos", cpos="xpos", morph="feats", head="head", func="deprel",
