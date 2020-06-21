@@ -378,6 +378,8 @@ class ConllulexToUccaConverter:
                     u._fedge().tag = 'S'
                 elif n.lexcat=='DISC' and n.lexlemma=='thanks':
                     u._fedge().tag = 'P'    # guidelines p. 22
+                elif n.lexcat=='DISC' and n.lexlemma=='thank you' and not n.children_with_rel('nsubj'):
+                    u._fedge().tag = 'P'    # guidelines p. 22
                 elif 'heuristic_relation' in expr and expr['heuristic_relation']['config'].startswith('predicative') and n.lexlemma!='nothing but' and not (n.ss2=='p.Extent' and n.lexlemma=='as'):
                     # a predicative SNACS relation evoked by u
                     # skip nothing_but, which is treated semantically as P but syntactically as coordination, which causes problems
@@ -563,9 +565,19 @@ class ConllulexToUccaConverter:
                     node2unit[n] = hu   # point to parent unit because things should never attach under F units
                 #print(f'node2unit[{n}]: {node2unit[n]} -> {hu}')
             elif cat=='-' and (r in ('discourse','vocative') or (n.lexcat=='INTJ' and r=='root')):
-                #assert cat=='-',(cat,n,r,h)
-                # keep at root
-                u._fedge().tag = 'G'
+                if n.lexlemma in ('yes', 'no') or r=='root':
+                    # keep at top level
+                    u._fedge().tag = '+'
+                else:
+                    dummyroot.remove(u)
+                    hu = parent_unit_for_dep(h, r)
+                    if r=='vocative' and h.lexlemma in ('thanks', 'thank you'):
+                        # thankee is A
+                        # (if obj, will be normal A)
+                        hu.add('A', u)
+                    else:
+                        # G by convention is under a scene
+                        hu.add('G', u)
 
         if printMe:
             print('111111111', l1.root)
@@ -1307,7 +1319,8 @@ class ConllulexToUccaConverter:
         toplevel = [c for c in dummyroot.children if c.ftag!='U']
         # top-level units must be H or L, so change - ones to H
         for u in toplevel:
-            if u.ftag in ('-','UNA'):
+            #if u.ftag in ('-','C','UNA'):
+            if u.ftag not in ('H','L'):
                 u._fedge().tag = 'H'
                 # TODO: add implicit unit?
 
@@ -1435,6 +1448,8 @@ class ConllulexToUccaConverter:
         - some articles are E, should be F
         - possessives: evoke scene or not?
         - discourse "anyway(s)": L or G
+        - "yes" and "no" as interjections: H or G (usually H; there is a No_H example on p. 22)
+        - emotive interjections: H or G
         - relational nouns like "manager": P or S
 
         AGENDA ITEMS
