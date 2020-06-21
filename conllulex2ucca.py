@@ -657,13 +657,25 @@ class ConllulexToUccaConverter:
                         # like above case
                         marker = n.children_with_rels(('case','mark'))[0]
                         (hu.fparent or hu).add(cat, u)
-                    elif hucat in ('-','A','E'):  # E-scene. make node for scene to attach as E
-                        scn = l1.add_fnode(hu, 'E')
-                        scn.add(cat, u)
-                        govlu, = layer1._multiple_children_by_tag(hu, 'UNA')
-                        if len(govlu.ftags)>1:  # relational nouns have e.g. [UNA|A|P [UNA doctor]]
-                            govlu, = layer1._multiple_children_by_tag(govlu, 'UNA')
-                        l1.add_remote(u, 'A', govlu)
+                    elif hucat in ('-','A','E'):
+                        if r=='amod' and h.deprel and h.deprel.startswith(('root','parataxis')) and hu.fparent is dummyroot:
+                            # Attributive Adjective Inversion: "Great food!" => [S Great [A food]]
+                            # last condition prevents this from applying twice when there are 2 adjs modifying the same noun
+                            hu.fparent.add('S', u)
+                            node2unit_for_advbl_attachment[h] = u   # adv modifiers of noun should attach to scene
+                            # NOTE: Some nmod PPs attaching to noun should go under the scene as well, e.g.
+                            #   Best restaurant in the city! => [S Best [A restaurant] [A [R in] [C the city]]]
+                            # There are just ~20 instances of this pattern with p.Locus in the training data.
+                            # Not worth it to implement a special case, so they will attach under the noun as E.
+                            hu.fparent.remove(hu)
+                            u.add('A', hu)
+                        else:   # E-scene. make node for scene to attach as E
+                            scn = l1.add_fnode(hu, 'E')
+                            scn.add(cat, u)
+                            govlu, = layer1._multiple_children_by_tag(hu, 'UNA')
+                            if len(govlu.ftags)>1:  # relational nouns have e.g. [UNA|A|P [UNA doctor]]
+                                govlu, = layer1._multiple_children_by_tag(govlu, 'UNA')
+                            l1.add_remote(u, 'A', govlu)
                     elif hucat in ('+','S','P'):
                         if n.children_with_rels(('nsubj','obj','iobj','obl','ccomp','xcomp')):
                             # e.g. "get a nice deal... which I *did*": aux promoted by ellipsis to head of embedded clause
