@@ -937,11 +937,27 @@ class ConllulexToUccaConverter:
                         hu = dummyroot
                     hu.add(newcat, u)
                 else:
-                    # TODO: not sure about this
+                    pnode = next((c for c in n.children if c.ss and c.ss.startswith('p.')), None)
+                    # p.Manner -> D
+                    # locative/participant PP or bare nominal -> A
+                    # rest -> sister scene, prep L
                     dummyroot.remove(u)
                     if hu is None:
                         hu = dummyroot
-                    hu.add('D', u)
+                    if not pnode or pnode.ss in ('p.Locus','p.Source','p.Goal',
+                        'p.Participant','p.Causer','p.Agent','p.Theme','p.Topic',
+                        'p.Cost','p.Ancillary','p.Instrument','p.Beneficiary',
+                        'p.Experiencer','p.Stimulus','p.Originator','p.Recipient'):
+                        # `not pnode`: e.g. governor is an idiomatic prepositional verb
+                        hu.add('A', u)
+                    elif pnode.ss=='p.Manner':  # e.g. "with confidence"
+                        hu.add('D', u)
+                    else:   # e.g. (event) during (event). make sister scene and change R to L
+                        hu.fparent.add(cat, u)
+                        pu = node2unit[pnode]
+                        if pu.ftag=='R' and pu.fparent==u:    # walrus
+                            u.remove(pu)
+                            u.fparent.add('L', pu)
 
 
         # for u in dummyroot.children:
@@ -1411,6 +1427,7 @@ class ConllulexToUccaConverter:
         1) Which adverbs are discourse connectives and which are within-clause modifiers.
         2) n.COGNITION, n.COMMUNICATION, n.POSSESSION are broad semantic fields covering entities, states, and processes.
         3) Institutionalized phrases (collection agency) are treated as MWEs in STREUSLE but not UCCA.
+        4) Dates should be UNA
 
 
         UCCA INCONSISTENCIES
@@ -1418,6 +1435,7 @@ class ConllulexToUccaConverter:
         - some articles are E, should be F
         - possessives: evoke scene or not?
         - discourse "anyway(s)": L or G
+        - relational nouns like "manager": P or S
 
         AGENDA ITEMS
         - Implicits
