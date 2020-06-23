@@ -1807,12 +1807,13 @@ class SSMapper:
         return coarsen_pss(ss, self.depth) if ss.startswith('p.') else ss
 
 
-class PreconvertedPassageLoader:
+class PreconvertedPassageLoader(ConllulexToUccaConverter):
     def __init__(self, path):
+        super().__init__()
         self.id_to_passage = {passage.ID: passage for passage in get_passages(path)}
 
     def convert(self, sent: dict) -> core.Passage:
-        return self.id_to_passage[sent[SENT_ID]]
+        return self.id_to_passage[sent[SENT_ID].replace("reviews-", "")]
 
 
 def main(args: argparse.Namespace) -> None:
@@ -1856,7 +1857,7 @@ def run(args, converter):
             report_f.close()
         summary = evaluation.Scores.aggregate(s for s, *_ in results)
         summary.print()
-        prefix = re.sub(r"(^\./*)|(/$)", "", args.out_dir)
+        prefix = re.sub(r"/$", "", args.preconverted or args.out_dir)
         scores_filename = prefix + ".scores.tsv"
         with open(scores_filename, "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f, delimiter="\t")
