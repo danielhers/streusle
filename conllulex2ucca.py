@@ -1807,8 +1807,16 @@ class SSMapper:
         return coarsen_pss(ss, self.depth) if ss.startswith('p.') else ss
 
 
+class PreconvertedPassageLoader:
+    def __init__(self, path):
+        self.id_to_passage = {passage.ID: passage for passage in get_passages(path)}
+
+    def convert(self, sent: dict) -> core.Passage:
+        return self.id_to_passage[sent[SENT_ID]]
+
+
 def main(args: argparse.Namespace) -> None:
-    converter = ConllulexToUccaConverter()
+    converter = PreconvertedPassageLoader(args.preconverted) if args.preconverted else ConllulexToUccaConverter()
     run(args, converter)
 
 
@@ -1874,6 +1882,8 @@ def add_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("-n", "--no-write", action="store_false", dest="write", help="do not write files")
     parser.add_argument("--normalize", action="store_true", help="normalize UCCA passages after conversion")
     parser.add_argument("--extra-normalization", action="store_true", help="apply extra UCCA normalization")
+    parser.add_argument("--preconverted", help="directory/filename pattern of pre-converted UCCA passage(s), "
+                                               "to be loaded and evaluated instead of the rule-based converter")
     parser.add_argument("--evaluate", help="directory/filename pattern of gold UCCA passage(s) for evaluation")
     parser.add_argument("--report", help="output filename for report of units, subtrees and multi-word expressions")
     parser.add_argument('--depth', metavar='D', type=int, choices=range(1, 5), default=4,
