@@ -331,6 +331,11 @@ class ConllulexToUccaConverter:
                     node.incoming_basic.remove(e)
                     h.outgoing_basic.remove(e)
 
+        printMe = False
+        if "asdfaudience members" in sent['text']:
+            printMe = True
+            print('%%%%%%%%%', l1.root)
+
         # TODO: treat all 'discourse' subtrees as G with no internal structure, like an MWE?
         # TODO: turn remaining 'fixed' attachments into UNA ('so that')
 
@@ -350,7 +355,8 @@ class ConllulexToUccaConverter:
 
                 if n.lexcat=='ADJ' and n.lexlemma not in ('else','such') + QUANT_ADJ and n.deprel!='discourse':
                     u._fedge().tag = 'S' # assume this is a state. However, adjectives modifying scenes (D) should not be scene-evoking---correct below
-                elif n.deprel=='expl' and n.lexlemma=='there':  # existential there
+                elif n.tok['xpos']=='EX' and n.lexlemma=='there':  # existential there
+                    # don't check for deprel 'expl' because next rule may have rearranged the tree
                     u._fedge().tag = 'S'
                 elif n.lexlemma=='be' and any(c.lexlemma=='there' for c in n.children_with_rel('expl')):
                     u._fedge().tag = '-'    # copula serves as clause-root for expletive 'it' and existential 'there'
@@ -516,9 +522,7 @@ class ConllulexToUccaConverter:
 
 
 
-        printMe = False
-        if "asdfdifficulty taking down" in sent['text']:
-            printMe = True
+        if printMe:
             print('000000000', l1.root)
 
 
