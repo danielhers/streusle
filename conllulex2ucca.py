@@ -268,6 +268,51 @@ class ConllulexToUccaConverter:
                     sent['swes'][str(node.position)] = node.exprs["swes"]
                     # keep the lexcat and supersenses, though they may be wrong
                 del sent["smwes"][[k for k,v in sent["smwes"].items() if v is mwe][0]]
+        del node
+
+        # remove V.IAV MWE annotations, as the preposition is normally not treated
+        # as idiomatic in UCCA
+        for mwe in list(sent['smwes'].values()):
+            uposes = [nodes[toknum].tok["upos"] for toknum in mwe["toknums"]]
+            if mwe['lexcat']=='V.IAV' and uposes[-1]=='ADP':
+                ptoknum = mwe["toknums"][-1]
+                if len(mwe["toknums"])>2:   # keep as an MWE, but without the final preposition, so not IAV
+                    oldll = mwe["lexlemma"]
+                    mwe["toknums"] = mwe["toknums"][:-1]
+                    mwe["lexlemma"] = ' '.join(sent["toks"][i-1]["lemma"] for i in mwe["toknums"])
+                    assert oldll.startswith(mwe["lexlemma"]),(mwe["lexlemma"],oldll)
+                    mwe["lexcat"] = 'V.VPC.full' if uposes[-2] in ('ADP','ADV') else 'V.LVC.full'
+                    mwe["nodes"] = mwe["nodes"][:-1]
+                else:
+                    for toknum in mwe["toknums"][:-1]:
+                        n = nodes[toknum]
+                        upos = n.tok['upos']
+                        del n.exprs["smwes"]
+                        n.exprs["swes"] = {"toknums": [n.position], "nodes": [n],
+                            "lexlemma": n.tok["lemma"],
+                            "ss": {'VERB': mwe["ss"], 'AUX': mwe["ss"], 'ADP': 'p.Theme'}.get(upos),
+                            "ss2": 'p.Theme' if upos=='ADP' else None,  # guess p.Theme for IAV adpositions
+                            "lexcat": {'VERB': 'V', 'AUX': 'V', 'ADP': 'P', 'NOUN': 'N'}.get(upos,upos)
+                        }
+                        sent['swes'][str(n.position)] = n.exprs["swes"]
+                    del sent["smwes"][[k for k,v in sent["smwes"].items() if v is mwe][0]]
+
+                # handle final preposition
+                n = nodes[ptoknum]
+                del n.exprs["smwes"]
+                n.exprs["swes"] = {"toknums": [n.position], "nodes": [n],
+                    "lexlemma": n.tok["lemma"],
+                    "ss": 'p.Theme', "ss2": 'p.Theme',  # guess p.Theme for IAV adpositions
+                    "lexcat": 'P'
+                }
+                # add gov/obj info
+                if n.head.tok['upos']=='VERB':
+                    # stranding
+                    go = {"config": 'stranded', "gov": n.head.position, "obj": None}
+                else:
+                    go = {"config": 'default', "gov": n.head.head.position, "obj": n.head.position}
+                n.exprs["swes"]['heuristic_relation'] = go
+                sent['swes'][str(n.position)] = n.exprs["swes"]
 
 
 
