@@ -11,13 +11,14 @@ Release URL: <https://github.com/nert-nlp/streusle>
 Additional information: <http://www.cs.cmu.edu/~ark/LexSem/>  
 Online corpus search in ANNIS: <https://corpling.uis.georgetown.edu/annis/#_c=c3RyZXVzbGVfNC4z> ([instructions](https://docs.google.com/document/d/e/2PACX-1vTpRsg7B4lj_YnVf-tVGNZCekg_I2k81sGfLayyaJW35k8L8eJJrt4IC-qESrWcl494NXGh2SIeSwi5/pub))
 
-The English Web Treebank sentences were also used by the [Universal Dependencies](http://universaldependencies.org/) (UD) project as the primary reference corpus for English [10]. STREUSLE incorporates the syntactic and morphological parses from UD\_English-EWT v2.5 plus a few further corrections (specifically, the dev branch at 06d21c3 as of December 28, 2019); these follow the UD v2 standard.
+The English Web Treebank sentences were also used by the [Universal Dependencies](http://universaldependencies.org/) (UD) project as the primary reference corpus for English [10]. STREUSLE incorporates the syntactic and morphological parses from UD\_English-EWT v2.6 (specifically, the dev branch at 37cf2bf as of June 7, 2020); these follow the UD v2 standard.
 
 This dataset's multiword expression and supersense annotations are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/) license (see LICENSE). The UD annotations are redistributed under the same license. The source sentences and PTB part-of-speech annotations, which are from the Reviews section of the __English Web Treebank__ (EWTB; [9]), are redistributed with permission of Google and the Linguistic Data Consortium, respectively.
 
 An independent effort to improve the MWE annotations from those in STREUSLE 3.0 resulted in the [HAMSTER](https://github.com/eltimster/HAMSTER) resource [14]. The HAMSTER revisions have not been merged with the 4.0 revisions, though we intend to do so for a future release.
 
-[![PyPI version](https://badge.fury.io/py/streusle.svg)](https://badge.fury.io/py/streusle)
+[![CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-sa/4.0/) [![PyPI version](https://badge.fury.io/py/streusle.svg)](https://badge.fury.io/py/streusle)
+
 
 Files
 -----
@@ -119,6 +120,7 @@ History
 
   - STREUSLE 4.4pre: TBD.
      * Update govobj.py to recognize a different style of annotation for preposition stranding.
+     * Update UD to v2.6.
   - STREUSLE 4.3: 2020-05-01.
      * Updated preposition/possessive annotations to SNACS v2.5 guidelines ([5], specifically <https://arxiv.org/abs/1704.02134v6>), which includes changes in the set of labels.
      * Added a sentence that had been omitted from a document in the training set.
