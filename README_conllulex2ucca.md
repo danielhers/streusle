@@ -37,7 +37,7 @@ In a top-down traversal of the dependency parse, visit each word's lexical unit 
 - If a common noun, mark as
   * `S` if supersense-tagged as ATTRIBUTE, FEELING, or STATE
   * `P` if ACT, PHENOMENON, PROCESS, or EVENT (with the exception of nouns denoting a part of the day)
-  * a relational noun (DETAILS TBD) if PERSON or GROUP and matching kinship/occupation lists or suffixes
+  * a relational noun _(TODO: DETAILS)_ if PERSON or GROUP and matching kinship/occupation lists or suffixes
   * `-` otherwise
 - If a verb or copula not handled above, label `+`
 - Else label `-`
@@ -105,7 +105,7 @@ TODO: BUG: The "of parking" PP unit should be C, not E? Or should Q not be combi
 
 ## Steps 7+: Cleanup
 
-Remove temporary decorations on `H` units from coordination; move `U` units for punctuation to more convenient attachment points; convert remaining `-` and `+` labels; wrap stray `P` and `S` units with `H` scenes; remove `UNA` and other temporary designations in the graph
+Remove temporary decorations on `H` units from articulation; move `U` units for punctuation to more convenient attachment points; convert remaining `-` and `+` labels; wrap stray `P` and `S` units with `H` scenes; remove `UNA` and other temporary designations in the graph
 
 > [S(COORD) [**H** [S [UNA There] ] [F [UNA 's] ] [A [Q [UNA plenty] ] [E [**H** [R [UNA of] ] [S [UNA parking] ] ] ] ] ] ... [L [UNA and] ] [**H** [A [UNA I] ] [F [UNA 've] ] [T [UNA never] ] [F had] [F [UNA an] ] [P [UNA issue] ] [A [R [UNA with] ] [E [UNA audience] ] [**C** [A|P [UNA members] ] ] [E [H [A\* members] [R [UNA who] ] [F [UNA wo] ] [D [UNA n't] ] [D [UNA stop] ] [+(COORD) [**H** [P [UNA talking] ] ] [L [UNA or] ] [**H** [P [UNA answering] ] [A [E [**C** [A|S [UNA their] ] ] [A\* cellphones] ] [C [UNA cellphones] ] ] ] ] ] ] ] ] ] [U ,] ... [U .]
 
@@ -115,3 +115,7 @@ Remove temporary decorations on `H` units from coordination; move `U` units for 
 > [**H** [H [S [UNA There] ] [F [UNA 's] ] [A [Q [UNA plenty] ] [E [H [R [UNA of] ] [S [UNA parking] ] ] ] ] ] [U ,] [L [UNA and] ] [H [A [UNA I] ] [F [UNA 've] ] [T [UNA never] ] [F had] [F [UNA an] ] [P [UNA issue] ] [A [R [UNA with] ] [E [UNA audience] ] [C [A|P [UNA members] ] ] [E [H [A\* members] [R [UNA who] ] [F [UNA wo] ] [D [UNA n't] ] [D [UNA stop] ] [**H** [H [P [UNA talking] ] ] [L [UNA or] ] [H [P [UNA answering] ] [A [E [C [A|S [UNA their] ] ] [A\* cellphones] ] [C [UNA cellphones] ] ] ] ] ] ] ] ] [U .] ]
 
 > [H [H [S There] [F 's] [A [Q plenty] [E [R of] [S parking] ] ] ] [U ,] [L and] [H [A I] [F 've] [T never] [F had] [F an] [P issue] [A [R with] [E audience] [C [A|P members] ] [E [A\* members] [R who] [F wo] [D n't] [D stop] [H [H [P talking] ] [L or] [H [P answering] [A [E [C [A|S their] ] [A\* cellphones] ] [C cellphones] ] ] ] ] ] ] [U .] ]
+
+## Gold for reference
+
+> [H [**F** There] [F 's] [**D** plenty] [**P** [R of] [C parking] ] ] [U ,] [L and] [H [A I] [F 've] [**D|T** never] [F had] [P [F an] [C issue] ] [A [R with] [C [**A** audience] [**P** members] ] [E [R who] [**H** [A* members] [F wo] [D n't] [D stop] [P talking] ] [L or] [**H** [A* members] [P answering] [A [E [S|A their] [A* cellphones] ] [C cellphones] [U .] ] ] ] ] ]
