@@ -23,4 +23,9 @@ This branch accompanies the [COLING 2020](https://coling2020.org/) paper [Compar
 }
 ```
 
-The code and data is based on the [official STREUSLE repository](https://github.com/nert-nlp/streusle).
+Changes in this repository, with respect to the code and data in [official STREUSLE repository](https://github.com/nert-nlp/streusle), are:
+* [Converter from STREUSLE + UD to UCCA](conllulex2ucca.py), described in the paper and [documented in detail](README_conllulex2ucca.md).
+* Scripts to convert [from CoNLL-U-Lex to CoNLL-U](conllulex2conllu.sh) (by keeping only the first 10 columns), and [from CoNLL-U-Lex to Lex](conllulex2lex.sh) (by dropping the first 10 columns).
+* Scripts to parse to CoNLL-U, using [UDPipe](parse_udpipe.sh) and [StanfordNLP](parse_stanfordnlp.sh), and concatenate the Lex columns from the original file. These allow experimenting with predicted (rather than gold) syntax.
+
+See also the [streusle2ucca-2019](https://github.com/danielhers/streusle/tree/streusle2ucca-2019) branch, containing the code for the alternative converter, described in Appendix B of the paper.
